@@ -180,3 +180,7 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 .kiro
+.claude
+AGENTS.md
+CLAUDE.md
+src/tools/largerag/data/literature/
