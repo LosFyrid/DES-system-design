@@ -1,0 +1,58 @@
+# LargeRAG 配置文件
+# 注意：敏感信息（API Key）从 .env 读取，不写在此文件
+
+# ============ Embedding 配置 ============
+embedding:
+  provider: "dashscope"                          # 固定值，不可修改
+  model: "text-embedding-v3"                    # Qwen embedding 模型
+  text_type: "document"                         # document 或 query
+  batch_size: 10                                # 批处理大小（减小以避免API限流）
+  dimension: 1024                               # 向量维度
+
+# ============ 向量存储配置 ============
+vector_store:
+  type: "chroma"                                # 固定值，不可修改
+  persist_directory: "${PROJECT_ROOT}src/tools/largerag/data/chroma_db"
+  collection_name: "des_literature_v1"
+  distance_metric: "cosine"                     # cosine, l2, ip
+
+# ============ 文档处理配置 ============
+document_processing:
+  chunk_size: 512                               # 分块大小（token）
+  chunk_overlap: 50                             # 重叠大小（token）
+  separator: "\n\n"                             # 分块分隔符
+
+# ============ 检索配置 ============
+retrieval:
+  similarity_top_k: 20                          # 向量检索召回数量
+  rerank_top_n: 5                               # Reranker 最终返回数量
+  similarity_threshold: 0.7                     # 相似度阈值（过滤低分）
+
+# ============ Reranker 配置 ============
+reranker:
+  provider: "dashscope"                         # 固定值
+  model: "gte-rerank"                           # Qwen reranker 模型
+  enabled: true                                 # 是否启用 reranker
+
+# ============ LLM 配置 ============
+llm:
+  provider: "dashscope"                         # 固定值
+  model: "qwen-max"                             # Qwen3-235B
+  temperature: 0.1
+  max_tokens: 2000
+
+# ============ 缓存配置 ============
+cache:
+  enabled: false                                # 是否启用缓存（暂时禁用以测试）
+  type: "redis"                                 # redis 或 local
+  redis_host: "localhost"
+  redis_port: 6379
+  redis_db: 0
+  collection_name: "largerag_embedding_cache"
+  ttl: 86400                                    # 缓存过期时间（秒）
+
+# ============ 日志配置 ============
+logging:
+  level: "INFO"                                 # DEBUG, INFO, WARNING, ERROR
+  file_path: "${PROJECT_ROOT}logs/largerag.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

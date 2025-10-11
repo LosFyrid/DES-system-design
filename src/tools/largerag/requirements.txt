@@ -1,0 +1,25 @@
+# LlamaIndex 核心
+llama-index>=0.10.0
+llama-index-core>=0.10.0
+
+# DashScope 集成
+llama-index-embeddings-dashscope>=0.2.0
+llama-index-llms-dashscope>=0.2.0
+llama-index-postprocessor-dashscope-rerank>=0.1.0
+
+# 向量数据库
+llama-index-vector-stores-chroma>=0.2.0
+chromadb>=0.4.0
+
+# 缓存系统
+llama-index-storage-kvstore-redis>=0.2.0
+redis>=5.0.0
+
+# 配置和工具
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+PyYAML>=6.0
+
+# 测试
+pytest>=7.0.0
+pytest-asyncio>=0.21.0

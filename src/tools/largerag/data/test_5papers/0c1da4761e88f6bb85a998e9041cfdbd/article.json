@@ -1,0 +1,2752 @@
+{
+    "paragraphs": [
+        {
+            "paragraph": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $+$ urea) at different temperatures ",
+            "type": "body_div",
+            "paragraph_idx": 0,
+            "pagenum": 0,
+            "head": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $+$ urea) at different temperatures",
+            "text_level": 1
+        },
+        {
+            "paragraph": "Chunlu Li, Niannian Wang, Yuanlin Yao, Zhifang Cui, Jun Gao & Dexin Feng ",
+            "type": "body_div",
+            "paragraph_idx": 1,
+            "pagenum": 0,
+            "head": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $+$ urea) at different temperatures"
+        },
+        {
+            "paragraph": "To cite this article: Chunlu Li, Niannian Wang, Yuanlin Yao, Zhifang Cui, Jun Gao & Dexin Feng (2021): Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $^ +$ urea) at different temperatures, Physics and Chemistry of Liquids, DOI: 10.1080/00319104.2021.1916930 ",
+            "type": "body_div",
+            "paragraph_idx": 2,
+            "pagenum": 0,
+            "head": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $+$ urea) at different temperatures"
+        },
+        {
+            "paragraph": "To link to this article:  https://doi.org/10.1080/00319104.2021.1916930 ",
+            "type": "body_div",
+            "paragraph_idx": 3,
+            "pagenum": 0,
+            "head": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $+$ urea) at different temperatures"
+        },
+        {
+            "paragraph": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride $^ +$ urea) at different temperatures ",
+            "type": "body_div",
+            "paragraph_idx": 4,
+            "pagenum": 1,
+            "head": "",
+            "text_level": 1
+        },
+        {
+            "paragraph": "Chunlu Li $\\textcircled{1} ^ { \\mathsf { a } }$ , Niannian Wanga, Yuanlin Yaoa, Zhifang Cuia, Jun Gao $\\oplus ^ { \\mathsf { a } }$ and Dexin Fengb ",
+            "type": "body_div",
+            "paragraph_idx": 5,
+            "pagenum": 1,
+            "head": "ARTICLE"
+        },
+        {
+            "paragraph": "aDepartment of Chemical Engineering, College of Chemical and Biological Engineering, Shandong University of Science and Technology, Qingdao, China; ${ } ^ { \\mathsf { b } } { \\mathsf { C A S } }$ Key Laboratory of Bio-based Material, Qingdao Institute of Bioenergy and Bioprocess Technology, Chinese Academy of Sciences, Qingdao, China ",
+            "type": "body_div",
+            "paragraph_idx": 6,
+            "pagenum": 1,
+            "head": "ARTICLE"
+        },
+        {
+            "paragraph": "ABSTRACT ",
+            "type": "body_div",
+            "paragraph_idx": 7,
+            "pagenum": 1,
+            "head": "ABSTRACT",
+            "text_level": 1
+        },
+        {
+            "paragraph": "To convert carbohydrates into platform compounds, the deep eutectic solvent (DES) based on choline chloride and urea (molar ratio 1:2) was adopted as a green solvent. The physical properties of density, dynamic viscosity, conductivity and refractive index were determined for the mix­ ture of D-glucose and DES including neat reline at a temperature from $2 9 3 . 1 5 \\mathsf { K }$ to $3 6 3 . 1 5 \\mathsf { K }$ at $1 0 1 . 3 \\mathsf { k P a }$ . The measured data of density, dynamic viscosity, conductivity and refractive index were correlated, respectively. Meanwhile, the molecular volume, standard molar entropy, lattice energy and free volume were calculated. The spectra of FTIR indicates that the hydrogen bond was changed in the mixture with increasing the content of D-glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 8,
+            "pagenum": 1,
+            "head": "ABSTRACT"
+        },
+        {
+            "paragraph": "ARTICLE HISTORY Received 19 October 2020 Accepted 11 April 2021 ",
+            "type": "body_div",
+            "paragraph_idx": 9,
+            "pagenum": 1,
+            "head": "ABSTRACT"
+        },
+        {
+            "paragraph": "KEYWORDS ",
+            "type": "body_div",
+            "paragraph_idx": 10,
+            "pagenum": 1,
+            "head": "KEYWORDS",
+            "text_level": 1
+        },
+        {
+            "paragraph": "Deep eutectic solvent; d-glucose; physical properties; correlation ",
+            "type": "body_div",
+            "paragraph_idx": 11,
+            "pagenum": 1,
+            "head": "KEYWORDS"
+        },
+        {
+            "paragraph": "1. Introduction ",
+            "type": "body_div",
+            "paragraph_idx": 12,
+            "pagenum": 1,
+            "head": "1. Introduction",
+            "text_level": 1
+        },
+        {
+            "paragraph": "In converting biomass-derived carbohydrates such as glucose, fructose into platform compounds 5-hydroxymethylfurfural (5-HMF), 5-ethoxymethylfurfural (5-EMF) and laevulinic acid [1], sol­ vent plays a very important role during the successful conversion of these platform compounds [2]. Researchers in this field have been looking for suitable solvents and concerning the physical properties of the solvents [3]. Until now, for conversion of carbohydrates into platform compounds, water, organic compounds and ionic liquids (ILs) have all been selected as the solvents. And the physical properties of these solutions containing the carbohydrates have also been investi­ gated [4,5]. ",
+            "type": "body_div",
+            "paragraph_idx": 13,
+            "pagenum": 1,
+            "head": "1. Introduction",
+            "cites": [
+                {
+                    "text": "[1]",
+                    "ref_id": "BIBREF0"
+                },
+                {
+                    "text": "[2]",
+                    "ref_id": "BIBREF1"
+                },
+                {
+                    "text": "[3]",
+                    "ref_id": "BIBREF2"
+                },
+                {
+                    "text": "[4,",
+                    "ref_id": "BIBREF3"
+                },
+                {
+                    "text": "5]",
+                    "ref_id": "BIBREF4"
+                }
+            ]
+        },
+        {
+            "paragraph": "Deep eutectic solvents (DESs), which contained hydrogen bond acceptor (HBA) and hydrogen bond donor (HBD), emerged in 2002 with many advantages, such as low cost, easy synthesis, nontoxicity and biodegradability, which can be used as alternatives to ionic liquids in many applica­ tions, such as separation, biodiesel and green solvents [6–12]. Recently, some literatures reported that the DESs were adopted as the solvents to obtain the platform compounds from carbohydrates [13–19]. Biofuel 5-EMF was produced from glucose in DES by Miao [20] with the yield of $4 6 . 7 \\%$ . Han and co-workers [21] synthesised HMF from fructose achieving the selectivity of $8 4 \\%$ using choline chloride-based DES. ",
+            "type": "body_div",
+            "paragraph_idx": 14,
+            "pagenum": 1,
+            "head": "1. Introduction",
+            "cites": [
+                {
+                    "text": "[20]",
+                    "ref_id": "BIBREF19"
+                },
+                {
+                    "text": "[21]",
+                    "ref_id": "BIBREF20"
+                }
+            ]
+        },
+        {
+            "paragraph": "Sugar, another HBD, was added into the DES to form a ternary system which contains one HBA and two HBDs. The addition of the second HBD influences the original system such as the force of the hydrogen bond, the space among the molecules, etc., and further influences the physical properties of the DES. Physical properties, such as density, dynamic viscosity, conductivity and refractive index (RI), are important for engineering calculations in designing industrial equipment or unit operations. ",
+            "type": "body_div",
+            "paragraph_idx": 15,
+            "pagenum": 1,
+            "head": "1. Introduction"
+        },
+        {
+            "paragraph": "To evaluate the DESs’ performance in industry applications, it is essential to determine the physical properties of the solutions [22–25, Tay26, 27]. To our knowledge, the physical properties of the mixture formed by D-glucose and DES at different temperatures have not been reported in the literatures. ",
+            "type": "body_div",
+            "paragraph_idx": 16,
+            "pagenum": 2,
+            "head": ""
+        },
+        {
+            "paragraph": "DES- based on urea and choline chloride was firstly synthesised [7] with low melting point of $1 2 ^ { \\circ } \\mathrm { C }$ that it is chosen as the solvent in this study. In this work, for converting D-glucose into platform compounds in the solvent of DES (ChCl: urea, molar ratio of 1:2), the properties of density, dynamic viscosity, electrical conductivity and RI of the solutions (including neat reline) with different D-glucose content at different temperatures were investigated, and the measured data was correlated. ",
+            "type": "body_div",
+            "paragraph_idx": 17,
+            "pagenum": 2,
+            "head": "1. Introduction",
+            "cites": [
+                {
+                    "text": "[7]",
+                    "ref_id": "BIBREF6"
+                }
+            ]
+        },
+        {
+            "paragraph": "2. Experimental section ",
+            "type": "body_div",
+            "paragraph_idx": 18,
+            "pagenum": 2,
+            "head": "2. Experimental section",
+            "text_level": 1
+        },
+        {
+            "paragraph": "2.1 Materials ",
+            "type": "body_div",
+            "paragraph_idx": 19,
+            "pagenum": 2,
+            "head": "2.1 Materials",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The CAS registry number, the supplier and the mass fractionof the chemicals in this work are presented in Table 1. All chemicals were dried in vacuum oven (DZF-6020-T, Shanghai Shensheng Co., Ltd) at $3 3 8 . 1 5 \\mathrm { K }$ under pressure of $0 . 0 5 \\mathrm { k P a }$ for $1 2 \\mathrm { ~ h ~ }$ to eliminate moisture before using. ",
+            "type": "body_div",
+            "paragraph_idx": 20,
+            "pagenum": 2,
+            "head": "2.1 Materials"
+        },
+        {
+            "paragraph": "2.2 Preparation of mixture of DES and D-glucose ",
+            "type": "body_div",
+            "paragraph_idx": 21,
+            "pagenum": 2,
+            "head": "2.2 Preparation of mixture of DES and D-glucose",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The DES (ChCl and urea, molar ratio 1:2, uncertainty of the molar ratio is 0.004) was synthesised at $3 5 3 . 1 5 \\mathrm { ~ K ~ }$ according to the method proposed in literatures [28,29]. The mixture of the DES and D-glucose with different molar fractions (0.02, 0.05, 0.08 and 0.11, uncertainty of molar fraction is 0.004) were stirred at $4 0 0 ~ \\mathrm { r p m }$ and $3 5 3 . 1 5 \\mathrm { ~ K ~ }$ until a clear and homogenous mixture was obtained. And the molar fraction of D-glucose was defined as the number of moles of D-glucose divided by the total moles number of the mixture. All the preparations were carried out in the glove box (Lab 2000, Etelux, China) filled with argon with the relative humidity less than $0 . 5 \\%$ . Then, the water content of the mixture was measured by Karl-Fischer Titrator (MA-2, Kulun, China), and water content in the mixture which showed less than 0.2 wt $\\%$ . ",
+            "type": "body_div",
+            "paragraph_idx": 22,
+            "pagenum": 2,
+            "head": "2.2 Preparation of mixture of DES and D-glucose",
+            "cites": [
+                {
+                    "text": "[28,",
+                    "ref_id": "BIBREF27"
+                },
+                {
+                    "text": "29]",
+                    "ref_id": "BIBREF28"
+                }
+            ]
+        },
+        {
+            "paragraph": "2.3 Physical property measurements ",
+            "type": "body_div",
+            "paragraph_idx": 23,
+            "pagenum": 2,
+            "head": "2.3 Physical property measurements",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The density of the prepared mixture was determined using the densimeter (DMA $4 5 0 0 \\mathrm { ~ M ~ }$ , Anton Paar, Austria), which was calibrated by measuring the densities of ultrapure water and dried air. The measurement temperature was controlled by an oil bath (DF-101S, Shanghai Lichen Co., Ltd, China) and determined using a mercury thermometer with a standard uncertainty of $^ { \\pm 0 . 0 1 }$ K. ",
+            "type": "body_div",
+            "paragraph_idx": 24,
+            "pagenum": 2,
+            "head": "2.3 Physical property measurements"
+        },
+        {
+            "paragraph": "The dynamic viscosity was determined by a viscometer (DV3T, Brookfield Instruments, USA), which was calibrated using the zero-calibration method. The temperature was controlled by an external water bath and circulator (HC-10, Protech Technology Enterprise Co., Ltd, China), and the standard uncertainty was $\\pm 0 . 0 1$ K. ",
+            "type": "body_div",
+            "paragraph_idx": 25,
+            "pagenum": 2,
+            "head": "2.3 Physical property measurements"
+        },
+        {
+            "paragraph": "The electrical conductivity was measured by a conductivity metre (Five Easy Plus FE28-S, METTLER-TOLEDO Co., Ltd, Switzerland). The electrical conductivity of 0.01 M KCl aqueous solution was analysed before each measurement for calibration. The oil bath was used to control the temperature with a standard uncertainty of $\\pm 0 . 1 \\mathrm { ~ K ~ }$ . ",
+            "type": "body_div",
+            "paragraph_idx": 26,
+            "pagenum": 2,
+            "head": "2.3 Physical property measurements"
+        },
+        {
+            "head": "Table 1",
+            "paragraph": [
+                "Table 1. CAS registry number and mass fraction purity of the chemicals. "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/8826aaade662f675e20467f4bbf4714ca471d8a3250b899a60c368c0db4b4467.jpg",
+            "paragraph_idx": 27,
+            "pagenum": 3,
+            "table_footnote": [],
+            "poly": [
+                129,
+                1714,
+                1238,
+                1714,
+                1238,
+                1835,
+                129,
+                1835
+            ],
+            "html": "<html><body><table><tr><td>Component</td><td>CAS reg. no.</td><td>Suppliers</td><td>Mass fraction</td></tr><tr><td>2-Hydroxy-N,N,N-trimethylethanaminium chloride</td><td>67-48-1</td><td>Shanghai Macklin Co., Ltd</td><td>0.990</td></tr><tr><td>D-glucose</td><td>50-99-7</td><td>Tianjin Fuyu Chemical Co., Ltd</td><td>0.995</td></tr><tr><td>Urea</td><td>57-13-6</td><td>Tianjin Kemiou Chemical Co., Ltd</td><td>0.995</td></tr></table></body></html>"
+        },
+        {
+            "paragraph": "The RI was measured using an Abbe refractometer (WAY-2S, Shantou Keyi Co., Ltd, China), which was calibrated with monobromonapthalene before measurement. The light source was a sodium arc lamp with the wavelength of $5 8 9 . 3 ~ \\mathrm { n m }$ . The sample temperature was maintained by a constant-temperature water circulator (501A, Shanghai Experimental Equipment Co., Ltd, China). ",
+            "type": "body_div",
+            "paragraph_idx": 28,
+            "pagenum": 3,
+            "head": ""
+        },
+        {
+            "paragraph": "All the measurements were performed at $1 0 1 . 3 \\mathrm { ~ k P a }$ . Each property value for the mixture was measured three times and the averaged value was adopted. ",
+            "type": "body_div",
+            "paragraph_idx": 29,
+            "pagenum": 3,
+            "head": "2.3 Physical property measurements"
+        },
+        {
+            "paragraph": "To explore the interactions of the components in the mixture, the mixture was characterised by Fourier transform infrared spectroscopy (VERTEX70, Germany Brooke Co., Ltd, German) at $4 0 0 { \\mathrm { - } } 4 0 0 0 ~ { \\mathrm { c m } } ^ { - 1 }$ . ",
+            "type": "body_div",
+            "paragraph_idx": 30,
+            "pagenum": 3,
+            "head": "2.3 Physical property measurements"
+        },
+        {
+            "paragraph": "3. Results and discussion ",
+            "type": "body_div",
+            "paragraph_idx": 31,
+            "pagenum": 3,
+            "head": "3. Results and discussion",
+            "text_level": 1
+        },
+        {
+            "paragraph": "3.1 Density ",
+            "type": "body_div",
+            "paragraph_idx": 32,
+            "pagenum": 3,
+            "head": "3.1 Density",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The density data for the mixture of $\\mathrm { D E S } + \\mathrm { D }$ -glucose are listed in Table S1 and presented in Figure 1. Some literature density values of neat DES are also listed in Table S1 for comparison. Figure 1 shows the influence of temperature and D-glucose on the density of the mixture. The density of D-glucose $( 1 . 5 4 ~ \\mathrm { g } \\cdot \\mathrm { c m } ^ { - 3 } )$ , is higher than neat DES. The density decreased with the increase of temperature for every $\\operatorname { C h C l + }$ urea) $+ \\mathrm { ~ D ~ }$ -glucose mixture. It could be seen that with the addition of D-glucose the density of the mixture increased. ",
+            "type": "body_div",
+            "paragraph_idx": 33,
+            "pagenum": 3,
+            "head": "3.1 Density"
+        },
+        {
+            "paragraph": "The measured density data were fitted by the following equation [30]: ",
+            "type": "body_div",
+            "paragraph_idx": 34,
+            "pagenum": 3,
+            "head": "3.1 Density",
+            "cites": [
+                {
+                    "text": "[30]",
+                    "ref_id": "BIBREF29"
+                }
+            ]
+        },
+        {
+            "head": "formula (1)",
+            "paragraph_idx": 35,
+            "latex": "$$\n\\rho = \\rho _ { 0 } + A T\n$$",
+            "pagenum": 3,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                606,
+                968,
+                763,
+                968,
+                763,
+                1005,
+                606,
+                1005
+            ],
+            "path": "images/ac16102c8fe71ce6095b8a01299cb218.jpg"
+        },
+        {
+            "head": "Figure 1",
+            "paragraph": [
+                "Figure 1. Density of ${ \\mathsf { D E S } } + { \\mathsf { D } } $ -glucose: molar fraction of D-glucose (□, 0.00; ○, 0.02; $\\triangle ,$ 0.05; $\\diamondsuit$ , 0.08; $\\bigtriangledown$ , 0.11). – represent fit to Eq. 1. "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/4516f722b41e5e84a45292648d3a15032edbe6d60dd1db833dea37b36fb8f5ca.jpg",
+            "paragraph_idx": 36,
+            "pagenum": 3,
+            "img_footnote": [],
+            "poly": [
+                206,
+                1091,
+                1160,
+                1091,
+                1160,
+                1790,
+                206,
+                1790
+            ]
+        },
+        {
+            "head": "Table 2",
+            "paragraph": [
+                "Table 2. Correlated value of the parameters for Eq 1 and ${ \\sf R } ^ { 2 }$ "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/9623d35aaab08f15a800c92c164d719f4092f82eabfb7d9c957cc210c7df800f.jpg",
+            "paragraph_idx": 37,
+            "pagenum": 5,
+            "table_footnote": [],
+            "poly": [
+                130,
+                170,
+                1239,
+                170,
+                1239,
+                377,
+                130,
+                377
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Molar fraction of D-glucose</td><td colspan=\"4\">Fittingparameters</td><td rowspan=\"2\">R²</td></tr><tr><td>Po (g·cm-3)</td><td>Standard error</td><td>A/x10-4 (g·cm-³.K-1)</td><td>Standard error</td></tr><tr><td>0.00</td><td>1.4759</td><td>0.0002</td><td>-8.9344</td><td>6.22 ×10-7</td><td>0.9999</td></tr><tr><td>0.02</td><td>1.4932</td><td>0.0005</td><td>-8.9209</td><td>1.64 × 10-6</td><td>0.9999</td></tr><tr><td>0.05</td><td>1.5048</td><td>0.0016</td><td>-8.8505</td><td>4.89 × 10-6</td><td>0.9995</td></tr><tr><td>0.08</td><td>1.5339</td><td>0.0025</td><td>-9.3341</td><td>7.44 × 10-6</td><td>0.9991</td></tr><tr><td>0.11</td><td>1.5545</td><td>0.0029</td><td>-9.4282</td><td>8.82 × 10-6</td><td>0.9988</td></tr></table></body></html>"
+        },
+        {
+            "paragraph": "where $\\rho$ is the density of the mixture. The values of $\\dot { \\rho } _ { 0 } , A$ and $R ^ { 2 }$ of the correlation are listed in Table 2. For each mixture, temperature showed a simple linear relationship with density at the investi­ gated temperature range (293.15–363.15 K). Meanwhile, at the same temperature, the values of density were also linearly dependent on the molar fraction of D-glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 38,
+            "pagenum": 4,
+            "head": "3.1 Density"
+        },
+        {
+            "paragraph": "The derived properties, molecular volume $( V _ { \\mathrm { m } } )$ , standard molar entropy $( \\boldsymbol { S } ^ { \\boldsymbol { o } } )$ and lattice energy $( U _ { \\mathrm { P O T } } )$ were calculated based on the experimental data by the following equations [31,32]: ",
+            "type": "body_div",
+            "paragraph_idx": 39,
+            "pagenum": 4,
+            "head": "3.1 Density",
+            "cites": [
+                {
+                    "text": "[31,",
+                    "ref_id": "BIBREF30"
+                },
+                {
+                    "text": "32]",
+                    "ref_id": "BIBREF31"
+                }
+            ]
+        },
+        {
+            "head": "formula (2)",
+            "paragraph_idx": 40,
+            "latex": "$$\nV _ { m } = M _ { \\mathrm { M i x t u r e } } / ( N _ { \\mathrm { A } } \\rho )\n$$",
+            "pagenum": 4,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                559,
+                651,
+                812,
+                651,
+                812,
+                689,
+                559,
+                689
+            ],
+            "path": "images/6d1b5356ad926f1f3e2c9af80d530b3d.jpg"
+        },
+        {
+            "head": "formula (3)",
+            "paragraph_idx": 41,
+            "latex": "$$\nS ^ { 0 } = 1 2 4 6 . 5 V _ { m } + 2 9 . 5\n$$",
+            "pagenum": 4,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                554,
+                724,
+                815,
+                724,
+                815,
+                762,
+                554,
+                762
+            ],
+            "path": "images/f46ca4bfcde56a60caf6305bf5fd613c.jpg"
+        },
+        {
+            "head": "formula (4)",
+            "paragraph_idx": 42,
+            "latex": "$$\nU _ { \\mathrm { P O T } } = 1 9 8 1 . 2 \\big ( \\rho / M _ { \\mathrm { M i x t u r e } } \\big ) ^ { 1 / 3 } + 1 0 3 . 8\n$$",
+            "pagenum": 4,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                465,
+                799,
+                906,
+                799,
+                906,
+                844,
+                465,
+                844
+            ],
+            "path": "images/cdd0aeca19ec469cde31a9e7a9032d8c.jpg"
+        },
+        {
+            "paragraph": "where $\\rho$ is the density of the mixture; $M _ { \\mathrm { M i x t u r e } }$ is the molecular mass of $( \\mathrm { D E S + D }$ -glucose) and $N _ { \\mathrm { A } }$ is the Avogadro’s number. Table 3 lists the calculated property values for the mixtures of DES with different content of D-glucose at $2 9 8 . 1 5 \\mathrm { ~ K ~ }$ . Molecular volume, standard molar entropy and lattice energy increase with the addition of D-glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 43,
+            "pagenum": 4,
+            "head": "3.1 Density"
+        },
+        {
+            "paragraph": "3.2 Dynamic viscosity ",
+            "type": "body_div",
+            "paragraph_idx": 44,
+            "pagenum": 4,
+            "head": "3.2 Dynamic viscosity",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The measured and literature dynamic viscosity data for the $\\mathrm { D E S } + \\mathrm { D }$ -glucose mixture at different temperatures are listed in Table S2 and plotted in Figure 2. For comparison, the dynamic viscosity data for the pure DES reported in literature are presented in Table S3, and the measured dynamic viscosity data for the pure DES in this study did not agree well with all the reported in the literature. The data of neat DES based on choline chloride and urea is inconsistent, especially when the temperature is lower than $3 2 8 . 1 5 ~ \\mathrm { K } .$ which may be due to the water content, purity of the reagent and instrument. In Figure 2, moreover, with adding the content of D-glucose, the viscosity values of the mixture increase, and decrease with increasing the temperature. The higher the molar fraction of D-glucose in the mixture, the higher the viscosity of the mixture. When the temperature is less than $3 2 8 . 1 5 \\mathrm { K } ,$ , the viscosity of the mixture varies significantly with the addition of glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 45,
+            "pagenum": 4,
+            "head": "3.2 Dynamic viscosity"
+        },
+        {
+            "paragraph": "The measured dynamic viscosity data were fitted by the Arrhenius equation and Vogel−Fulcher −Tamman (VFT) equation [4,22,33,34]: ",
+            "type": "body_div",
+            "paragraph_idx": 46,
+            "pagenum": 4,
+            "head": "3.2 Dynamic viscosity",
+            "cites": [
+                {
+                    "text": "[4,",
+                    "ref_id": "BIBREF3"
+                },
+                {
+                    "text": "22,",
+                    "ref_id": "BIBREF21"
+                },
+                {
+                    "text": "33,",
+                    "ref_id": "BIBREF32"
+                },
+                {
+                    "text": "34]",
+                    "ref_id": "BIBREF33"
+                }
+            ]
+        },
+        {
+            "head": "formula (5)",
+            "paragraph_idx": 47,
+            "latex": "$$\n\\eta = B _ { 0 } \\exp ( - B / T )\n$$",
+            "pagenum": 4,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                574,
+                1526,
+                795,
+                1526,
+                795,
+                1563,
+                574,
+                1563
+            ],
+            "path": "images/57a3e2f81f18448de642382ccd1af03b.jpg"
+        },
+        {
+            "head": "Table 3",
+            "paragraph": [
+                "Table 3. Calculated property values for ${ \\mathsf { D E S } } + { \\mathsf { D } }$ -glucose at $2 9 8 . 1 5 1 6 .$ "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/60cf10dec4a62dbdd4ba1a7f54e97a01757c540ac2481621779df0ac6d8ab048.jpg",
+            "paragraph_idx": 48,
+            "pagenum": 5,
+            "table_footnote": [],
+            "poly": [
+                129,
+                1660,
+                1240,
+                1660,
+                1240,
+                1817,
+                129,
+                1817
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Property</td><td colspan=\"5\">Molar fraction of D-glucose</td></tr><tr><td>0.00</td><td>0.02</td><td>0.05</td><td>0.08</td><td>0.11</td></tr><tr><td>Vm (nm3)</td><td>0.3566</td><td>0.3563</td><td>0.3595</td><td>0.3625</td><td>0.3644</td></tr><tr><td>5°(J·K-1.mol−1)</td><td>474</td><td>473</td><td>477</td><td>481</td><td>483</td></tr><tr><td>UPOT (kJ·mol-1)</td><td>331.25</td><td>331.32</td><td>330.33</td><td>329.41</td><td>328.84</td></tr></table></body></html>"
+        },
+        {
+            "head": "Table 4",
+            "paragraph": [
+                "Table 4. Correlated values of the parameters for Eq. 5 and $R ^ { 2 . }$ "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/f9cc457a3adc6677a974b875457cc14c7438656f607a4745ddcd3c0e4d58467a.jpg",
+            "paragraph_idx": 49,
+            "pagenum": 6,
+            "table_footnote": [],
+            "poly": [
+                130,
+                171,
+                1238,
+                171,
+                1238,
+                377,
+                130,
+                377
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Molar fractionof D-glucose</td><td colspan=\"4\">Fitting parameters for Eq.5</td><td rowspan=\"2\">R²</td></tr><tr><td>B/10-8(mPa·s)</td><td>Standard error</td><td>B (K)</td><td>Standard error</td></tr><tr><td>0.00</td><td>1.69</td><td>9.08 × 10-13</td><td>7364</td><td>3.28</td><td>0.9992</td></tr><tr><td>0.02</td><td>64.43</td><td>8.40 × 10-13</td><td>6342</td><td>1.14</td><td>0.9991</td></tr><tr><td>0.05</td><td>120.30</td><td>17.2 × 10-13</td><td>6213</td><td>1.61</td><td>0.9990</td></tr><tr><td>0.08</td><td>62.50</td><td>7.15 × 10-13</td><td>6537</td><td>4.23</td><td>0.9991</td></tr><tr><td>0.11</td><td>43.78</td><td>4.43 ×10-13</td><td>6741</td><td>2.63</td><td>0.9992</td></tr></table></body></html>"
+        },
+        {
+            "head": "Table 5",
+            "paragraph": [
+                "Table 5. Correlated values of the parameters for Eq. 6 and $R ^ { 2 . }$ . "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/6fcdfa7574f7be2187735518cb52a12c37dd9088bf3bfe0dcd3760caa7791ad2.jpg",
+            "paragraph_idx": 50,
+            "pagenum": 6,
+            "table_footnote": [],
+            "poly": [
+                131,
+                464,
+                1237,
+                464,
+                1237,
+                671,
+                131,
+                671
+            ],
+            "html": "<html><body><table><tr><td></td><td colspan=\"6\">Fitting parameters for Eq.6</td><td></td></tr><tr><td>Molar fraction of D-glucose</td><td>B1/10-4(mPa·s)</td><td>Standard error</td><td>B2(K)</td><td>Standard error</td><td>To(K)</td><td>Stand error</td><td>R²</td></tr><tr><td>0.00</td><td>0.782</td><td>3.54×10-8</td><td>3303</td><td>1.12</td><td>94.84</td><td>0.146</td><td>0.9983</td></tr><tr><td>0.02</td><td>1.213</td><td>2.48×10-8</td><td>3543</td><td>1.75</td><td>77.05</td><td>0.172</td><td>0.9982</td></tr><tr><td>0.05</td><td>2.627</td><td>4.18 × 10-8</td><td>3355</td><td>1.78</td><td>80.98</td><td>0.173</td><td>0.9981</td></tr><tr><td>0.08</td><td>2.093</td><td>7.98 ×10-8</td><td>3469</td><td>1.50</td><td>82.76</td><td>0.139</td><td>0.9982</td></tr><tr><td>0.11</td><td>2.704</td><td>7.31×10-8</td><td>3391</td><td>1.67</td><td>88.51</td><td>0.184</td><td>0.9983</td></tr></table></body></html>"
+        },
+        {
+            "head": "Table 6",
+            "paragraph": [
+                "Table 6. Correlated values of the parameters for Eq. 7, standard error and $R ^ { 2 }$ . "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/31bbc7f555e014776e76f43aed6574dc797360d29566f41ecd87eeb0b243149f.jpg",
+            "paragraph_idx": 51,
+            "pagenum": 6,
+            "table_footnote": [],
+            "poly": [
+                131,
+                758,
+                1236,
+                758,
+                1236,
+                965,
+                131,
+                965
+            ],
+            "html": "<html><body><table><tr><td></td><td colspan=\"5\">Fitting parameters for Eq.7</td></tr><tr><td>Molar fraction of D-glucose</td><td>Co/106(S·m-1)</td><td>Standard error</td><td>C (K)</td><td>Standard error</td><td>R²</td></tr><tr><td>0.00</td><td>8.91×10</td><td>2.28 × 106</td><td>4842</td><td>92</td><td>0.998</td></tr><tr><td>0.02</td><td>1.69 × 10</td><td>4.13 × 10</td><td>5082</td><td>88</td><td>0.998</td></tr><tr><td>0.05</td><td>3.22 ×107</td><td>8.88 ×106</td><td>5350</td><td>99</td><td>0.998</td></tr><tr><td>0.08</td><td>1.09 ×10</td><td>3.01×107</td><td>5854</td><td>101</td><td>0.998</td></tr><tr><td>0.11</td><td>2.18×108</td><td>5.42×10</td><td>6154</td><td>90</td><td>0.999</td></tr></table></body></html>"
+        },
+        {
+            "head": "Table 7",
+            "paragraph": [
+                "Table 7. Correlated values of the parameters for Eq. 8, standard error and $R ^ { 2 }$ . "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/5cc4ccd2ecfd9720723c5e451d14ace793e157f6de3dc16d48f65021d1568c60.jpg",
+            "paragraph_idx": 52,
+            "pagenum": 6,
+            "table_footnote": [],
+            "poly": [
+                131,
+                1052,
+                1237,
+                1052,
+                1237,
+                1258,
+                131,
+                1258
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Molar fraction of D-glucose</td><td colspan=\"7\">Fitting parameters for Eq.8</td></tr><tr><td>C (S.cm-1)</td><td>Stand error</td><td>C2(K)</td><td>Standard error</td><td>To(K)</td><td>Standard error</td><td>R²</td></tr><tr><td>0.00</td><td>0.349</td><td>1.65×10-8</td><td>382</td><td>1.18</td><td>245</td><td>0.149</td><td>0.978</td></tr><tr><td>0.02</td><td>0.397</td><td>3.14 ×10-8</td><td>483</td><td>1.75</td><td>225</td><td>0.165</td><td>0.977</td></tr><tr><td>0.05</td><td>0.345</td><td>7.46 × 10-8</td><td>402</td><td>1.77</td><td>245</td><td>0.148</td><td>0.983</td></tr><tr><td>0.08</td><td>1.044</td><td>7.89 × 10-8</td><td>620</td><td>1.72</td><td>229</td><td>0.169</td><td>0.988</td></tr><tr><td>0.11</td><td>1.125</td><td>4.83×10-8</td><td>662</td><td>1.67</td><td>226</td><td>0.187</td><td>0.990</td></tr></table></body></html>"
+        },
+        {
+            "head": "formula (6)",
+            "paragraph_idx": 53,
+            "latex": "$$\n\\eta = B _ { 1 } \\exp ( B _ { 2 } / ( T - T _ { 0 } ) )\n$$",
+            "pagenum": 5,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                538,
+                1313,
+                831,
+                1313,
+                831,
+                1352,
+                538,
+                1352
+            ],
+            "path": "images/47656e2596f754629ec11b2d2b401bd2.jpg"
+        },
+        {
+            "paragraph": "where $\\eta$ is the dynamic viscosity; $B _ { 0 } , B , B _ { 1 } , B _ { 2 } , T _ { 0 } ,$ are the parameters; and $T$ is the temperature. The correlated values of the parameters and $R ^ { 2 }$ are listed in Tables 4 and 5. ",
+            "type": "body_div",
+            "paragraph_idx": 54,
+            "pagenum": 5,
+            "head": "3.2 Dynamic viscosity"
+        },
+        {
+            "paragraph": "3.3 Conductivity ",
+            "type": "body_div",
+            "paragraph_idx": 55,
+            "pagenum": 5,
+            "head": "3.3 Conductivity",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The conductivity for the mixture was measured and is presented in Table S3 and plotted in Figure 3. The estimated conductivity value of the figure from the literature is also listed in Table S3 for comparison. As shown in Figure 3, with increasing the content of D-glucose, the conductivity decreases, while the conductivity increases with increasing the temperature. Conductivity is strongly correlated with viscosity: the higher the viscosity, the lower the conductivity [35]. This trend was not changed with the addition of D-glucose. Compared to the effect of temperature on dynamic viscosity, conductivity is influenced by temperature, especially when the temperature is higher than 328.15 K. ",
+            "type": "body_div",
+            "paragraph_idx": 56,
+            "pagenum": 5,
+            "head": "3.3 Conductivity",
+            "cites": [
+                {
+                    "text": "[35]",
+                    "ref_id": "BIBREF34"
+                }
+            ]
+        },
+        {
+            "head": "Figure 2",
+            "paragraph": [
+                "Figure 2. Dynamic viscosity of ${ \\mathsf { D E S } } + { \\mathsf { D } } .$ -glucose: molar fraction of D-glucose (□, 0.00; ○, 0.02; △, 0.05; $\\diamondsuit$ , 0.08; $\\bigtriangledown$ , 0.11). – fitted by Eq. 6. "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/63bb90a37d624370a2a3046cc204d52a9186cfba1ed2c8a971073da82fc6d024.jpg",
+            "paragraph_idx": 57,
+            "pagenum": 6,
+            "img_footnote": [],
+            "poly": [
+                200,
+                151,
+                1164,
+                151,
+                1164,
+                851,
+                200,
+                851
+            ]
+        },
+        {
+            "head": "Figure 3",
+            "paragraph": [
+                "Figure 3. Conductivity of DES $^ +$ D-glucose: molar fraction of D-glucose $\\{ \\ldots , 0 . 0 0 ; \\circ , 0 . 0 2$ ; \u0000, $0 . 0 5 ;$ \u0000, 0.08; \u0000, 0.11). – fitted by Eq. 7. "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/c7e6c8d0bbdc9e1c21b5b084917bc31f7473418be743f475040ed75e683b6544.jpg",
+            "paragraph_idx": 58,
+            "pagenum": 6,
+            "img_footnote": [],
+            "poly": [
+                205,
+                977,
+                1157,
+                977,
+                1157,
+                1695,
+                205,
+                1695
+            ]
+        },
+        {
+            "paragraph": "Usually, the measured conductivity data were fitted by the Arrhenius equation and VFT equation [33]: ",
+            "type": "body_div",
+            "paragraph_idx": 59,
+            "pagenum": 7,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "formula (7)",
+            "paragraph_idx": 60,
+            "latex": "$$\n\\sigma C _ { 0 } \\mathrm { e x p } { ( - C / T ) }\n$$",
+            "pagenum": 7,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                593,
+                224,
+                775,
+                224,
+                775,
+                263,
+                593,
+                263
+            ],
+            "path": "images/a9f9d1e9a31f1ed6d51b5842943d1a3d.jpg"
+        },
+        {
+            "head": "formula (8)",
+            "paragraph_idx": 61,
+            "latex": "$$\n\\sigma = { C _ { 1 } } \\exp ( { C _ { 2 } } / { ( T - T _ { 0 } ) } )\n$$",
+            "pagenum": 7,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                537,
+                298,
+                832,
+                298,
+                832,
+                337,
+                537,
+                337
+            ],
+            "path": "images/2ec428b41265fe62ab585ea5557afff6.jpg"
+        },
+        {
+            "paragraph": "where $\\sigma$ is conductivity; $C _ { 0 } , C , C _ { 1 } , C _ { 2 } , T _ { 0 }$ are the parameters; $T$ is temperature. The fitted values of the parameters are listed in Tables 6 and 7. ",
+            "type": "body_div",
+            "paragraph_idx": 62,
+            "pagenum": 7,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "paragraph": "The relationship between dynamic viscosity and electrical conductivity can be discussed by the Walden rule [33]. Molar conductivity can be calculated by the following equations [36]: ",
+            "type": "body_div",
+            "paragraph_idx": 63,
+            "pagenum": 7,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "formula (9)",
+            "paragraph_idx": 64,
+            "latex": "$$\n\\Lambda \\sigma M / \\rho\n$$",
+            "pagenum": 7,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                636,
+                503,
+                732,
+                503,
+                732,
+                541,
+                636,
+                541
+            ],
+            "path": "images/fea44ccfc283cbe3b78e1587a6bfad96.jpg"
+        },
+        {
+            "head": "formula (10)",
+            "paragraph_idx": 65,
+            "latex": "$$\n\\varLambda \\eta ^ { \\alpha } k\n$$",
+            "pagenum": 7,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                650,
+                578,
+                720,
+                578,
+                720,
+                615,
+                650,
+                615
+            ],
+            "path": "images/cbe5179b2988b8326bb9b81b1f83622b.jpg"
+        },
+        {
+            "head": "formula (11)",
+            "paragraph_idx": 66,
+            "latex": "$$\n\\log \\Lambda = \\log k + \\alpha \\mathrm { l o g } \\eta ^ { - 1 }\n$$",
+            "pagenum": 7,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                550,
+                652,
+                818,
+                652,
+                818,
+                693,
+                550,
+                693
+            ],
+            "path": "images/53deb6d54462040adfce0afe6d422b1e.jpg"
+        },
+        {
+            "paragraph": "where $\\varLambda$ is the molar conductivity, $\\eta$ is the dynamic viscosity and $k$ is the temperature-dependent constant. The molar conductivity of mixture is shown in Table S4 and the $\\log \\bar { \\Lambda } - \\log \\eta ^ { - 1 }$ plot is shown in Figure 4 with ideal line of aqueous solution. It can be seen from Figure 4 that all the Walden plots of mixtures are under the ideal line which mean that all the $( \\mathrm { D E S } + \\mathrm { D }$ -glucose) mixtures are ‘subionic’, which is plotted by using aqueous KCl solution at high dilution. The slopes and intercepts of all the Walden plat are shown in Table 8. All the values of the slopes are smaller than 1, predicting a progressive increase of the value of conductivity as increasing in quantity of less conductive ion pairs when being heated according to the Walden rule. ",
+            "type": "body_div",
+            "paragraph_idx": 67,
+            "pagenum": 7,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "Figure 4",
+            "paragraph": [
+                "Figure 4. Plot of logΛ versus log $\\mathfrak { n } ^ { - 1 }$ for DESs 293.15–363.15 K. the solid straight line is the ideal line for aqueous KCl solutions (□, 0.00; ○, 0.02; $\\triangle ,$ 0.05; $\\diamondsuit$ , 0.08; $\\bigtriangledown$ , 0.11). "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/ea75e1da1a7022860187075a6f16867a5f701dedfb22d9459ebfa7facdc472b5.jpg",
+            "paragraph_idx": 68,
+            "pagenum": 7,
+            "img_footnote": [],
+            "poly": [
+                203,
+                968,
+                1164,
+                968,
+                1164,
+                1764,
+                203,
+                1764
+            ]
+        },
+        {
+            "head": "Table 8",
+            "paragraph": [
+                "Table 8. Correlated values of fitting parameters for Eq. 11 and $R ^ { 2 }$ . "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/93f553799e67ead936420889ab42cc1d29e24f563a606fc256406b3129f5d0b1.jpg",
+            "paragraph_idx": 69,
+            "pagenum": 9,
+            "table_footnote": [],
+            "poly": [
+                300,
+                171,
+                1067,
+                171,
+                1067,
+                377,
+                300,
+                377
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Molar fraction of D-glucose</td><td colspan=\"2\">Fitting parameters</td><td rowspan=\"2\">R²</td></tr><tr><td>a</td><td>log k</td></tr><tr><td>0.00</td><td>0.6497</td><td>-3.2696</td><td>0.9791</td></tr><tr><td>0.02</td><td>0.6593</td><td>-3.2108</td><td>0.9999</td></tr><tr><td>0.05</td><td>0.7055</td><td>-3.1063</td><td>0.9999</td></tr><tr><td>0.08</td><td>0.7255</td><td>-3.0971</td><td>0.9999</td></tr><tr><td>0.11</td><td>0.7371</td><td>-3.0850</td><td>0.9999</td></tr></table></body></html>"
+        },
+        {
+            "paragraph": "3.4 Refractive index ",
+            "type": "body_div",
+            "paragraph_idx": 70,
+            "pagenum": 8,
+            "head": "",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The measured RI and literature data for the mixture are presented in Table S5 and Figure 5. For comparison, the RI data for the pure DES reported in literature were presented in Table S6, which is consistent with that measured in this work [33]. As seen from Figure 5, the RI decreases with increasing the temperature, while at the same temperature, the RI increases with the increase of D-glucose concentration. ",
+            "type": "body_div",
+            "paragraph_idx": 71,
+            "pagenum": 8,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "paragraph": "The measured RI data can be correlated by Eq. 12 [37]: ",
+            "type": "body_div",
+            "paragraph_idx": 72,
+            "pagenum": 8,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "formula (12)",
+            "paragraph_idx": 73,
+            "latex": "$$\nn _ { \\mathrm { D } } = D _ { 0 } + D T\n$$",
+            "pagenum": 8,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                597,
+                839,
+                775,
+                839,
+                775,
+                873,
+                597,
+                873
+            ],
+            "path": "images/ffd070eec937bf029faa57ee782cb34d.jpg"
+        },
+        {
+            "paragraph": "where $n _ { \\mathrm { D } }$ is the refractive index; $D _ { 0 } , D$ are the parameters; and $T$ is the experimental temperature.   \nThe fitted values of $D _ { 0 }$ and $D$ are listed in Table 9. ",
+            "type": "body_div",
+            "paragraph_idx": 74,
+            "pagenum": 8,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "paragraph": "The free volume $( f _ { m } )$ can be considered as the interstice or available free space in the media. With increase of freevolume, light can travel at a higher velocity [34]. To explore the effect of the ",
+            "type": "body_div",
+            "paragraph_idx": 75,
+            "pagenum": 8,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "Figure 5",
+            "paragraph": [
+                "Figure 5. Refractive index of ${ \\mathsf { D E S } } + { \\mathsf { D } } $ -glucose: molar fraction of D-glucose (□, 0.00; ○, 0.02; $\\bigtriangleup$ , 0.05; $\\diamondsuit$ , 0.08; $\\bigtriangledown$ , 0.11). – fit to Eq. 12. "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/bdf82d4b5777c17560dde2c380219e2db864dcb4240d22b6421cd10a36b1ef86.jpg",
+            "paragraph_idx": 76,
+            "pagenum": 8,
+            "img_footnote": [],
+            "poly": [
+                209,
+                1089,
+                1147,
+                1089,
+                1147,
+                1766,
+                209,
+                1766
+            ]
+        },
+        {
+            "head": "Table 9",
+            "paragraph": [
+                "Table 9. Correlated values of fitting parameters for Eq. 12 and $R ^ { 2 }$ "
+            ],
+            "statement": [],
+            "type": "body_table_div",
+            "path": "images/e71e0121b2de476c81169609a4521ee240010e609d06c2c63401a3642f615ad1.jpg",
+            "paragraph_idx": 77,
+            "pagenum": 10,
+            "table_footnote": [],
+            "poly": [
+                299,
+                171,
+                1069,
+                171,
+                1069,
+                377,
+                299,
+                377
+            ],
+            "html": "<html><body><table><tr><td rowspan=\"2\">Molar fraction of D-glucose</td><td colspan=\"2\">Fitting parameters</td><td rowspan=\"2\">R²</td></tr><tr><td>D</td><td>D×10-4</td></tr><tr><td>0.00</td><td>1.57642</td><td>-2.38803</td><td>0.9996</td></tr><tr><td>0.02</td><td>1.57878</td><td>-2.39015</td><td>0.9998</td></tr><tr><td>0.05</td><td>1.57997</td><td>2.36352</td><td>0.9999</td></tr><tr><td>0.08</td><td>1.58262</td><td>2.37753</td><td>0.9999</td></tr><tr><td>0.11</td><td>1.58567</td><td>2.38510</td><td>0.9999</td></tr></table></body></html>"
+        },
+        {
+            "head": "Figure 6",
+            "paragraph": [
+                "Figure 6. Free volume $( f _ { m } )$ of ${ \\mathsf { D E S } } + { \\mathsf { D } } { \\mathsf { \\cdot } }$ -glucose: molar fraction of D-glucose (□, 0.00; ○, 0.02; \u0000, 0.05; \u0000, 0.08; \u0000, 0.11). "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/bebba42515e7ae737e35557979700c783d93bb3cb31e3492afeb1d0ebfac38f7.jpg",
+            "paragraph_idx": 78,
+            "pagenum": 9,
+            "img_footnote": [],
+            "poly": [
+                222,
+                447,
+                1144,
+                447,
+                1144,
+                1121,
+                222,
+                1121
+            ]
+        },
+        {
+            "paragraph": "addition on D-glucose on free volume, the free volume $f _ { \\mathrm { m } }$ was calculated by the following Eqs. 13 and 4 [38]: ",
+            "type": "body_div",
+            "paragraph_idx": 79,
+            "pagenum": 9,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "formula (13)",
+            "paragraph_idx": 80,
+            "latex": "$$\nf _ { m } = V - R _ { m }\n$$",
+            "pagenum": 9,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                601,
+                1325,
+                764,
+                1325,
+                764,
+                1363,
+                601,
+                1363
+            ],
+            "path": "images/8727f9888db864906e0c1b49dc616a38.jpg"
+        },
+        {
+            "head": "formula (14)",
+            "paragraph_idx": 81,
+            "latex": "$$\nR _ { m } = \\frac { n _ { D } ^ { 2 } - 1 } { n _ { D } ^ { 2 } + 2 } \\times V\n$$",
+            "pagenum": 9,
+            "formula_type": "isolated",
+            "type": "body_formula_div",
+            "poly": [
+                579,
+                1430,
+                791,
+                1430,
+                791,
+                1508,
+                579,
+                1508
+            ],
+            "path": "images/25daded20ef4fc780009836b75ad4d4f.jpg"
+        },
+        {
+            "paragraph": "where $f _ { \\mathrm { m } } ( \\mathrm { c m } ^ { 3 } { \\cdot } \\mathrm { m o l } ^ { - 1 } )$ is free volume, $V ( \\mathrm { c m } ^ { 3 } { \\cdot } \\mathrm { m o l } ^ { - 1 } )$ is molar volume and $R _ { \\mathrm { m } } ( \\mathrm { c m } ^ { 3 } { \\cdot } \\mathrm { m o l } ^ { - 1 } )$ is molar refraction. ",
+            "type": "body_div",
+            "paragraph_idx": 82,
+            "pagenum": 9,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "paragraph": "The calculated results of $f _ { \\mathrm { m } }$ are presented in Table S6 and plotted in Figure 6. As shown in Figure 6, the values of $f _ { \\mathrm { m } }$ increase with increasing of the content of D-glucose. Meanwhile, increasing temperature can lead to thermal expansion of the mixtures, which can provide more space to let light pass through the medium. Therefore, decreasing of the RI due to the increasing of $f _ { \\mathrm { m } }$ [39]. ",
+            "type": "body_div",
+            "paragraph_idx": 83,
+            "pagenum": 9,
+            "head": "3.3 Conductivity"
+        },
+        {
+            "head": "Figure 7",
+            "paragraph": [
+                "Figure 7. FTIR spectra of urea, DES and mixture (molar fraction of D-glucose is 0.11). "
+            ],
+            "statement": [],
+            "type": "body_figure_div",
+            "path": "images/90291635d3d7198133813af5a2fb267efd96942e99069b29812b17dab34e6e66.jpg",
+            "paragraph_idx": 84,
+            "pagenum": 10,
+            "img_footnote": [],
+            "poly": [
+                238,
+                146,
+                1115,
+                146,
+                1115,
+                846,
+                238,
+                846
+            ]
+        },
+        {
+            "paragraph": "4. Fourier transform infrared spectroscopy (FTIR) ",
+            "type": "body_div",
+            "paragraph_idx": 85,
+            "pagenum": 10,
+            "head": "4. Fourier transform infrared spectroscopy (FTIR)",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The FTIR is essential to study changes of the functional groups in the mixtures after the addition of D-glucose to analyse the interaction between the molecular, especially between the HBD and HBA. The FTIR spectra of the pure DES and $\\mathrm { D E S } + \\mathrm { D }$ -glucose (molar fraction is 0.11) mixture are shown in Figure 7. For the spectrum of pure DES, $_ \\mathrm { N - H }$ peak appeared at 1668  and $1 6 2 0 ~ \\mathrm { { c m } ^ { - 1 } }$ , which agreed with those reported in the literature [33,40]. Yue reported that the peaks of $_ \\mathrm { N - H }$ shifted to lower wavenumbers due to the formation of strong hydrogen bonds. As seen from Figure 7, the peak of $_ \\mathrm { N - H }$ shifts to lower wavenumber (from $1 6 8 1 ~ \\mathrm { { c m } ^ { - 1 } }$ to $1 6 6 8 ~ \\mathrm { { c m } ^ { - 1 } }$ and from $1 6 2 9 ~ \\mathrm { { c m } ^ { - 1 } }$ to $\\bar { 1 } 6 2 0 { \\mathrm { c m } } ^ { - 1 } ,$ ) due to the formation of strong hydrogen bonds between urea and choline chloride. But with adding the content of D-glucose, two peaks shift back to higher wavenumber (from $1 6 6 8 ~ \\mathrm { { c m } ^ { - 1 } }$ to $1 6 7 7 \\mathrm { c m } ^ { - 1 }$ and from $1 6 2 0 \\mathrm { c m } ^ { - 1 }$ to $1 6 2 5 \\mathrm { c m } ^ { - 1 }$ ), implying that $_ \\mathrm { N - H }$ was stronger than in pure DES which could be due to urea in the hydrogen bond system is partially instead of D-glucose. D-glucose and choline chloride-based DES have much higher viscosity than the DES based on urea and choline chloride [41]. The hydrogen bond formed by $_ \\mathrm { O - H }$ is much stronger than by $_ \\mathrm { N - H }$ , and this can also be realised by comparing the viscosity of pure DES and the mixture of $\\mathrm { D E S + D }$ -glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 86,
+            "pagenum": 10,
+            "head": "4. Fourier transform infrared spectroscopy (FTIR)",
+            "cites": [
+                {
+                    "text": "[33,",
+                    "ref_id": "BIBREF32"
+                },
+                {
+                    "text": "40]",
+                    "ref_id": "BIBREF39"
+                },
+                {
+                    "text": "[41]",
+                    "ref_id": "BIBREF40"
+                }
+            ]
+        },
+        {
+            "paragraph": "5. Conclusions ",
+            "type": "body_div",
+            "paragraph_idx": 87,
+            "pagenum": 10,
+            "head": "5. Conclusions",
+            "text_level": 1
+        },
+        {
+            "paragraph": "For conversion of D-glucose to platform compounds with the solvent of DES, the properties density, dynamic viscosity, conductivity and RI for the mixture $\\mathrm { \\Delta [ D E S + D }$ -glucose) were measured at temperature from 293.15 to 363.15 K. With the measured density data for the mixture, the values of molecular volume, standard molar entropy and lattice energy were calculated. Also, the free volume values for the mixture were also calculated based on the measured RI data. Both the temperature and D-glucose content had obvious effects on these physical properties for the mixture. Meanwhile, all the measured data for the mixture were correlated. Finally, FTIR spectra revealed that the hydrogen bond formed in the mixture was also influenced by the addition of D-glucose. ",
+            "type": "body_div",
+            "paragraph_idx": 88,
+            "pagenum": 10,
+            "head": "5. Conclusions"
+        },
+        {
+            "paragraph": "Notes ",
+            "type": "body_div",
+            "paragraph_idx": 89,
+            "pagenum": 11,
+            "head": "Notes",
+            "text_level": 1
+        },
+        {
+            "paragraph": "The authors declare no competing financial interest. ",
+            "type": "body_div",
+            "paragraph_idx": 90,
+            "pagenum": 11,
+            "head": "Notes"
+        },
+        {
+            "paragraph": "Disclosure statement ",
+            "type": "body_div",
+            "paragraph_idx": 91,
+            "pagenum": 11,
+            "head": "Disclosure statement",
+            "text_level": 1
+        },
+        {
+            "paragraph": "No potential conflict of interest was reported by the author(s). ",
+            "type": "body_div",
+            "paragraph_idx": 92,
+            "pagenum": 11,
+            "head": "Disclosure statement"
+        },
+        {
+            "paragraph": "Funding ",
+            "type": "body_div",
+            "paragraph_idx": 93,
+            "pagenum": 11,
+            "head": "Funding",
+            "text_level": 1
+        },
+        {
+            "paragraph": "Financial support from Key Laboratory of Bio-based Material, Qingdao Institute of Bioenergy and Bioprocess Technology, Chinese Academy of Sciences (No. KLBM2016003) is greatly acknowledged;Open Fund from Qingdao Institute of Bioenergy and Bioprocess Technology, Chinese Academy of Sciences [No. KLBM2016003]; ",
+            "type": "body_div",
+            "paragraph_idx": 94,
+            "pagenum": 11,
+            "head": "Funding"
+        },
+        {
+            "paragraph": "ORCID ",
+            "type": "body_div",
+            "paragraph_idx": 95,
+            "pagenum": 11,
+            "head": "ORCID",
+            "text_level": 1
+        },
+        {
+            "paragraph": "Chunlu Li $\\textcircled{1}$ http://orcid.org/0000-0003-2511-7478   \nJun Gao $\\textcircled{1}$ http://orcid.org/0000-0003-1145-9565 ",
+            "type": "body_div",
+            "paragraph_idx": 96,
+            "pagenum": 11,
+            "head": "ORCID"
+        },
+        {
+            "paragraph": "References ",
+            "type": "body_div",
+            "paragraph_idx": 97,
+            "pagenum": 11,
+            "head": "References",
+            "text_level": 1
+        },
+        {
+            "paragraph": "[1] Srirangan K, Akawi L, Moo-Young M, et al. Towards sustainable production of clean energy carriers from biomass resources. Appl Energy. 2012;100:172–186.   \n[2] Clark JH, Fabien E, Farmer TJ. The integration of green chemistry into future biorefineries. Biofuels Bioprod Biorefin. 2009;3(1):72–90. .   \n[3] Hassan El SR, Mutelet F, Pontvianne S, et al. Studies on the dissolution of glucose in ionic liquids and extraction using the antisolvent method. Environ Sci Technol. 2013;47(6):2809–2816.   \n[4] Liu C, Chen W, Wu Z, et al. Density, viscosity and electrical conductivity of AlCl 3 -amide ionic liquid analogues. J Mol Liq. 2017;247:57–63.   \n[5] Tariq M, Forte PAS, Gomes MFC, et al. Densities and refractive indices of imidazolium- and phosphonium-based ionic liquids: effect of temperature, alkyl chain length, and anion. J Chem Thermodyn. 2009;41(6):790–798.   \n[6] Abbott AP. Novel solvent properties of choline chloride/urea mixtures. Chem Commun. 2002;3: 70–71. Cambridge, U K.   \n[7] Abbott AP, Capper G, Davies DL, et al. Novel solvent properties of choline chloride/urea mixtures. Chem Commun. 2003;9(1):70–71. Cambridge, U K. .   \n[8] Jiang H, Xu D, Zhang L, et al. Vapor–liquid phase equilibrium for separation of isopropanol from its aqueous solution by Choline Chloride-based deep eutectic solvent selected by COSMO-SAC. Model J Chem Eng Data. 2019;64(4):1338–1348. .   \n[9] Liu X, Xu D, Diao B. Choline chloride based deep eutectic solvents selection and liquid-liquid equilibrium for separation of dimethyl carbonate and ethanol. J Mol Liq. 2019;275:347–353.   \n[10] Liu X, Xu D, Diao B, et al. Separation of dimethyl carbonate and methanol by deep eutectic solvents: liquid– liquid equilibrium measurements and thermodynamic modeling. J Chem Eng Data. 2018;63(5):1234–1239.   \n[11] Troter DZ, Todorović ZB, Đokić-Stojanović DR, et al. Choline chloride-based deep eutectic solvents in CaO-catalyzed ethanolysis of expired sunflower oil. J Mol Liq. 2018;266:557-567.   \n[12] Wang S, Peng X, Zhong L, et al. Choline chloride/urea as an effective plasticizer for production of cellulose films. Carbohydr Polym. 2015;117:133–139.   \n[13] Jerome F, Vigier K. Catalytic conversion of carbohydrates to furanic derivatives in the presence of Choline Chloride. Catalysts. 2017;7:1–11.   \n[14] Carrion Prieto P, Martin Ramos P, Hernandez Navarro S, et al. Furfural, 5-HMF, acid-soluble lignin and sugar contents in C. ladanifer and E. arborea lignocellulosic biomass hydrolysates obtained from microwave-assisted treatments in different solvents. Biomass Bioenergy. 2018;119:135–143.   \n[15] Qin Y, Li Y, Zong M, et al. Enzyme-catalyzed selective oxidation of 5-hydroxymethylfurfural (HMF) and separation of HMF and 2,5-diformylfuran using deep eutectic solvents. Green Chem. 2015;17(7):3718–3722.   \n[16] Sun Z, Wang S, Wang X, et al. Lysine functional heteropolyacid nanospheres as bifunctional acid–base catalysts for cascade conversion of glucose to levulinic acid. Fuel. 2016;164:262–266.   \n[17] Xiong C, Sun Y, Du J, et al. Efficient conversion of fructose to 5-[(formyloxy)methyl]furfural by reactive extraction and in-situ esterification Korean. J Chem Eng. 2018;35:1312–1318.   \n[18] Zhang J, Xiao dehydration into 5-Hydroxymethylfurfural in the deep eutectic solvent of [Emim]Cl/Alcohol. ACS Sustainable Chem Eng. 2016;4(7):3995–4002.   \n[19] Zuo M, Li Z, Jiang Y, et al. Green catalytic conversion of bio-based sugars to 5-chloromethyl furfural in deep eutectic solvent, catalyzed by metal chlorides. RSC Adv. 2016;6(32):27004–27007.   \n[20] Zuo M, Le K, Feng Y, et al. An effective pathway for converting carbohydrates to biofuel 5-ethoxymethylfurfural via 5-hydroxymethylfurfural with deep eutectic solvents (DESs). Ind Crops Prod. 2018;112:18–23.   \n[21] Hu S, Zhang Z, Zhou Y, et al. Conversion of fructose to 5-hydroxymethylfurfural using ionic liquids prepared from renewable materials. Green Chem. 2008;10(12):1280–1283. .   \n[22] Anita Y, Pandey S. Densities and viscosities of (choline chloride $^ +$ urea) deep eutectic solvent and its aqueous mixtures in the temperature range $2 9 3 . 1 5 \\mathrm { K }$ to $3 6 3 . 1 5 \\mathrm { K } .$ J Chem Eng Data. 2014;59(7):2221–2229.   \n[23] Harifi-Mood AR, Buchner R. Density, viscosity, and conductivity of choline chloride $^ +$ ethylene glycol as a deep eutectic solvent and its binary mixtures with dimethyl sulfoxide. J Mol Liq. 2017;225:689–695.   \n[24] Scopus Díaz-Ruiz R, Bergua F, Muñoz Embid J, et al. The hydration behavior of D-glucose in the choline chloride: urea: watermixtures. J Mol Liq. 2020;314. DOI:10.1016/j.molliq.2020.113649   \n[25] Shahbaz K, Baroutian S, Mjalli FS, et al. Densities of ammonium and phosphonium based deep eutectic solvents: prediction using artificial intelligence and group contribution techniques. Thermochim Acta. 2012;527:59–66.   \n[26] Taysun MB, Sert E, Atalay FS. Physical properties of benzyl tri-methyl ammonium chloride based deep eutectic solvents and employment as catalyst. J Mol Liq. 2016;223:845–852.   \n[27] Yadav A, Kar JR, Verma M, et al. Densities of aqueous mixtures of (choline chloride $^ +$ ethylene glycol) and (choline chloride $^ +$ malonic acid) deep eutectic solvents in temperature range 283.15–363.15K. Thermochim Acta. 2015;600:95–101.   \n[28] Shekaari H, Zafarani-Moattar MT, Mohammadi B. Thermophysical characterization of aqueous deep eutectic solvent (choline chloride/urea) solutions in full ranges of concentration at $\\mathrm { T } = ( 2 9 3 . 1 5 - 3 2 3 . 1 5 ) \\mathrm { K . ~ J \\ M o l \\ L i }$ q. 2017;243:451–461.   \n[29] Fareeda C, Anjum H, Shariff AM. Thermal and physical properties of (Choline chloride+urea+l-arginine) deep eutectic solvents. J Mol Liq. 2016;218:301–308.   \n[30] Khan A, Man Z, Arvina A, et al. Dicationic imidazolium based ionic liquids: synthesis and properties. J Mol Liq. 2017;227:98–105.   \n[31] Glasser L. Lattice and phase transition thermodynamics of ionic liquids. Thermochim Acta. 2004;421 (1–2):87–93.   \n[32] Jenkins HDB, Glasser L. Standard absolute entropy, ${ { S _ { 2 9 8 } } ^ { 0 } }$ , Values from Volume or Density. 1. Inorganic Materials. Inorg Chem. 2003;42(26):8702–8708.   \n[33] Troter D, Todorovic Z, Dokic-Stojanovic D, et al. The physicochemical and thermodynamic properties of the choline chloride-based deep eutectic solvents. J Serb Chem Soc. 2017;82(9):1039–1052.   \n[34] Zhu J, Yu K, Zhu Y, et al. Physicochemical properties of deep eutectic solvents formed by choline chloride and phenolic compounds at $\\mathrm { T } = ( 2 9 3 . 1 5 \\$ to 333.15) K: the influence of electronic effect of substitution group. J Mol Liq. 2017;232:182–187.   \n[35] García G, Aparicio S, Ullah $\\begin{array} { r } { \\mathbb { R } , } \\end{array}$ et al. Deep eutectic solvents: physicochemical properties and gas separation applications. Energy Fuels. 2015;29:2616–2644.   \n[36] Su H, Yin J, Liu Q, et al. Properties of four deep eutectic solvents: density, electrical conductivity, dynamic viscosity and refractive index. Acta Phys Chim Sin. 2015;31(8):1468. .   \n[37] Hayyan A, Mjalli FS, AlNashef IM, et al. Fruit sugar-based deep eutectic solvents and their physical properties. Thermochim Acta. 2012;541:70–75.   \n[38] Florindo C, Oliveira FS, Rebelo LPN, et al. Insights into the synthesis and properties of deep eutectic solvents based on Cholinium Chloride and carboxylic acids ACS sustainable. Chem Eng. 2014;2:2416–2425.   \n[39] Chemat F, You HJ, Muthukumar K, et al. Effect of l-arginine on the physical properties of choline chloride and glycerol based deep eutectic solvents. J Mol Liq. 2015;212:605–611.   \n[40] Yue D, Jia Y, Yao Y, et al. Structure and electrochemical behavior of ionic liquid analogue based on choline chloride and urea. Electrochim Acta. 2012;65:30–36.   \n[41] Hayyan A, Mjalli FS, AlNashef IM, et al. Glucose-based deep eutectic solvents: physical properties. J Mol Liq. 2013;178:137–141. ",
+            "type": "body_div",
+            "paragraph_idx": 98,
+            "pagenum": 11,
+            "head": "References"
+        }
+    ],
+    "title": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride + urea) at different temperatures",
+    "authors": [
+        "Chunlu Li",
+        "Niannian Wang",
+        "Yuanlin Yao",
+        "Zhifang Cui",
+        "Jun Gao",
+        "Dexin Feng"
+    ],
+    "authorship": [
+        {
+            "instution": "Department of Chemical EngineeringCollege of Chemical and Biological EngineeringShandong University of Science and Technology",
+            "author": "Chunlu Li"
+        },
+        {
+            "instution": "Department of Chemical EngineeringCollege of Chemical and Biological EngineeringShandong University of Science and Technology",
+            "author": "Niannian Wang"
+        },
+        {
+            "instution": "Department of Chemical EngineeringCollege of Chemical and Biological EngineeringShandong University of Science and Technology",
+            "author": "Yuanlin Yao"
+        },
+        {
+            "instution": "Department of Chemical EngineeringCollege of Chemical and Biological EngineeringShandong University of Science and Technology",
+            "author": "Zhifang Cui"
+        },
+        {
+            "instution": "Department of Chemical EngineeringCollege of Chemical and Biological EngineeringShandong University of Science and Technology",
+            "author": "Jun Gao"
+        },
+        {
+            "instution": "Institute of Bioenergy and Bioprocess TechnologyChinese Academy of Sciences",
+            "author": "Dexin Feng"
+        }
+    ],
+    "keywords": [
+        "Deep eutectic solvent",
+        "d-glucose",
+        "physical properties",
+        "correlation"
+    ],
+    "references": [
+        {
+            "ref_id": "BIBREF0",
+            "ref_idx": 1,
+            "ref_text": "Srirangan K, Akawi L, Moo-Young M, et al. Towards sustainable production of clean energy carriers from biomass resources. Appl Energy. 2012;100:172-186.",
+            "authors": [
+                {
+                    "first": "K",
+                    "last": "Srirangan",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "last": "Akawi",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "last": "Moo-Young",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2012,
+            "venue": "Appl Energy",
+            "volume": "100",
+            "title": "Towards sustainable production of clean energy carriers from biomass resources",
+            "issue": "",
+            "pages": "172--186",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF1",
+            "ref_idx": 2,
+            "ref_text": "Clark JH, Fabien E, Farmer TJ. The integration of green chemistry into future biorefineries. Biofuels Bioprod Biorefin. 2009;3(1):72-90. .",
+            "authors": [
+                {
+                    "first": "J",
+                    "last": "Clark",
+                    "middle": [
+                        "H"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "E",
+                    "last": "Fabien",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "last": "Farmer",
+                    "middle": [
+                        "J"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2009,
+            "venue": "Biofuels Bioprod Biorefin",
+            "volume": "3",
+            "title": "The integration of green chemistry into future biorefineries",
+            "issue": "1",
+            "pages": "72--90",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF2",
+            "ref_idx": 3,
+            "ref_text": "Hassan El SR, Mutelet F, Pontvianne S, et al. Studies on the dissolution of glucose in ionic liquids and extraction using the antisolvent method. Environ Sci Technol. 2013;47(6):2809-2816.",
+            "authors": [
+                {
+                    "first": "Hassan",
+                    "last": "El",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "Mutelet",
+                    "middle": [
+                        "R"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Pontvianne",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2013,
+            "venue": "Environ Sci Technol",
+            "volume": "47",
+            "title": "Studies on the dissolution of glucose in ionic liquids and extraction using the antisolvent method",
+            "issue": "6",
+            "pages": "2809--2816",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF3",
+            "ref_idx": 4,
+            "ref_text": "Liu C, Chen W, Wu Z, et al. Density, viscosity and electrical conductivity of AlCl 3 -amide ionic liquid analogues. J Mol Liq. 2017;247:57-63.",
+            "authors": [
+                {
+                    "first": "C",
+                    "last": "Liu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "W",
+                    "last": "Chen",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Wu",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Mol Liq",
+            "volume": "247",
+            "title": "Density, viscosity and electrical conductivity of AlCl 3 -amide ionic liquid analogues",
+            "issue": "",
+            "pages": "57--63",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF4",
+            "ref_idx": 5,
+            "ref_text": "Tariq M, Forte PAS, Gomes MFC, et al. Densities and refractive indices of imidazolium-and phosphonium-based ionic liquids: effect of temperature, alkyl chain length, and anion. J Chem Thermodyn. 2009;41(6):790-798.",
+            "authors": [
+                {
+                    "first": "M",
+                    "last": "Tariq",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Pas",
+                    "last": "Forte",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Mfc",
+                    "last": "Gomes",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2009,
+            "venue": "J Chem Thermodyn",
+            "volume": "41",
+            "title": "Densities and refractive indices of imidazolium-and phosphonium-based ionic liquids: effect of temperature, alkyl chain length, and anion",
+            "issue": "6",
+            "pages": "790--798",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF5",
+            "ref_idx": 6,
+            "ref_text": "Abbott AP. Novel solvent properties of choline chloride/urea mixtures. Chem Commun. 2002;3: 70-71. Cambridge, U K.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Abbott",
+                    "middle": [
+                        "P"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2002,
+            "venue": "Chem Commun",
+            "volume": "3",
+            "title": "Novel solvent properties of choline chloride/urea mixtures",
+            "issue": "",
+            "pages": "70--71",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF6",
+            "ref_idx": 7,
+            "ref_text": "Abbott AP, Capper G, Davies DL, et al. Novel solvent properties of choline chloride/urea mixtures. Chem Commun. 2003;9(1):70-71. Cambridge, U K. .",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Abbott",
+                    "middle": [
+                        "P"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "last": "Capper",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Davies",
+                    "middle": [
+                        "L"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Chem Commun",
+            "volume": "9",
+            "title": "Novel solvent properties of choline chloride/urea mixtures",
+            "issue": "1",
+            "pages": "70--71",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF7",
+            "ref_idx": 8,
+            "ref_text": "Jiang H, Xu D, Zhang L, et al. Vapor-liquid phase equilibrium for separation of isopropanol from its aqueous solution by Choline Chloride-based deep eutectic solvent selected by COSMO-SAC. Model J Chem Eng Data. 2019;64(4):1338-1348. .",
+            "authors": [
+                {
+                    "first": "H",
+                    "last": "Jiang",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Xu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "last": "Zhang",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2019,
+            "venue": "Model J Chem Eng Data",
+            "volume": "64",
+            "title": "Vapor-liquid phase equilibrium for separation of isopropanol from its aqueous solution by Choline Chloride-based deep eutectic solvent selected by COSMO-SAC",
+            "issue": "4",
+            "pages": "1338--1348",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF8",
+            "ref_idx": 9,
+            "ref_text": "Liu X, Xu D, Diao B. Choline chloride based deep eutectic solvents selection and liquid-liquid equilibrium for separation of dimethyl carbonate and ethanol. J Mol Liq. 2019;275:347-353.",
+            "authors": [
+                {
+                    "first": "X",
+                    "last": "Liu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Xu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "last": "Diao",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2019,
+            "venue": "J Mol Liq",
+            "volume": "275",
+            "title": "Choline chloride based deep eutectic solvents selection and liquid-liquid equilibrium for separation of dimethyl carbonate and ethanol",
+            "issue": "",
+            "pages": "347--353",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF9",
+            "ref_idx": 10,
+            "ref_text": "Liu X, Xu D, Diao B, et al. Separation of dimethyl carbonate and methanol by deep eutectic solvents: liquid- liquid equilibrium measurements and thermodynamic modeling. J Chem Eng Data. 2018;63(5):1234-1239.",
+            "authors": [
+                {
+                    "first": "X",
+                    "last": "Liu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Xu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "last": "Diao",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2018,
+            "venue": "J Chem Eng Data",
+            "volume": "63",
+            "title": "Separation of dimethyl carbonate and methanol by deep eutectic solvents: liquidliquid equilibrium measurements and thermodynamic modeling",
+            "issue": "5",
+            "pages": "1234--1239",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF10",
+            "ref_idx": 11,
+            "ref_text": "Troter DZ, Todorović ZB, Đokić-Stojanović DR, et al. Choline chloride-based deep eutectic solvents in CaO-catalyzed ethanolysis of expired sunflower oil. J Mol Liq. 2018;266:557-567.",
+            "authors": [
+                {
+                    "first": "D",
+                    "last": "Troter",
+                    "middle": [
+                        "Z"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Todorović",
+                    "middle": [
+                        "B"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Đokić-Stojanović",
+                    "middle": [
+                        "R"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2018,
+            "venue": "J Mol Liq",
+            "volume": "266",
+            "title": "Choline chloride-based deep eutectic solvents in CaO-catalyzed ethanolysis of expired sunflower oil",
+            "issue": "",
+            "pages": "557--567",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF11",
+            "ref_idx": 12,
+            "ref_text": "Wang S, Peng X, Zhong L, et al. Choline chloride/urea as an effective plasticizer for production of cellulose films. Carbohydr Polym. 2015;117:133-139.",
+            "authors": [
+                {
+                    "first": "S",
+                    "last": "Wang",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "X",
+                    "last": "Peng",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "last": "Zhong",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "Carbohydr Polym",
+            "volume": "117",
+            "title": "Choline chloride/urea as an effective plasticizer for production of cellulose films",
+            "issue": "",
+            "pages": "133--139",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF12",
+            "ref_idx": 13,
+            "ref_text": "Jerome F, Vigier K. Catalytic conversion of carbohydrates to furanic derivatives in the presence of Choline Chloride. Catalysts. 2017;7:1-11.",
+            "authors": [
+                {
+                    "first": "F",
+                    "last": "Jerome",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "last": "Vigier",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "Catalysts",
+            "volume": "7",
+            "title": "Catalytic conversion of carbohydrates to furanic derivatives in the presence of Choline Chloride",
+            "issue": "",
+            "pages": "1--11",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF13",
+            "ref_idx": 14,
+            "ref_text": "Carrion Prieto P, Martin Ramos P, Hernandez Navarro S, et al. Furfural, 5-HMF, acid-soluble lignin and sugar contents in C. ladanifer and E. arborea lignocellulosic biomass hydrolysates obtained from microwave-assisted treatments in different solvents. Biomass Bioenergy. 2018;119:135-143.",
+            "authors": [
+                {
+                    "first": "Carrion",
+                    "last": "Prieto",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Martin",
+                    "last": "Ramos",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Hernandez",
+                    "last": "Navarro",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2018,
+            "venue": "Biomass Bioenergy",
+            "volume": "119",
+            "title": "Furfural, 5-HMF, acid-soluble lignin and sugar contents in C. ladanifer and E. arborea lignocellulosic biomass hydrolysates obtained from microwave-assisted treatments in different solvents",
+            "issue": "",
+            "pages": "135--143",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF14",
+            "ref_idx": 15,
+            "ref_text": "Qin Y, Li Y, Zong M, et al. Enzyme-catalyzed selective oxidation of 5-hydroxymethylfurfural (HMF) and separation of HMF and 2,5-diformylfuran using deep eutectic solvents. Green Chem. 2015;17(7):3718-3722.",
+            "authors": [
+                {
+                    "first": "Y",
+                    "last": "Qin",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Li",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "last": "Zong",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "Green Chem",
+            "volume": "17",
+            "title": "Enzyme-catalyzed selective oxidation of 5-hydroxymethylfurfural (HMF) and separation of HMF and 2,5-diformylfuran using deep eutectic solvents",
+            "issue": "7",
+            "pages": "3718--3722",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF15",
+            "ref_idx": 16,
+            "ref_text": "Sun Z, Wang S, Wang X, et al. Lysine functional heteropolyacid nanospheres as bifunctional acid-base catalysts for cascade conversion of glucose to levulinic acid. Fuel. 2016;164:262-266.",
+            "authors": [
+                {
+                    "first": "Z",
+                    "last": "Sun",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "Wang",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "X",
+                    "last": "Wang",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2016,
+            "venue": "Fuel",
+            "volume": "164",
+            "title": "Lysine functional heteropolyacid nanospheres as bifunctional acid-base catalysts for cascade conversion of glucose to levulinic acid",
+            "issue": "",
+            "pages": "262--266",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF16",
+            "ref_idx": 17,
+            "ref_text": "Xiong C, Sun Y, Du J, et al. Efficient conversion of fructose to 5-[(formyloxy)methyl]furfural by reactive extraction and in-situ esterification Korean. J Chem Eng. 2018;35:1312-1318.",
+            "authors": [
+                {
+                    "first": "C",
+                    "last": "Xiong",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Sun",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "last": "Du",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2018,
+            "venue": "J Chem Eng",
+            "volume": "35",
+            "title": "Efficient conversion of fructose to 5-[(formyloxy)methyl]furfural by reactive extraction and in-situ esterification Korean",
+            "issue": "",
+            "pages": "1312--1318",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF17",
+            "ref_idx": 18,
+            "ref_text": "Zhang J, Xiao Y, Zhong Y, et al. Alcohol effect and the related mechanism on fructose dehydration into 5-Hydroxymethylfurfural in the deep eutectic solvent of [Emim]Cl/Alcohol. ACS Sustainable Chem Eng. 2016;4(7):3995-4002.",
+            "authors": [
+                {
+                    "first": "J",
+                    "last": "Zhang",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Xiao",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Zhong",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2016,
+            "venue": "ACS Sustainable Chem Eng",
+            "volume": "4",
+            "title": "Alcohol effect and the related mechanism on fructose dehydration into 5-Hydroxymethylfurfural in the deep eutectic solvent of [Emim]Cl/Alcohol",
+            "issue": "7",
+            "pages": "3995--4002",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF18",
+            "ref_idx": 19,
+            "ref_text": "Zuo M, Li Z, Jiang Y, et al. Green catalytic conversion of bio-based sugars to 5-chloromethyl furfural in deep eutectic solvent, catalyzed by metal chlorides. RSC Adv. 2016;6(32):27004-27007.",
+            "authors": [
+                {
+                    "first": "M",
+                    "last": "Zuo",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Li",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Jiang",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2016,
+            "venue": "RSC Adv",
+            "volume": "6",
+            "title": "Green catalytic conversion of bio-based sugars to 5-chloromethyl furfural in deep eutectic solvent, catalyzed by metal chlorides",
+            "issue": "32",
+            "pages": "27004--27007",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF19",
+            "ref_idx": 20,
+            "ref_text": "Zuo M, Le K, Feng Y, et al. An effective pathway for converting carbohydrates to biofuel 5-ethoxymethylfurfural via 5-hydroxymethylfurfural with deep eutectic solvents (DESs). Ind Crops Prod. 2018;112:18-23.",
+            "authors": [
+                {
+                    "first": "M",
+                    "last": "Zuo",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "last": "Le",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Feng",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2018,
+            "venue": "Ind Crops Prod",
+            "volume": "112",
+            "title": "An effective pathway for converting carbohydrates to biofuel 5-ethoxymethylfurfural via 5-hydroxymethylfurfural with deep eutectic solvents (DESs)",
+            "issue": "",
+            "pages": "18--23",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF20",
+            "ref_idx": 21,
+            "ref_text": "Hu S, Zhang Z, Zhou Y, et al. Conversion of fructose to 5-hydroxymethylfurfural using ionic liquids prepared from renewable materials. Green Chem. 2008;10(12):1280-1283. .",
+            "authors": [
+                {
+                    "first": "S",
+                    "last": "Hu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Zhang",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Zhou",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2008,
+            "venue": "Green Chem",
+            "volume": "10",
+            "title": "Conversion of fructose to 5-hydroxymethylfurfural using ionic liquids prepared from renewable materials",
+            "issue": "12",
+            "pages": "1280--1283",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF21",
+            "ref_idx": 22,
+            "ref_text": "Anita Y, Pandey S. Densities and viscosities of (choline chloride + urea) deep eutectic solvent and its aqueous mixtures in the temperature range 293.15 K to 363.15 K. J Chem Eng Data. 2014;59(7):2221-2229.",
+            "authors": [
+                {
+                    "first": "Y",
+                    "last": "Anita",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "Pandey",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2014,
+            "venue": "J Chem Eng Data",
+            "volume": "15",
+            "title": "Densities and viscosities of (choline chloride + urea) deep eutectic solvent and its aqueous mixtures in the temperature range 293.15 K to 363",
+            "issue": "7",
+            "pages": "2221--2229",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF22",
+            "ref_idx": 23,
+            "ref_text": "Harifi-Mood AR, Buchner R. Density, viscosity, and conductivity of choline chloride + ethylene glycol as a deep eutectic solvent and its binary mixtures with dimethyl sulfoxide. J Mol Liq. 2017;225:689-695.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Harifi-Mood",
+                    "middle": [
+                        "R"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "last": "Buchner",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Mol Liq",
+            "volume": "225",
+            "title": "Density, viscosity, and conductivity of choline chloride + ethylene glycol as a deep eutectic solvent and its binary mixtures with dimethyl sulfoxide",
+            "issue": "",
+            "pages": "689--695",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF23",
+            "ref_idx": 24,
+            "ref_text": "Scopus Díaz-Ruiz R, Bergua F, Muñoz Embid J, et al. The hydration behavior of D-glucose in the choline chloride: urea: watermixtures. J Mol Liq. 2020;314. DOI:10.1016/j.molliq.2020.113649",
+            "authors": [
+                {
+                    "first": "Scopus",
+                    "last": "Díaz-Ruiz",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "last": "Bergua",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Muñoz",
+                    "last": "Embid",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "last": "",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2020,
+            "venue": "J Mol Liq",
+            "volume": "314",
+            "title": "The hydration behavior of D-glucose in the choline chloride: urea: watermixtures",
+            "issue": "",
+            "pages": "",
+            "other_ids": {
+                "DOI": [
+                    "10.1016/j.molliq.2020.113649"
+                ]
+            },
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF24",
+            "ref_idx": 25,
+            "ref_text": "Shahbaz K, Baroutian S, Mjalli FS, et al. Densities of ammonium and phosphonium based deep eutectic solvents: prediction using artificial intelligence and group contribution techniques. Thermochim Acta. 2012;527:59-66.",
+            "authors": [
+                {
+                    "first": "K",
+                    "last": "Shahbaz",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "Baroutian",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Mjalli",
+                    "middle": [
+                        "S"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2012,
+            "venue": "Thermochim Acta",
+            "volume": "527",
+            "title": "Densities of ammonium and phosphonium based deep eutectic solvents: prediction using artificial intelligence and group contribution techniques",
+            "issue": "",
+            "pages": "59--66",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF25",
+            "ref_idx": 26,
+            "ref_text": "Taysun MB, Sert E, Atalay FS. Physical properties of benzyl tri-methyl ammonium chloride based deep eutectic solvents and employment as catalyst. J Mol Liq. 2016;223:845-852.",
+            "authors": [
+                {
+                    "first": "M",
+                    "last": "Taysun",
+                    "middle": [
+                        "B"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "E",
+                    "last": "Sert",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Atalay",
+                    "middle": [
+                        "S"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2016,
+            "venue": "J Mol Liq",
+            "volume": "223",
+            "title": "Physical properties of benzyl tri-methyl ammonium chloride based deep eutectic solvents and employment as catalyst",
+            "issue": "",
+            "pages": "845--852",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF26",
+            "ref_idx": 27,
+            "ref_text": "Yadav A, Kar JR, Verma M, et al. Densities of aqueous mixtures of (choline chloride+ethylene glycol) and (choline chloride+malonic acid) deep eutectic solvents in temperature range 283.15-363.15K. Thermochim Acta. 2015;600:95-101.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Yadav",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "last": "Kar",
+                    "middle": [
+                        "R"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "last": "Verma",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "Thermochim Acta",
+            "volume": "15",
+            "title": "Densities of aqueous mixtures of (choline chloride+ethylene glycol) and (choline chloride+malonic acid) deep eutectic solvents in temperature range 283",
+            "issue": "",
+            "pages": "95--101",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF27",
+            "ref_idx": 28,
+            "ref_text": "Shekaari H, Zafarani-Moattar MT, Mohammadi B. Thermophysical characterization of aqueous deep eutectic solvent (choline chloride/urea) solutions in full ranges of concentration at T = (293.15-323.15) K. J Mol Liq. 2017;243:451-461.",
+            "authors": [
+                {
+                    "first": "H",
+                    "last": "Shekaari",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "last": "Zafarani-Moattar",
+                    "middle": [
+                        "T"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "last": "Mohammadi",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Mol Liq",
+            "volume": "243",
+            "title": "Thermophysical characterization of aqueous deep eutectic solvent (choline chloride/urea) solutions in full ranges of concentration at T = (293.15-323.15) K",
+            "issue": "",
+            "pages": "451--461",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF28",
+            "ref_idx": 29,
+            "ref_text": "Fareeda C, Anjum H, Shariff AM. Thermal and physical properties of (Choline chloride+urea+l-arginine) deep eutectic solvents. J Mol Liq. 2016;218:301-308.",
+            "authors": [
+                {
+                    "first": "C",
+                    "last": "Fareeda",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "H",
+                    "last": "Anjum",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "last": "Shariff",
+                    "middle": [
+                        "M"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2016,
+            "venue": "J Mol Liq",
+            "volume": "218",
+            "title": "Thermal and physical properties of (Choline chloride+urea+l-arginine) deep eutectic solvents",
+            "issue": "",
+            "pages": "301--308",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF29",
+            "ref_idx": 30,
+            "ref_text": "Khan A, Man Z, Arvina A, et al. Dicationic imidazolium based ionic liquids: synthesis and properties. J Mol Liq. 2017;227:98-105.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Khan",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Man",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "last": "Arvina",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Mol Liq",
+            "volume": "227",
+            "title": "Dicationic imidazolium based ionic liquids: synthesis and properties",
+            "issue": "",
+            "pages": "98--105",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF30",
+            "ref_idx": 31,
+            "ref_text": "Glasser L. Lattice and phase transition thermodynamics of ionic liquids. Thermochim Acta. 2004;421 (1-2):87-93.",
+            "authors": [
+                {
+                    "first": "L",
+                    "last": "Glasser",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2004,
+            "venue": "Thermochim Acta",
+            "volume": "421",
+            "title": "Lattice and phase transition thermodynamics of ionic liquids",
+            "issue": "1-2",
+            "pages": "87--93",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF31",
+            "ref_idx": 32,
+            "ref_text": "Jenkins HDB, Glasser L. Standard absolute entropy, S 298 0 , Values from Volume or Density. 1. Inorganic Materials. Inorg Chem. 2003;42(26):8702-8708.",
+            "authors": [
+                {
+                    "first": "Hdb",
+                    "last": "Jenkins",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "last": "Glasser",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Inorg Chem",
+            "volume": "42",
+            "title": "Standard absolute entropy, S 298 0 , Values from Volume or Density. 1. Inorganic Materials",
+            "issue": "26",
+            "pages": "8702--8708",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF32",
+            "ref_idx": 33,
+            "ref_text": "Troter D, Todorovic Z, Dokic-Stojanovic D, et al. The physicochemical and thermodynamic properties of the choline chloride-based deep eutectic solvents. J Serb Chem Soc. 2017;82(9):1039-1052.",
+            "authors": [
+                {
+                    "first": "D",
+                    "last": "Troter",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "last": "Todorovic",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "last": "Dokic-Stojanovic",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Serb Chem Soc",
+            "volume": "82",
+            "title": "The physicochemical and thermodynamic properties of the choline chloride-based deep eutectic solvents",
+            "issue": "9",
+            "pages": "1039--1052",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF33",
+            "ref_idx": 34,
+            "ref_text": "Zhu J, Yu K, Zhu Y, et al. Physicochemical properties of deep eutectic solvents formed by choline chloride and phenolic compounds at T = (293.15 to 333.15) K: the influence of electronic effect of substitution group. J Mol Liq. 2017;232:182-187.",
+            "authors": [
+                {
+                    "first": "J",
+                    "last": "Zhu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "last": "Yu",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Zhu",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2017,
+            "venue": "J Mol Liq",
+            "volume": "232",
+            "title": "Physicochemical properties of deep eutectic solvents formed by choline chloride and phenolic compounds at T = (293.15 to 333.15) K: the influence of electronic effect of substitution group",
+            "issue": "",
+            "pages": "182--187",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF34",
+            "ref_idx": 35,
+            "ref_text": "García G, Aparicio S, Ullah R, et al. Deep eutectic solvents: physicochemical properties and gas separation applications. Energy Fuels. 2015;29:2616-2644.",
+            "authors": [
+                {
+                    "first": "G",
+                    "last": "García",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "last": "Aparicio",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "last": "Ullah",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "Energy Fuels",
+            "volume": "29",
+            "title": "Deep eutectic solvents: physicochemical properties and gas separation applications",
+            "issue": "",
+            "pages": "2616--2644",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF35",
+            "ref_idx": 36,
+            "ref_text": "Su H, Yin J, Liu Q, et al. Properties of four deep eutectic solvents: density, electrical conductivity, dynamic viscosity and refractive index. Acta Phys Chim Sin. 2015;31(8):1468. .",
+            "authors": [
+                {
+                    "first": "H",
+                    "last": "Su",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "last": "Yin",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Q",
+                    "last": "Liu",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "Acta Phys Chim Sin",
+            "volume": "31",
+            "title": "Properties of four deep eutectic solvents: density, electrical conductivity, dynamic viscosity and refractive index",
+            "issue": "8",
+            "pages": "",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF36",
+            "ref_idx": 37,
+            "ref_text": "Hayyan A, Mjalli FS, AlNashef IM, et al. Fruit sugar-based deep eutectic solvents and their physical properties. Thermochim Acta. 2012;541:70-75.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Hayyan",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Mjalli",
+                    "middle": [
+                        "S"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "I",
+                    "last": "Alnashef",
+                    "middle": [
+                        "M"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2012,
+            "venue": "Thermochim Acta",
+            "volume": "541",
+            "title": "Fruit sugar-based deep eutectic solvents and their physical properties",
+            "issue": "",
+            "pages": "70--75",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF37",
+            "ref_idx": 38,
+            "ref_text": "Florindo C, Oliveira FS, Rebelo LPN, et al. Insights into the synthesis and properties of deep eutectic solvents based on Cholinium Chloride and carboxylic acids ACS sustainable. Chem Eng. 2014;2:2416-2425.",
+            "authors": [
+                {
+                    "first": "C",
+                    "last": "Florindo",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Oliveira",
+                    "middle": [
+                        "S"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "Lpn",
+                    "last": "Rebelo",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2014,
+            "venue": "Chem Eng",
+            "volume": "2",
+            "title": "Insights into the synthesis and properties of deep eutectic solvents based on Cholinium Chloride and carboxylic acids ACS sustainable",
+            "issue": "",
+            "pages": "2416--2425",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF38",
+            "ref_idx": 39,
+            "ref_text": "Chemat F, You HJ, Muthukumar K, et al. Effect of l-arginine on the physical properties of choline chloride and glycerol based deep eutectic solvents. J Mol Liq. 2015;212:605-611.",
+            "authors": [
+                {
+                    "first": "F",
+                    "last": "Chemat",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "H",
+                    "last": "You",
+                    "middle": [
+                        "J"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "last": "Muthukumar",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2015,
+            "venue": "J Mol Liq",
+            "volume": "212",
+            "title": "Effect of l-arginine on the physical properties of choline chloride and glycerol based deep eutectic solvents",
+            "issue": "",
+            "pages": "605--611",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF39",
+            "ref_idx": 40,
+            "ref_text": "Yue D, Jia Y, Yao Y, et al. Structure and electrochemical behavior of ionic liquid analogue based on choline chloride and urea. Electrochim Acta. 2012;65:30-36.",
+            "authors": [
+                {
+                    "first": "D",
+                    "last": "Yue",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Jia",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "last": "Yao",
+                    "middle": [],
+                    "suffix": ""
+                }
+            ],
+            "year": 2012,
+            "venue": "Electrochim Acta",
+            "volume": "65",
+            "title": "Structure and electrochemical behavior of ionic liquid analogue based on choline chloride and urea",
+            "issue": "",
+            "pages": "30--36",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        },
+        {
+            "ref_id": "BIBREF40",
+            "ref_idx": 41,
+            "ref_text": "Hayyan A, Mjalli FS, AlNashef IM, et al. Glucose-based deep eutectic solvents: physical properties. J Mol Liq. 2013;178:137-141.",
+            "authors": [
+                {
+                    "first": "A",
+                    "last": "Hayyan",
+                    "middle": [],
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "last": "Mjalli",
+                    "middle": [
+                        "S"
+                    ],
+                    "suffix": ""
+                },
+                {
+                    "first": "I",
+                    "last": "Alnashef",
+                    "middle": [
+                        "M"
+                    ],
+                    "suffix": ""
+                }
+            ],
+            "year": 2013,
+            "venue": "J Mol Liq",
+            "volume": "178",
+            "title": "Glucose-based deep eutectic solvents: physical properties",
+            "issue": "",
+            "pages": "137--141",
+            "other_ids": {},
+            "num": null,
+            "urls": [],
+            "links": null
+        }
+    ],
+    "abstracts": "Density, dynamic viscosity, conductivity and refractive index for mixture D-glucose and deep eutectic solvent (choline chloride + urea) at different temperatures, Physics and Chemistry of Liquids,"
+}
