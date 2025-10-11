@@ -1,8 +1,0 @@
-{
-    "mcpServers": {
-      "context7": {
-        "command": "cmd /c npx",
-        "args": ["-y", "@upstash/context7-mcp@latest"]
-      }
-    }
-  }

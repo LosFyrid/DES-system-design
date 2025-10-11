@@ -4,7 +4,7 @@ import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 import owlready2
 from owlready2 import onto_path, get_ontology, Ontology, Namespace
@@ -74,15 +74,20 @@ class OntologySettings:
     base_iri: str
     ontology_file_name: str
     directory_path: str
-    closed_ontology_file_name: str
+    # closed_ontology_file_name: str
 
     _ontology: Optional[Ontology] = field(init=False, repr=False, default=None)
+    _world: Optional[Any] = field(init=False, repr=False, default=None)  # 独立的owlready2 World
     _namespaces: Dict[str, Namespace] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self):
         onto_path.append(self.directory_path)
         try:
-            self._ontology = get_ontology(self.ontology_iri).load(only_local=True)
+            # 为每个OntologySettings实例创建独立的owlready2 World
+            # 这样避免多个实例共享同一个本体对象
+            from owlready2 import World
+            self._world = World()
+            self._ontology = self._world.get_ontology(self.ontology_iri).load(only_local=True)
         except Exception as e:
             print(f"Error loading ontology {self.ontology_iri}: {e}")
             raise RuntimeError(f"Failed to load ontology: {self.ontology_iri}") from e
@@ -91,9 +96,9 @@ class OntologySettings:
     def ontology_iri(self) -> str:
         return self.base_iri.rstrip('/') + '/' + self.ontology_file_name.lstrip('/')
 
-    @property
-    def closed_ontology_iri(self) -> str:
-        return self.base_iri.rstrip('/') + '/' + self.closed_ontology_file_name.lstrip('/')
+    # @property
+    # def closed_ontology_iri(self) -> str:
+    #     return self.base_iri.rstrip('/') + '/' + self.closed_ontology_file_name.lstrip('/')
 
     @property
     def ontology(self) -> Ontology:
@@ -145,6 +150,13 @@ ONTOLOGY_SETTINGS = OntologySettings(**_ontology_settings_data)
 LLM_CONFIG = yaml_settings["LLM"]
 EXTRACTOR_EXAMPLES_CONFIG = yaml_settings["extractor_examples"]
 DATASET_CONSTRUCTION_CONFIG = yaml_settings["dataset_construction"]
+ENTITY_RETRIEVAL_CONFIG = yaml_settings.get("entity_retrieval", {
+    "top_k": 15,
+    "bm25_weight": 0.5,
+    "jaccard_weight": 0.5,
+    "trigram_size": 3,
+    "min_score_threshold": 0.1
+})
 
 _ASSESSMENT_CRITERIA_SCORE_CONFIG = {
     "entity_score": 9,
