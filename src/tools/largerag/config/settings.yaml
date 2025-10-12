@@ -18,38 +18,50 @@ vector_store:
 
 # ============ 文档处理配置 ============
 document_processing:
-  chunk_size: 512                               # 分块大小（token）
-  chunk_overlap: 50                             # 重叠大小（token）
-  separator: "\n\n"                             # 分块分隔符
+  splitter_type: "token"                        # 分块策略: token / semantic / sentence
+  chunk_size: 512                               # 分块大小（token，仅 token 模式）
+  chunk_overlap: 50                             # 重叠大小（token，仅 token 模式）
+  separator: "\n\n"                             # 分块分隔符（仅 token 模式）
+
+  # Semantic 切分配置（当 splitter_type=semantic 时生效）
+  semantic_breakpoint_threshold: 0.5            # 语义断点阈值 (0-1)
+  semantic_buffer_size: 1                       # 缓冲区大小
 
 # ============ 检索配置 ============
 retrieval:
   similarity_top_k: 20                          # 向量检索召回数量
   rerank_top_n: 5                               # Reranker 最终返回数量
-  similarity_threshold: 0.7                     # 相似度阈值（过滤低分）
+  similarity_threshold: 0                       # 相似度阈值（>0 启用，0 禁用）
+                                                 # 启用后，只返回分数 >= 阈值的结果
+                                                 # 推荐值：0.6-0.8（宁缺毋滥）
 
 # ============ Reranker 配置 ============
 reranker:
   provider: "dashscope"                         # 固定值
-  model: "gte-rerank"                           # Qwen reranker 模型
+  model: "gte-rerank-v2"                           # Qwen reranker 模型
   enabled: true                                 # 是否启用 reranker
 
 # ============ LLM 配置 ============
 llm:
   provider: "dashscope"                         # 固定值
-  model: "qwen-max"                             # Qwen3-235B
+  model: "qwen3-235b-a22b-thinking-2507"                             # Qwen3-235B
   temperature: 0.1
   max_tokens: 2000
 
 # ============ 缓存配置 ============
 cache:
-  enabled: false                                # 是否启用缓存（暂时禁用以测试）
-  type: "redis"                                 # redis 或 local
+  enabled: true                                 # 是否启用缓存
+  type: "local"                                 # local（推荐，无需额外服务） 或 redis
+
+  # 本地文件缓存配置（默认）
+  local_cache_dir: "${PROJECT_ROOT}src/tools/largerag/data/cache"
+
+  # Redis 缓存配置（可选，需要 redis-server 服务）
   redis_host: "localhost"
   redis_port: 6379
-  redis_db: 0
+
   collection_name: "largerag_embedding_cache"
-  ttl: 86400                                    # 缓存过期时间（秒）
+  ttl: 86400                                    # 缓存过期时间（秒，仅Redis使用）
 
 # ============ 日志配置 ============
 logging:

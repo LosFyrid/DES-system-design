@@ -79,9 +79,12 @@ class VectorStoreConfig:
 
 @dataclass
 class DocumentProcessingConfig:
+    splitter_type: str
     chunk_size: int
     chunk_overlap: int
     separator: str
+    semantic_breakpoint_threshold: Optional[float] = 0.5
+    semantic_buffer_size: Optional[int] = 1
 
 
 @dataclass
@@ -110,11 +113,15 @@ class LLMConfig:
 class CacheConfig:
     enabled: bool
     type: str
-    redis_host: str
-    redis_port: int
-    redis_db: int
     collection_name: str
     ttl: int
+
+    # 本地缓存配置
+    local_cache_dir: Optional[str] = None
+
+    # Redis 缓存配置
+    redis_host: Optional[str] = None
+    redis_port: Optional[int] = None
 
 
 @dataclass

@@ -11,9 +11,10 @@ llama-index-postprocessor-dashscope-rerank>=0.1.0
 llama-index-vector-stores-chroma>=0.2.0
 chromadb>=0.4.0
 
-# 缓存系统
-llama-index-storage-kvstore-redis>=0.2.0
-redis>=5.0.0
+# 缓存系统（本地文件缓存为默认，无需额外依赖）
+# Redis 缓存（可选）- 如需使用请取消注释：
+# llama-index-storage-kvstore-redis>=0.2.0
+# redis>=5.0.0
 
 # 配置和工具
 pydantic>=2.0.0

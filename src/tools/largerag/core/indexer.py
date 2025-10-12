@@ -17,7 +17,6 @@ from llama_index.embeddings.dashscope import (
     DashScopeTextEmbeddingType
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.storage.kvstore.redis import RedisKVStore
 import chromadb
 import logging
 import time
@@ -28,8 +27,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import SETTINGS, DASHSCOPE_API_KEY
+from core.cache import LlamaIndexLocalCache
 
 logger = logging.getLogger(__name__)
+
+# Redis 作为可选依赖，仅在需要时导入
+try:
+    from llama_index.storage.kvstore.redis import RedisKVStore
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    logger.warning("Redis support not available. Install llama-index-storage-kvstore-redis to enable Redis cache.")
 
 
 class RetryableDashScopeEmbedding(DashScopeEmbedding):
@@ -37,8 +45,9 @@ class RetryableDashScopeEmbedding(DashScopeEmbedding):
 
     def __init__(self, *args, max_retries: int = 3, retry_delay: float = 2.0, **kwargs):
         super().__init__(*args, **kwargs)
-        self.max_retries = max_retries
-        self.retry_delay = retry_delay
+        # 使用 object.__setattr__ 绕过 Pydantic 的字段验证
+        object.__setattr__(self, 'max_retries', max_retries)
+        object.__setattr__(self, 'retry_delay', retry_delay)
 
     def _get_text_embeddings(self, texts: List[str]) -> List[List[float]]:
         """带重试的批量 embedding"""
@@ -91,33 +100,78 @@ class LargeRAGIndexer:
 
     def _init_pipeline(self):
         """初始化 Ingestion Pipeline（含缓存）"""
-        transformations = [
-            SentenceSplitter(
+        # 根据配置选择分块策略
+        splitter_type = self.settings.document_processing.splitter_type
+
+        if splitter_type == "semantic":
+            # 语义切分（需要额外 embedding 计算）
+            from llama_index.core.node_parser import SemanticSplitterNodeParser
+            splitter = SemanticSplitterNodeParser(
+                embed_model=self.embed_model,
+                breakpoint_percentile_threshold=self.settings.document_processing.semantic_breakpoint_threshold,
+                buffer_size=self.settings.document_processing.semantic_buffer_size,
+            )
+            logger.info(f"Using semantic splitter (threshold={self.settings.document_processing.semantic_breakpoint_threshold})")
+        elif splitter_type == "sentence":
+            # 句子切分（保持句子完整性）
+            from llama_index.core.node_parser import SentenceSplitter
+            splitter = SentenceSplitter(
                 chunk_size=self.settings.document_processing.chunk_size,
                 chunk_overlap=self.settings.document_processing.chunk_overlap,
-            ),
+            )
+            logger.info(f"Using sentence splitter (size={self.settings.document_processing.chunk_size})")
+        else:  # "token" (default)
+            # Token 切分（当前默认）
+            from llama_index.core.node_parser import SentenceSplitter
+            splitter = SentenceSplitter(
+                chunk_size=self.settings.document_processing.chunk_size,
+                chunk_overlap=self.settings.document_processing.chunk_overlap,
+            )
+            logger.info(f"Using token-based splitter (size={self.settings.document_processing.chunk_size}, overlap={self.settings.document_processing.chunk_overlap})")
+
+        transformations = [
+            splitter,
             self.embed_model,
         ]
 
         # 配置缓存
         cache = None
         if self.settings.cache.enabled:
-            if self.settings.cache.type == "redis":
+            if self.settings.cache.type == "local":
+                # 本地文件缓存（默认推荐）
                 try:
-                    # 注意：新版 RedisKVStore 不支持 db 参数
+                    local_cache = LlamaIndexLocalCache(
+                        cache_dir=self.settings.cache.local_cache_dir,
+                        collection_name=self.settings.cache.collection_name,
+                    )
                     cache = IngestionCache(
-                        cache=RedisKVStore.from_host_and_port(
-                            host=self.settings.cache.redis_host,
-                            port=self.settings.cache.redis_port,
-                        ),
+                        cache=local_cache,
                         collection=self.settings.cache.collection_name,
                     )
-                    logger.info("Redis cache initialized successfully")
+                    logger.info(f"Local file cache initialized at: {self.settings.cache.local_cache_dir}")
                 except Exception as e:
-                    logger.warning(f"Failed to initialize Redis cache: {e}. Proceeding without cache.")
+                    logger.warning(f"Failed to initialize local cache: {e}. Proceeding without cache.")
                     cache = None
+
+            elif self.settings.cache.type == "redis":
+                # Redis 缓存（可选，需要额外服务）
+                if not REDIS_AVAILABLE:
+                    logger.warning("Redis cache requested but not available. Install llama-index-storage-kvstore-redis.")
+                else:
+                    try:
+                        cache = IngestionCache(
+                            cache=RedisKVStore.from_host_and_port(
+                                host=self.settings.cache.redis_host,
+                                port=self.settings.cache.redis_port,
+                            ),
+                            collection=self.settings.cache.collection_name,
+                        )
+                        logger.info("Redis cache initialized successfully")
+                    except Exception as e:
+                        logger.warning(f"Failed to initialize Redis cache: {e}. Proceeding without cache.")
+                        cache = None
             else:
-                logger.warning("Local cache not implemented, using no cache")
+                logger.warning(f"Unknown cache type: {self.settings.cache.type}. Using no cache.")
 
         self.pipeline = IngestionPipeline(
             transformations=transformations,
@@ -144,20 +198,21 @@ class LargeRAGIndexer:
         nodes = self.pipeline.run(documents=documents, show_progress=True)
         logger.info(f"Generated {len(nodes)} nodes from {len(documents)} documents")
 
-        # 创建 Chroma collection
+        # 创建 Chroma collection（添加距离度量配置）
         collection = self.chroma_client.get_or_create_collection(
-            name=self.settings.vector_store.collection_name
+            name=self.settings.vector_store.collection_name,
+            metadata={"hnsw:space": self.settings.vector_store.distance_metric}
         )
         vector_store = ChromaVectorStore(chroma_collection=collection)
 
         # 创建 StorageContext
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-        # 构建索引（显式指定 embed_model）
+        # 构建索引（nodes 已包含 embedding，不需要重新计算）
         index = VectorStoreIndex(
             nodes=nodes,
             storage_context=storage_context,
-            embed_model=self.embed_model,
+            # ✓ 移除 embed_model 参数，避免重复计算 embedding
             show_progress=True,
         )
 
