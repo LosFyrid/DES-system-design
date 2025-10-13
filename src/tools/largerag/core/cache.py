@@ -9,6 +9,8 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
+from llama_index.core.storage.kvstore.types import BaseKVStore
+
 logger = logging.getLogger(__name__)
 
 
@@ -132,7 +134,7 @@ class LocalFileCache:
             return {"error": str(e)}
 
 
-class LlamaIndexLocalCache:
+class LlamaIndexLocalCache(BaseKVStore):
     """
     LlamaIndex IngestionCache 兼容的本地缓存包装器
 
@@ -141,20 +143,52 @@ class LlamaIndexLocalCache:
 
     def __init__(self, cache_dir: str, collection_name: str = "ingestion_cache"):
         self._cache = LocalFileCache(cache_dir, collection_name)
+        self._collection_name = collection_name
 
-    def put(self, key: str, value: Any) -> None:
+    def put(self, key: str, val: Any, collection: str = "default") -> None:
         """LlamaIndex KVStore 接口：存储"""
-        self._cache.set(key, value)
+        # collection 参数被忽略，使用构造时的 collection_name
+        self._cache.set(key, val)
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, collection: str = "default") -> Optional[Any]:
         """LlamaIndex KVStore 接口：获取"""
-        result = self._cache.get(key)
-        return result if result is not None else default
+        # collection 参数被忽略，使用构造时的 collection_name
+        return self._cache.get(key)
 
-    def delete(self, key: str) -> bool:
-        """LlamaIndex KVStore 接口：删除（暂未实现）"""
-        # 本地缓存不需要频繁删除，可以通过 clear() 批量清理
-        return True
+    def get_all(self, collection: str = "default") -> dict:
+        """LlamaIndex KVStore 接口：获取所有（不支持）"""
+        # 文件缓存不高效支持此操作，返回空字典
+        logger.warning("get_all() not efficiently supported by LocalFileCache")
+        return {}
+
+    def delete(self, key: str, collection: str = "default") -> bool:
+        """LlamaIndex KVStore 接口：删除"""
+        cache_path = self._cache._get_cache_path(key)
+        try:
+            if cache_path.exists():
+                cache_path.unlink()
+                return True
+            return False
+        except Exception as e:
+            logger.warning(f"Failed to delete cache key {key}: {e}")
+            return False
+
+    # Async 版本（简单包装同步版本）
+    async def aput(self, key: str, val: Any, collection: str = "default") -> None:
+        """异步存储（包装同步方法）"""
+        self.put(key, val, collection)
+
+    async def aget(self, key: str, collection: str = "default") -> Optional[Any]:
+        """异步获取（包装同步方法）"""
+        return self.get(key, collection)
+
+    async def aget_all(self, collection: str = "default") -> dict:
+        """异步获取所有（包装同步方法）"""
+        return self.get_all(collection)
+
+    async def adelete(self, key: str, collection: str = "default") -> bool:
+        """异步删除（包装同步方法）"""
+        return self.delete(key, collection)
 
     def clear(self) -> None:
         """清空缓存"""

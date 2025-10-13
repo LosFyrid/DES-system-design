@@ -13,7 +13,6 @@ from llama_index.core.ingestion import IngestionPipeline, IngestionCache
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.dashscope import (
     DashScopeEmbedding,
-    DashScopeTextEmbeddingModels,
     DashScopeTextEmbeddingType
 )
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -22,12 +21,8 @@ import logging
 import time
 from requests.exceptions import ConnectionError, Timeout
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from config.settings import SETTINGS, DASHSCOPE_API_KEY
-from core.cache import LlamaIndexLocalCache
+from ..config.settings import SETTINGS, DASHSCOPE_API_KEY
+from .cache import LlamaIndexLocalCache
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +75,9 @@ class LargeRAGIndexer:
                 "Please set it in .env file."
             )
 
-        # 初始化 Embedding 模型（带重试机制）
+        # 初始化 Embedding 模型（带重试机制，使用配置文件中的模型）
         self.embed_model = RetryableDashScopeEmbedding(
-            model_name=DashScopeTextEmbeddingModels.TEXT_EMBEDDING_V3,
+            model_name=self.settings.embedding.model,
             text_type=DashScopeTextEmbeddingType.TEXT_TYPE_DOCUMENT,
             api_key=self.api_key,
             embed_batch_size=self.settings.embedding.batch_size,  # 显式设置批处理大小

@@ -10,10 +10,10 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import logging
 
-from core.document_processor import DocumentProcessor
-from core.indexer import LargeRAGIndexer
-from core.query_engine import LargeRAGQueryEngine
-from config.settings import SETTINGS
+from .core.document_processor import DocumentProcessor
+from .core.indexer import LargeRAGIndexer
+from .core.query_engine import LargeRAGQueryEngine
+from .config.settings import SETTINGS
 
 logging.basicConfig(
     level=logging.INFO,

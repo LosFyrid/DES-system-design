@@ -14,7 +14,7 @@ from typing import Optional
 from langchain_core.tools import tool
 import logging
 
-from largerag import LargeRAG
+from .largerag import LargeRAG
 
 logger = logging.getLogger(__name__)
 

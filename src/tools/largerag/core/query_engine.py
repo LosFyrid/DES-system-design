@@ -11,14 +11,10 @@ from llama_index.core import VectorStoreIndex
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.postprocessor.dashscope_rerank import DashScopeRerank
-from llama_index.llms.dashscope import DashScope, DashScopeGenerationModels
+from llama_index.llms.dashscope import DashScope
 import logging
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from config.settings import SETTINGS, DASHSCOPE_API_KEY
+from ..config.settings import SETTINGS, DASHSCOPE_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +33,9 @@ class LargeRAGQueryEngine:
                 "Please set it in .env file."
             )
 
-        # 初始化 LLM
+        # 初始化 LLM（使用配置文件中的模型）
         self.llm = DashScope(
-            model_name=DashScopeGenerationModels.QWEN_MAX,
+            model_name=self.settings.llm.model,
             api_key=self.api_key,
             temperature=self.settings.llm.temperature,
             max_tokens=self.settings.llm.max_tokens,

@@ -5,17 +5,54 @@ LargeRAG + LangGraph 集成示例
 
 运行方式：
     python examples/3_langgraph_integration.py
+
+环境要求：
+    .env 文件需包含：
+    - DASHSCOPE_API_KEY: DashScope API Key（用于 LargeRAG 和 LLM）
 """
 
 import sys
+import os
 from pathlib import Path
 
-# 添加项目路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# 添加项目根目录到路径（向上 5 级：examples -> largerag -> tools -> src -> 项目根）
+project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from largerag.agent_tool import create_largerag_tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+
+from src.tools.largerag.agent_tool import create_largerag_tool
+
+
+# ============================================================
+# DashScope LLM 配置（项目默认）
+# ============================================================
+
+def create_dashscope_llm(model: str = "qwen3-235b-a22b-thinking-2507", temperature: float = 0):
+    """
+    创建 DashScope LLM（通过 OpenAI 兼容接口）
+
+    Args:
+        model: 模型名称（qwen-turbo, qwen-plus, qwen-max）
+        temperature: 温度参数
+
+    Returns:
+        ChatOpenAI: 配置好的 LLM 实例
+    """
+    api_key = os.getenv("DASHSCOPE_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "DASHSCOPE_API_KEY not found in environment variables. "
+            "Please add it to .env file."
+        )
+
+    return ChatOpenAI(
+        model=model,
+        temperature=temperature,
+        openai_api_key=api_key,
+        openai_api_base="https://dashscope.aliyuncs.com/compatible-mode/v1"
+    )
 
 
 def example_basic_usage():
@@ -27,8 +64,10 @@ def example_basic_usage():
     # 1. 创建 LargeRAG 工具（一行代码）
     largerag_tool = create_largerag_tool()
 
-    # 2. 创建 LangGraph ReAct Agent
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    # 2. 创建 DashScope LLM
+    llm = create_dashscope_llm(model="qwen-turbo", temperature=0)
+
+    # 3. 创建 LangGraph ReAct Agent
     agent = create_react_agent(
         model=llm,
         tools=[largerag_tool]
@@ -58,7 +97,7 @@ def example_multi_turn_conversation():
     print("=" * 70)
 
     tool = create_largerag_tool()
-    llm = ChatOpenAI(model="gpt-4o-mini")
+    llm = create_dashscope_llm(model="qwen-turbo")
     agent = create_react_agent(llm, tools=[tool])
 
     # 模拟多轮对话
@@ -92,7 +131,7 @@ def example_check_tool_status():
     print("  Example 3: Check Tool Status")
     print("=" * 70)
 
-    from largerag.agent_tool import LargeRAGTool
+    from src.tools.largerag.agent_tool import LargeRAGTool
 
     # 直接创建工具实例（可以访问更多方法）
     tool = LargeRAGTool()
@@ -108,9 +147,9 @@ def example_check_tool_status():
 
     if not tool.rag.query_engine:
         print("\n⚠️  Index not ready. Please build it first:")
-        print("    from largerag import LargeRAG")
+        print("    from src.tools.largerag import LargeRAG")
         print("    rag = LargeRAG()")
-        print("    rag.index_from_folders('data/literature')")
+        print("    rag.index_from_folders('src/tools/largerag/data/literature')")
     else:
         print("\n✓ Tool is ready to use!")
 
@@ -123,7 +162,7 @@ def example_custom_parameters():
     print("  Example 4: Custom Retrieval Parameters")
     print("=" * 70)
 
-    from largerag.agent_tool import LargeRAGTool
+    from src.tools.largerag.agent_tool import LargeRAGTool
 
     tool = LargeRAGTool()
 
