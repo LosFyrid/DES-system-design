@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "max_items": 1000,
+  "num_memories": 3,
+  "memories": [
+    {
+      "title": "ChCl:Oxalic Acid Dihydrate (1:1) Achieves 6.5 g/L Solubility for Cellulose at 25°C",
+      "description": "A 1:1 molar ratio DES of choline chloride and oxalic acid dihydrate dissolves cellulose with moderate solubility of 6.5 g/L at room temperature.",
+      "content": "The formulation {HBA: choline chloride, HBD: oxalic acid dihydrate, molar_ratio: 1:1} successfully formed a clear, colorless liquid DES at 25°C with a viscosity of 45 cP. Under these conditions, the measured solubility of cellulose was 6.5 g/L. This indicates that acidic HBDs like oxalic acid dihydrate can enable moderate cellulose dissolution even at ambient temperature.",
+      "source_task_id": "demo_task_001",
+      "is_from_success": true,
+      "created_at": "2025-10-16T15:16:50.620819",
+      "embedding": null,
+      "metadata": {
+        "target_material": "cellulose",
+        "extraction_type": "experiment_feedback",
+        "performance_score": 6.5,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251016_151631_demo_task_001",
+        "is_liquid_formed": true,
+        "solubility": 6.5,
+        "experiment_date": "2025-10-16T15:16:33.970161"
+      }
+    },
+    {
+      "title": "Acidic HBDs Enable Room-Temperature DES Formation with Choline Chloride",
+      "description": "Choline chloride combined with oxalic acid dihydrate forms a DES at 25°C without heating, indicating strong H-bonding and proton donation facilitate low-temperature liquefaction.",
+      "content": "The choline chloride:oxalic acid dihydrate (1:1) system formed a homogeneous, liquid DES at room temperature (25°C), suggesting that highly acidic HBDs promote DES formation due to strong hydrogen bond donation and efficient disruption of the HBA's crystal lattice. This eliminates the need for external heating during preparation, which is commonly required in other DES systems.",
+      "source_task_id": "demo_task_001",
+      "is_from_success": true,
+      "created_at": "2025-10-16T15:16:50.620888",
+      "embedding": null,
+      "metadata": {
+        "target_material": "cellulose",
+        "extraction_type": "experiment_feedback",
+        "performance_score": 6.5,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251016_151631_demo_task_001",
+        "is_liquid_formed": true,
+        "solubility": 6.5,
+        "experiment_date": "2025-10-16T15:16:33.970161"
+      }
+    },
+    {
+      "title": "Moderate Cellulose Solubility Correlates with 45 cP Viscosity in Acidic DES Systems",
+      "description": "At 25°C, a choline chloride:oxalic acid dihydrate (1:1) DES with 45 cP viscosity achieves 6.5 g/L cellulose solubility, indicating moderate mass transfer efficiency.",
+      "content": "The measured viscosity of 45 cP in the choline chloride:oxalic acid dihydrate (1:1) DES corresponds to a cellulose solubility of 6.5 g/L at 25°C. This suggests that while the system has favorable fluidity for a DES, further viscosity reduction may be needed to significantly enhance solubility, as higher viscosity typically limits diffusion and swelling kinetics. ```",
+      "source_task_id": "demo_task_001",
+      "is_from_success": true,
+      "created_at": "2025-10-16T15:16:50.620928",
+      "embedding": null,
+      "metadata": {
+        "target_material": "cellulose",
+        "extraction_type": "experiment_feedback",
+        "performance_score": 6.5,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251016_151631_demo_task_001",
+        "is_liquid_formed": true,
+        "solubility": 6.5,
+        "experiment_date": "2025-10-16T15:16:33.970161"
+      }
+    }
+  ]
+}

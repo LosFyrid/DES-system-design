@@ -35,6 +35,11 @@ memory:
   persist_path: "data/memory/des_reasoningbank.json"
   auto_save: true  # Auto-save after each consolidation
 
+# Async Experimental Feedback Configuration (NEW)
+recommendations:
+  storage_path: "data/recommendations"  # Directory path for recommendation JSON files
+  auto_create_dirs: true  # Auto-create storage directory if not exists
+
 # Judge Configuration
 judge:
   temperature: 0.0  # Deterministic for consistency

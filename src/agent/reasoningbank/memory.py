@@ -30,6 +30,7 @@ class MemoryItem:
         embedding: Optional vector embedding for semantic similarity search
         metadata: Additional key-value pairs for filtering and organization
     """
+
     title: str
     description: str
     content: str
@@ -58,7 +59,7 @@ class MemoryItem:
             "is_from_success": self.is_from_success,
             "created_at": self.created_at,
             "embedding": self.embedding,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -72,7 +73,7 @@ class MemoryItem:
             is_from_success=data.get("is_from_success", True),
             created_at=data.get("created_at", datetime.now().isoformat()),
             embedding=data.get("embedding"),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )
 
     def to_prompt_string(self) -> str:
@@ -114,6 +115,7 @@ class MemoryQuery:
         filters: Optional filters to apply (e.g., {"is_from_success": True})
         min_similarity: Minimum similarity threshold (0.0 to 1.0)
     """
+
     query_text: str
     top_k: int = 3
     filters: dict = field(default_factory=dict)
@@ -133,6 +135,7 @@ class Trajectory:
         final_result: The agent's final output
         metadata: Additional information (e.g., tool calls, reasoning traces)
     """
+
     task_id: str
     task_description: str
     steps: List[dict]
@@ -163,7 +166,7 @@ if __name__ == "__main__":
         ),
         source_task_id="task_001",
         is_from_success=True,
-        metadata={"domain": "polymer_dissolution", "material_type": "cellulose"}
+        metadata={"domain": "polymer_dissolution", "material_type": "cellulose"},
     )
 
     # Test serialization

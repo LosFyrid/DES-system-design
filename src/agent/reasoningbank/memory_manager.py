@@ -36,7 +36,7 @@ class ReasoningBank:
     def __init__(
         self,
         embedding_func: Optional[Callable[[str], List[float]]] = None,
-        max_items: int = 1000
+        max_items: int = 1000,
     ):
         """
         Initialize ReasoningBank.
@@ -83,9 +83,13 @@ class ReasoningBank:
         # Enforce max_items limit (remove oldest)
         if len(self.memories) > self.max_items:
             removed = self.memories.pop(0)
-            logger.info(f"Removed oldest memory '{removed.title}' (limit: {self.max_items})")
+            logger.info(
+                f"Removed oldest memory '{removed.title}' (limit: {self.max_items})"
+            )
 
-    def add_memories(self, memories: List[MemoryItem], compute_embeddings: bool = True) -> None:
+    def add_memories(
+        self, memories: List[MemoryItem], compute_embeddings: bool = True
+    ) -> None:
         """
         Add multiple memory items in batch.
 
@@ -151,7 +155,9 @@ class ReasoningBank:
             if match:
                 filtered.append(memory)
 
-        logger.debug(f"Filtered {len(filtered)}/{len(self.memories)} memories with {filters}")
+        logger.debug(
+            f"Filtered {len(filtered)}/{len(self.memories)} memories with {filters}"
+        )
         return filtered
 
     def consolidate(self, new_memories: List[MemoryItem]) -> None:
@@ -188,11 +194,11 @@ class ReasoningBank:
             "version": "1.0",
             "max_items": self.max_items,
             "num_memories": len(self.memories),
-            "memories": [memory.to_dict() for memory in self.memories]
+            "memories": [memory.to_dict() for memory in self.memories],
         }
 
         # Write to file
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Saved {len(self.memories)} memories to {filepath}")
@@ -211,7 +217,7 @@ class ReasoningBank:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Memory file not found: {filepath}")
 
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # Validate version (future-proofing)
@@ -259,7 +265,7 @@ class ReasoningBank:
             "from_failure": len(self.memories) - success_count,
             "with_embeddings": with_embedding,
             "max_capacity": self.max_items,
-            "utilization": f"{len(self.memories)/self.max_items*100:.1f}%"
+            "utilization": f"{len(self.memories) / self.max_items * 100:.1f}%",
         }
 
     def __len__(self) -> int:
@@ -285,6 +291,7 @@ if __name__ == "__main__":
     def mock_embedding(text: str) -> List[float]:
         # Simple mock: use hash to generate pseudo-random embedding
         import hashlib
+
         hash_val = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_val >> i) % 100 / 100.0 for i in range(8)]
 
@@ -297,7 +304,7 @@ if __name__ == "__main__":
         description="Analyze hydrogen bonding first for polar materials",
         content="For dissolving polar polymers, H-bond strength is the primary factor.",
         source_task_id="task_001",
-        is_from_success=True
+        is_from_success=True,
     )
 
     memory2 = MemoryItem(
@@ -305,7 +312,7 @@ if __name__ == "__main__":
         description="Certain HBD-HBA combinations cause decomposition",
         content="Quaternary ammonium salts + acidic HBDs can lead to decomposition.",
         source_task_id="task_002",
-        is_from_success=False
+        is_from_success=False,
     )
 
     bank.add_memory(memory1)

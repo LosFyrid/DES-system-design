@@ -6,6 +6,7 @@ from .extraction_prompts import (
     SUCCESS_EXTRACTION_PROMPT,
     FAILURE_EXTRACTION_PROMPT,
     PARALLEL_MATTS_PROMPT,
+    EXPERIMENT_EXTRACTION_PROMPT,
     format_trajectory_for_extraction,
     parse_extracted_memories
 )
@@ -19,6 +20,7 @@ __all__ = [
     "SUCCESS_EXTRACTION_PROMPT",
     "FAILURE_EXTRACTION_PROMPT",
     "PARALLEL_MATTS_PROMPT",
+    "EXPERIMENT_EXTRACTION_PROMPT",
     "format_trajectory_for_extraction",
     "parse_extracted_memories",
     "JUDGE_PROMPT",

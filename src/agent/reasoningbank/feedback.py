@@ -1,0 +1,579 @@
+"""
+Feedback System for Asynchronous Experiment-Based Optimization
+
+This module implements the feedback loop for real experimental validation:
+- ExperimentResult: Real experiment data (not LLM evaluation)
+- Recommendation: Persistent recommendation records
+- RecommendationManager: Storage and retrieval
+- FeedbackProcessor: Process experimental feedback and update ReasoningBank
+"""
+
+from dataclasses import dataclass, field, asdict
+from typing import Optional, List, Dict, Any, Callable
+from pathlib import Path
+from datetime import datetime
+import json
+import logging
+
+from .memory import Trajectory, MemoryItem
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ExperimentResult:
+    """
+    Real experimental feedback data for DES formulation.
+
+    This replaces LLM-as-a-Judge with actual lab measurements.
+
+    Required Fields:
+        is_liquid_formed (bool): Whether the DES components dissolved to form liquid
+        solubility (float): Solubility of target material (only when is_liquid_formed=True)
+        solubility_unit (str): Unit of solubility measurement
+
+    Optional Fields:
+        properties (dict): User-defined additional measurements (viscosity, density, etc.)
+        experimenter (str): Who performed the experiment
+        experiment_date (str): When the experiment was conducted
+        notes (str): Experimental notes
+    """
+
+    # ===== Required Fields =====
+    is_liquid_formed: bool
+    solubility: Optional[float] = None
+    solubility_unit: str = "g/L"
+
+    # ===== Optional Fields =====
+    properties: Dict[str, Any] = field(default_factory=dict)
+
+    # ===== Metadata =====
+    experimenter: Optional[str] = None
+    experiment_date: str = field(default_factory=lambda: datetime.now().isoformat())
+    notes: str = ""
+
+    def __post_init__(self):
+        """Validate data integrity with boundary case handling"""
+        # Boundary case: If DES not formed, solubility should be None
+        if not self.is_liquid_formed and self.solubility is not None:
+            logger.warning(
+                "Inconsistent data: is_liquid_formed=False but solubility is provided. "
+                "Setting solubility to None."
+            )
+            self.solubility = None
+
+        # If DES formed, solubility must be provided
+        if self.is_liquid_formed and self.solubility is None:
+            raise ValueError("When is_liquid_formed=True, solubility must be provided")
+
+    def get_performance_score(self) -> float:
+        """
+        Calculate performance score (0-10) for ranking and comparison.
+
+        Rules:
+        - DES not formed: 0.0
+        - DES formed: based on solubility (higher is better)
+
+        Returns:
+            float: Performance score (0-10)
+        """
+        if not self.is_liquid_formed:
+            return 0.0
+
+        # Simple mapping: higher solubility = better
+        # Can be customized based on specific requirements
+        if self.solubility is not None:
+            # Cap at 10.0
+            return min(10.0, self.solubility)
+
+        # Default to medium score if no solubility data
+        return 5.0
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization"""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ExperimentResult":
+        """Create from dictionary"""
+        return cls(**data)
+
+
+@dataclass
+class Recommendation:
+    """
+    Persistent record of a DES formulation recommendation.
+
+    This stores all information needed for:
+    - User review and experimentation
+    - Feedback submission
+    - Cross-instance reuse (system A → system B)
+
+    Attributes:
+        recommendation_id: Unique identifier
+        task: Original task specification
+        task_id: Task identifier
+        formulation: Recommended DES formulation
+        reasoning: Agent's reasoning
+        confidence: Confidence score (0-1)
+        trajectory: Complete agent execution trace
+        status: Current status (PENDING, COMPLETED, CANCELLED)
+        experiment_result: Experimental feedback (None until submitted)
+        version: Data format version (for backward compatibility)
+    """
+
+    # ===== Core Fields =====
+    recommendation_id: str
+    task: Dict
+    task_id: str
+    formulation: Dict  # {HBD, HBA, molar_ratio}
+    reasoning: str
+    confidence: float
+
+    # ===== Trajectory (for cross-instance reuse) =====
+    trajectory: Trajectory
+
+    # ===== Status Management =====
+    status: str  # PENDING, COMPLETED, CANCELLED
+    created_at: str
+    updated_at: str
+
+    # ===== Experimental Feedback =====
+    experiment_result: Optional[ExperimentResult] = None
+
+    # ===== Versioning (for backward compatibility) =====
+    version: str = "1.0"
+    metadata: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization"""
+        data = asdict(self)
+        # Special handling for Trajectory
+        data["trajectory"] = self.trajectory.to_dict()
+        # Special handling for ExperimentResult
+        if self.experiment_result:
+            data["experiment_result"] = self.experiment_result.to_dict()
+        return data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Recommendation":
+        """
+        Create from dictionary with version support.
+
+        Supports backward compatibility for future format changes.
+        """
+        version = data.get("version", "1.0")
+
+        if version == "1.0":
+            # Reconstruct Trajectory
+            data["trajectory"] = Trajectory.from_dict(data["trajectory"])
+            # Reconstruct ExperimentResult
+            if data.get("experiment_result"):
+                data["experiment_result"] = ExperimentResult.from_dict(
+                    data["experiment_result"]
+                )
+            return cls(**data)
+        else:
+            raise ValueError(f"Unsupported data format version: {version}")
+
+
+class RecommendationManager:
+    """
+    Manages persistent storage and retrieval of DES formulation recommendations.
+
+    Storage Strategy:
+    - Phase 1: JSON files (one per recommendation) + index.json
+    - Advantages: Simple, debuggable, Git-compatible, easy migration
+    - Directory structure:
+        data/recommendations/
+        ├── index.json
+        ├── REC_20251016_001.json
+        ├── REC_20251016_002.json
+        └── ...
+
+    Methods:
+        save_recommendation: Persist recommendation to disk
+        get_recommendation: Load recommendation by ID
+        list_recommendations: Query recommendations with filters
+        update_status: Update recommendation status
+        submit_feedback: Submit experimental feedback
+        get_statistics: Get summary statistics
+    """
+
+    def __init__(self, storage_path: str = "data/recommendations"):
+        """
+        Initialize RecommendationManager.
+
+        Args:
+            storage_path: Directory path for storing recommendations
+        """
+        self.storage_path = Path(storage_path)
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+        self.index_file = self.storage_path / "index.json"
+        self._load_index()
+        logger.info(f"Initialized RecommendationManager at {self.storage_path}")
+
+    def _load_index(self):
+        """Load recommendation index"""
+        if self.index_file.exists():
+            with open(self.index_file, "r", encoding="utf-8") as f:
+                self.index = json.load(f)
+            logger.debug(f"Loaded index with {len(self.index)} entries")
+        else:
+            self.index = {}
+            logger.debug("Created new index")
+
+    def _save_index(self):
+        """Save recommendation index"""
+        with open(self.index_file, "w", encoding="utf-8") as f:
+            json.dump(self.index, f, indent=2, ensure_ascii=False)
+        logger.debug(f"Saved index with {len(self.index)} entries")
+
+    def save_recommendation(self, rec: Recommendation) -> str:
+        """
+        Save recommendation to disk.
+
+        Args:
+            rec: Recommendation object
+
+        Returns:
+            str: Recommendation ID
+        """
+        rec_file = self.storage_path / f"{rec.recommendation_id}.json"
+
+        # Save recommendation
+        with open(rec_file, "w", encoding="utf-8") as f:
+            json.dump(rec.to_dict(), f, indent=2, ensure_ascii=False)
+
+        # Update index
+        self.index[rec.recommendation_id] = {
+            "task_id": rec.task_id,
+            "status": rec.status,
+            "created_at": rec.created_at,
+            "updated_at": rec.updated_at,
+            "target_material": rec.task.get("target_material"),
+            "target_temperature": rec.task.get("target_temperature"),
+            "file": str(rec_file),
+        }
+        self._save_index()
+
+        logger.info(
+            f"Saved recommendation {rec.recommendation_id} with status {rec.status}"
+        )
+        return rec.recommendation_id
+
+    def get_recommendation(self, rec_id: str) -> Optional[Recommendation]:
+        """
+        Get recommendation by ID.
+
+        Args:
+            rec_id: Recommendation ID
+
+        Returns:
+            Recommendation object or None if not found
+        """
+        if rec_id not in self.index:
+            logger.warning(f"Recommendation {rec_id} not found in index")
+            return None
+
+        rec_file = Path(self.index[rec_id]["file"])
+        if not rec_file.exists():
+            logger.error(f"Recommendation file not found: {rec_file}")
+            return None
+
+        with open(rec_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        return Recommendation.from_dict(data)
+
+    def list_recommendations(
+        self,
+        status: Optional[str] = None,
+        target_material: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[Recommendation]:
+        """
+        Query recommendations with filters.
+
+        Args:
+            status: Filter by status (PENDING, COMPLETED, CANCELLED)
+            target_material: Filter by target material
+            limit: Maximum number of results
+
+        Returns:
+            List of Recommendation objects
+        """
+        filtered = []
+
+        for rec_id, meta in self.index.items():
+            # Apply filters
+            if status and meta["status"] != status:
+                continue
+            if target_material and meta.get("target_material") != target_material:
+                continue
+
+            # Load recommendation
+            rec = self.get_recommendation(rec_id)
+            if rec:
+                filtered.append(rec)
+
+            if len(filtered) >= limit:
+                break
+
+        # Sort by creation time (descending)
+        filtered.sort(key=lambda r: r.created_at, reverse=True)
+
+        logger.debug(
+            f"Listed {len(filtered)} recommendations "
+            f"(status={status}, material={target_material})"
+        )
+
+        return filtered
+
+    def update_status(self, rec_id: str, status: str):
+        """
+        Update recommendation status.
+
+        Args:
+            rec_id: Recommendation ID
+            status: New status (PENDING, COMPLETED, CANCELLED)
+        """
+        rec = self.get_recommendation(rec_id)
+        if not rec:
+            raise ValueError(f"Recommendation {rec_id} not found")
+
+        rec.status = status
+        rec.updated_at = datetime.now().isoformat()
+        self.save_recommendation(rec)
+
+        logger.info(f"Updated {rec_id} status to {status}")
+
+    def submit_feedback(self, rec_id: str, experiment_result: ExperimentResult):
+        """
+        Submit experimental feedback for a recommendation.
+
+        Args:
+            rec_id: Recommendation ID
+            experiment_result: ExperimentResult object
+        """
+        rec = self.get_recommendation(rec_id)
+        if not rec:
+            raise ValueError(f"Recommendation {rec_id} not found")
+
+        rec.experiment_result = experiment_result
+        rec.status = "COMPLETED"
+        rec.updated_at = datetime.now().isoformat()
+
+        self.save_recommendation(rec)
+        logger.info(f"Submitted experimental feedback for {rec_id}")
+
+    def get_statistics(self) -> Dict:
+        """
+        Get summary statistics.
+
+        Returns:
+            Dict with statistics
+        """
+        stats = {"total": len(self.index), "by_status": {}, "by_material": {}}
+
+        for meta in self.index.values():
+            # Count by status
+            status = meta["status"]
+            stats["by_status"][status] = stats["by_status"].get(status, 0) + 1
+
+            # Count by material
+            material = meta.get("target_material", "unknown")
+            stats["by_material"][material] = stats["by_material"].get(material, 0) + 1
+
+        return stats
+
+
+class FeedbackProcessor:
+    """
+    Processes experimental feedback and updates ReasoningBank.
+
+    This component bridges the asynchronous feedback loop:
+    1. Load recommendation + experiment result
+    2. Update trajectory (no binary success/failure, just "experiment_completed")
+    3. Extract data-driven memories using MemoryExtractor
+    4. Consolidate to ReasoningBank
+
+    Key Design:
+    - No binary classification (removed success/failure)
+    - Extract "formulation-condition-performance" mappings
+    - All memories are experiment-validated
+    """
+
+    def __init__(self, agent, rec_manager: RecommendationManager):
+        """
+        Initialize FeedbackProcessor.
+
+        Args:
+            agent: DESAgent instance (for extractor and memory access)
+            rec_manager: RecommendationManager instance
+        """
+        self.agent = agent
+        self.rec_manager = rec_manager
+        logger.info("Initialized FeedbackProcessor")
+
+    def process_feedback(self, rec_id: str) -> Dict:
+        """
+        Process experimental feedback for one recommendation.
+
+        Args:
+            rec_id: Recommendation ID
+
+        Returns:
+            Dict with processing results
+        """
+        # 1. Load recommendation and feedback
+        rec = self.rec_manager.get_recommendation(rec_id)
+        if not rec:
+            raise ValueError(f"Recommendation {rec_id} not found")
+
+        if not rec.experiment_result:
+            raise ValueError(f"No experiment result for {rec_id}")
+
+        logger.info(f"Processing feedback for {rec_id}")
+
+        # 2. Update Trajectory (no binary outcome, unified as "experiment_completed")
+        exp_result = rec.experiment_result
+        rec.trajectory.outcome = "experiment_completed"
+
+        # Add experiment data to trajectory metadata
+        rec.trajectory.metadata["experiment_result"] = exp_result.to_dict()
+        rec.trajectory.metadata["performance_score"] = (
+            exp_result.get_performance_score()
+        )
+        rec.trajectory.metadata["feedback_processed_at"] = datetime.now().isoformat()
+
+        # 3. Extract experiment-based memories
+        logger.info("Extracting experiment-based memories")
+        new_memories = self.agent.extractor.extract_from_experiment(
+            rec.trajectory, exp_result
+        )
+
+        # Tag memories as experiment-validated
+        for memory in new_memories:
+            memory.metadata["source"] = "experiment_validated"
+            memory.metadata["recommendation_id"] = rec_id
+            memory.metadata["performance_score"] = exp_result.get_performance_score()
+            # Key experimental parameters
+            memory.metadata["is_liquid_formed"] = exp_result.is_liquid_formed
+            memory.metadata["solubility"] = exp_result.solubility
+            memory.metadata["experiment_date"] = exp_result.experiment_date
+
+        # 4. Consolidate to ReasoningBank
+        if new_memories:
+            self.agent.memory.consolidate(new_memories)
+            logger.info(
+                f"Consolidated {len(new_memories)} experiment-validated memories"
+            )
+
+            # Auto-save if configured
+            if self.agent.config.get("memory", {}).get("auto_save", False):
+                save_path = self.agent.config["memory"]["persist_path"]
+                self.agent.memory.save(save_path)
+                logger.info(f"Auto-saved memory bank to {save_path}")
+
+        # 5. Save updated recommendation
+        self.rec_manager.save_recommendation(rec)
+
+        return {
+            "recommendation_id": rec_id,
+            "performance_score": exp_result.get_performance_score(),
+            "is_liquid_formed": exp_result.is_liquid_formed,
+            "solubility": exp_result.solubility,
+            "memories_extracted": [m.title for m in new_memories],
+            "num_memories": len(new_memories),
+        }
+
+    def process_all_pending_feedback(self) -> List[Dict]:
+        """
+        Process all COMPLETED recommendations that haven't been processed yet.
+
+        Returns:
+            List of processing results
+        """
+        completed_recs = self.rec_manager.list_recommendations(status="COMPLETED")
+
+        results = []
+        for rec in completed_recs:
+            # Check if already processed
+            if rec.trajectory.metadata.get("feedback_processed_at"):
+                logger.debug(f"Feedback for {rec.recommendation_id} already processed")
+                continue
+
+            try:
+                result = self.process_feedback(rec.recommendation_id)
+                results.append(result)
+            except Exception as e:
+                logger.error(
+                    f"Failed to process feedback for {rec.recommendation_id}: {e}"
+                )
+
+        logger.info(f"Processed {len(results)} pending feedbacks")
+        return results
+
+
+# Example usage
+if __name__ == "__main__":
+    import tempfile
+
+    logging.basicConfig(level=logging.INFO)
+
+    # Create temp storage
+    temp_dir = tempfile.mkdtemp()
+    rec_manager = RecommendationManager(temp_dir)
+
+    # Create sample recommendation
+    from .memory import Trajectory
+
+    traj = Trajectory(
+        task_id="task_001",
+        task_description="Design DES for cellulose",
+        steps=[],
+        outcome="pending",
+        final_result={
+            "formulation": {"HBD": "Urea", "HBA": "ChCl", "molar_ratio": "1:2"}
+        },
+        metadata={},
+    )
+
+    rec = Recommendation(
+        recommendation_id="REC_TEST_001",
+        task={"target_material": "cellulose", "target_temperature": 25},
+        task_id="task_001",
+        formulation={"HBD": "Urea", "HBA": "ChCl", "molar_ratio": "1:2"},
+        reasoning="Good H-bond network",
+        confidence=0.8,
+        trajectory=traj,
+        status="PENDING",
+        created_at=datetime.now().isoformat(),
+        updated_at=datetime.now().isoformat(),
+    )
+
+    # Save recommendation
+    rec_manager.save_recommendation(rec)
+
+    # Submit feedback
+    exp_result = ExperimentResult(
+        is_liquid_formed=True,
+        solubility=6.5,
+        solubility_unit="g/L",
+        properties={"viscosity": 450},
+        experimenter="Dr. Test",
+        notes="Good performance",
+    )
+
+    rec_manager.submit_feedback("REC_TEST_001", exp_result)
+
+    # Load and verify
+    loaded_rec = rec_manager.get_recommendation("REC_TEST_001")
+    print(f"Loaded: {loaded_rec.recommendation_id}")
+    print(f"Status: {loaded_rec.status}")
+    print(f"Performance: {loaded_rec.experiment_result.get_performance_score():.1f}/10")
+
+    # Statistics
+    stats = rec_manager.get_statistics()
+    print(f"Statistics: {stats}")

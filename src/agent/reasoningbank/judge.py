@@ -30,11 +30,7 @@ class LLMJudge:
         temperature: Sampling temperature (0.0 for deterministic)
     """
 
-    def __init__(
-        self,
-        llm_client: Callable[[str], str],
-        temperature: float = 0.0
-    ):
+    def __init__(self, llm_client: Callable[[str], str], temperature: float = 0.0):
         """
         Initialize LLMJudge.
 
@@ -73,7 +69,7 @@ class LLMJudge:
             return {
                 "status": "failure",
                 "thoughts": f"Judge error: {str(e)}",
-                "reason": "Unable to evaluate due to LLM error"
+                "reason": "Unable to evaluate due to LLM error",
             }
 
         # Parse output
@@ -121,7 +117,7 @@ class LLMJudge:
             hba=hba,
             molar_ratio=molar_ratio,
             solubility=solubility,
-            reasoning=reasoning
+            reasoning=reasoning,
         )
 
         return prompt
@@ -179,37 +175,37 @@ Status: SUCCESS"""
                 "action": "Query CoreRAG for H-bond theory",
                 "reasoning": "Need to understand hydrogen bonding for cellulose",
                 "tool": "CoreRAG",
-                "tool_output": "Cellulose has strong H-bond accepting groups..."
+                "tool_output": "Cellulose has strong H-bond accepting groups...",
             },
             {
                 "action": "Propose formulation",
                 "reasoning": "Choline chloride + urea forms strong H-bonds",
-            }
+            },
         ],
         outcome="unknown",  # Will be determined by judge
         final_result={
             "formulation": {
                 "HBD": "Urea",
                 "HBA": "Choline chloride",
-                "molar_ratio": "1:2"
+                "molar_ratio": "1:2",
             },
             "predicted_solubility": "High",
-            "reasoning": "Strong H-bond network suitable for cellulose"
+            "reasoning": "Strong H-bond network suitable for cellulose",
         },
         metadata={
             "target_material": "cellulose",
             "target_temperature": 25,
-            "constraints": {}
-        }
+            "constraints": {},
+        },
     )
 
     # Evaluate
     result = judge.evaluate(trajectory)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("JUDGE EVALUATION RESULT")
-    print("="*60)
+    print("=" * 60)
     print(f"Status: {result['status'].upper()}")
     print(f"Thoughts: {result['thoughts']}")
-    if result.get('reason'):
+    if result.get("reason"):
         print(f"Reason: {result['reason']}")

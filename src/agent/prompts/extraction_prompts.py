@@ -237,3 +237,68 @@ def parse_extracted_memories(llm_output: str) -> list:
         memories.append(current_memory)
 
     return memories
+
+
+# ===== New: Experiment-Based Extraction =====
+
+EXPERIMENT_EXTRACTION_PROMPT = """You are an expert in Deep Eutectic Solvent (DES) formulation design. You will be given a DES design task, the agent's reasoning trajectory, and the **actual experimental results** from laboratory testing.
+
+## Guidelines
+
+Your goal is to extract generalizable insights about **formulation-condition-performance relationships** based on the experimental data.
+
+Focus on:
+1. **Quantitative relationships**: Which formulation achieved what solubility under what conditions?
+2. **Component effects**: How did HBD/HBA choice affect DES formation and solubility?
+3. **Molar ratio effects**: How did the ratio influence performance?
+4. **Temperature effects**: How did temperature affect DES formation?
+5. **Failure analysis**: If DES didn't form, what might be the chemical reason?
+6. **Performance patterns**: What formulation characteristics correlate with better performance?
+
+## Important Notes
+
+- Extract **data-driven insights**, not just chemical theory
+- Include **quantitative values** (solubility, temperature, ratio) in memory content
+- Focus on **transferable patterns** that can guide future formulations
+- You can extract at most 3 memory items
+- Do NOT repeat similar or overlapping items
+- Distinguish between "DES formation success" and "high solubility" — these are different metrics
+
+## Output Format
+
+Your output must strictly follow this Markdown format:
+
+```
+# Memory Item 1
+## Title: <concise identifier with key quantitative info, e.g., "ChCl:Urea (1:2) Achieves 6.5 g/L for Cellulose at 25°C">
+## Description: <one sentence summary including formulation and key performance metric>
+## Content: <2-4 sentences describing the formulation, experimental conditions, and measured results with specific numbers>
+
+# Memory Item 2
+## Title: ...
+## Description: ...
+## Content: ...
+
+# Memory Item 3
+## Title: ...
+## Description: ...
+## Content: ...
+```
+
+## Input
+
+**Task Description:**
+{task_description}
+
+**Target Material:** {target_material}
+**Target Temperature:** {target_temperature}°C
+
+**Agent Trajectory:**
+{trajectory}
+
+**Proposed Formulation:**
+{formulation}
+
+{experiment_summary}
+
+Now, extract data-driven insights from this experimental result:"""

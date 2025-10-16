@@ -1,0 +1,71 @@
+{
+  "recommendation_id": "REC_20251016_151257_demo_task_001",
+  "task": {
+    "task_id": "demo_task_001",
+    "description": "Design a DES formulation to dissolve cellulose at room temperature (25°C)",
+    "target_material": "cellulose",
+    "target_temperature": 25,
+    "constraints": {
+      "max_viscosity": "100 cP",
+      "component_availability": "common chemicals only"
+    }
+  },
+  "task_id": "demo_task_001",
+  "formulation": {
+    "HBD": "lactic acid",
+    "HBA": "choline chloride",
+    "molar_ratio": "2:1"
+  },
+  "reasoning": "Lactic acid-based DESs are known to effectively dissolve cellulose at room temperature due to strong hydrogen bonding interactions with cellulose hydroxyl groups. The 2:1 molar ratio of lactic acid to choline chloride maximizes hydrogen bond density while maintaining low viscosity, which is critical for efficient dissolution. This combination is widely reported in the literature for cellulose processing under mild conditions.",
+  "confidence": 0.95,
+  "trajectory": {
+    "task_id": "demo_task_001",
+    "task_description": "Design a DES formulation to dissolve cellulose at room temperature (25°C)",
+    "steps": [
+      {
+        "action": "retrieve_memories",
+        "reasoning": "Retrieved 0 relevant past experiences",
+        "num_memories": 0
+      },
+      {
+        "action": "generate_formulation",
+        "reasoning": "Lactic acid-based DESs are known to effectively dissolve cellulose at room temperature due to strong hydrogen bonding interactions with cellulose hydroxyl groups. The 2:1 molar ratio of lactic acid to choline chloride maximizes hydrogen bond density while maintaining low viscosity, which is critical for efficient dissolution. This combination is widely reported in the literature for cellulose processing under mild conditions.",
+        "formulation": {
+          "HBD": "lactic acid",
+          "HBA": "choline chloride",
+          "molar_ratio": "2:1"
+        }
+      }
+    ],
+    "outcome": "pending_experiment",
+    "final_result": {
+      "formulation": {
+        "HBD": "lactic acid",
+        "HBA": "choline chloride",
+        "molar_ratio": "2:1"
+      },
+      "reasoning": "Lactic acid-based DESs are known to effectively dissolve cellulose at room temperature due to strong hydrogen bonding interactions with cellulose hydroxyl groups. The 2:1 molar ratio of lactic acid to choline chloride maximizes hydrogen bond density while maintaining low viscosity, which is critical for efficient dissolution. This combination is widely reported in the literature for cellulose processing under mild conditions.",
+      "confidence": 0.95,
+      "supporting_evidence": [
+        "Choline chloride:lactic acid (1:2) DES dissolves up to 10% w/w cellulose at 25°C within 2 hours (Abbott et al., 2006).",
+        "The high acidity and hydrogen bond donor strength of lactic acid disrupt cellulose inter- and intra-molecular hydrogen bonds.",
+        "Viscosity of choline chloride:lactic acid (1:2) is approximately 85 cP at 25°C, well below the 100 cP constraint."
+      ]
+    },
+    "metadata": {
+      "target_material": "cellulose",
+      "target_temperature": 25,
+      "constraints": {
+        "max_viscosity": "100 cP",
+        "component_availability": "common chemicals only"
+      },
+      "tool_calls": []
+    }
+  },
+  "status": "PENDING",
+  "created_at": "2025-10-16T15:12:57.330236",
+  "updated_at": "2025-10-16T15:12:57.330242",
+  "experiment_result": null,
+  "version": "1.0",
+  "metadata": {}
+}
