@@ -6,7 +6,15 @@
     "updated_at": "2025-10-17T15:03:20.304610",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_150320_task_20251017_150204.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_150320_task_20251017_150204.json",
+    "formulation_summary": "Ethylene glycol : Choline chloride (2:1)",
+    "formulation": {
+      "HBD": "Ethylene glycol",
+      "HBA": "Choline chloride",
+      "molar_ratio": "2:1"
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251017_150612_react_test_001": {
     "task_id": "react_test_001",
@@ -15,7 +23,15 @@
     "updated_at": "2025-10-17T15:06:12.520063",
     "target_material": "cellulose",
     "target_temperature": 25,
-    "file": "data\\recommendations\\REC_20251017_150612_react_test_001.json"
+    "file": "data\\recommendations\\REC_20251017_150612_react_test_001.json",
+    "formulation_summary": "lactic acid : choline chloride (2:1)",
+    "formulation": {
+      "HBD": "lactic acid",
+      "HBA": "choline chloride",
+      "molar_ratio": "2:1"
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251017_151547_react_test_001": {
     "task_id": "react_test_001",
@@ -24,7 +40,15 @@
     "updated_at": "2025-10-17T15:15:47.519809",
     "target_material": "cellulose",
     "target_temperature": 25,
-    "file": "data\\recommendations\\REC_20251017_151547_react_test_001.json"
+    "file": "data\\recommendations\\REC_20251017_151547_react_test_001.json",
+    "formulation_summary": "urea : choline chloride (2:1)",
+    "formulation": {
+      "HBD": "urea",
+      "HBA": "choline chloride",
+      "molar_ratio": "2:1"
+    },
+    "confidence": 0.9,
+    "performance_score": null
   },
   "REC_20251017_154805_贵金属_1760687181267_1": {
     "task_id": "贵金属_1760687181267_1",
@@ -33,7 +57,41 @@
     "updated_at": "2025-10-17T15:48:05.640815",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_154805_贵金属_1760687181267_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_154805_贵金属_1760687181267_1.json",
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Zinc chloride (1:2:1:1:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, provides structural framework and stability"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, lowers melting point and enhances fluidity"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD/modifier",
+          "function": "Secondary hydrogen bond donor, increases polarity and solvation power for metals"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD/HBA",
+          "function": "Amphoteric component that enhances complexation with noble metals and further depresses eutectic temperature"
+        },
+        {
+          "name": "Zinc chloride",
+          "role": "neutral/Lewis acid",
+          "function": "Metallic salt additive acting as Lewis acid to promote dissolution of noble metals via coordination"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251017_154948_贵金属_1760687181267_2": {
     "task_id": "贵金属_1760687181267_2",
@@ -42,15 +100,83 @@
     "updated_at": "2025-10-17T15:49:48.567580",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_154948_贵金属_1760687181267_2.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_154948_贵金属_1760687181267_2.json",
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Malonic acid (1:2:1:1:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, provides structural framework"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, lowers viscosity and melting point"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Secondary hydrogen bond donor, enhances solvation power for metals"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD",
+          "function": "Co-donor that improves thermal stability and metal complexation"
+        },
+        {
+          "name": "Malonic acid",
+          "role": "HBD/acidic modifier",
+          "function": "Acidic component to promote dissolution of noble metals via proton-assisted oxidation"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251017_162459_贵金属_1760689426220_1": {
     "task_id": "贵金属_1760689426220_1",
-    "status": "PENDING",
+    "status": "COMPLETED",
     "created_at": "2025-10-17T16:24:59.978727",
-    "updated_at": "2025-10-17T16:24:59.978733",
+    "updated_at": "2025-10-20T16:38:54.110957",
     "target_material": "贵金属",
     "target_temperature": 25.0,
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Zinc chloride (1:2:1:1:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, provides structural framework and low-cost ionic character"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, reduces viscosity and melting point, enhances conductivity"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD/modifier",
+          "function": "Secondary hydrogen bond donor to improve solvation power for metal ions and increase polarity"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD/modifier",
+          "function": "Amide-based donor that enhances nitrogen coordination to noble metals and further depresses eutectic temperature"
+        },
+        {
+          "name": "Zinc chloride",
+          "role": "neutral/Lewis acid",
+          "function": "Metallic salt additive acting as Lewis acid to coordinate with noble metals and promote oxidative dissolution"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": 1.0,
     "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_162459_贵金属_1760689426220_1.json"
   },
   "REC_20251017_165337_cellulose_1760691145359_1": {
@@ -60,7 +186,15 @@
     "updated_at": "2025-10-17T16:53:37.191841",
     "target_material": "cellulose",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_165337_cellulose_1760691145359_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251017_165337_cellulose_1760691145359_1.json",
+    "formulation_summary": "oxalic acid dihydrate : choline chloride (1:1)",
+    "formulation": {
+      "HBD": "oxalic acid dihydrate",
+      "HBA": "choline chloride",
+      "molar_ratio": "1:1"
+    },
+    "confidence": 0.9,
+    "performance_score": null
   },
   "REC_20251018_105112_贵金属_1760755864220_1": {
     "task_id": "贵金属_1760755864220_1",
@@ -69,7 +203,15 @@
     "updated_at": "2025-10-18T10:51:12.351191",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_105112_贵金属_1760755864220_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_105112_贵金属_1760755864220_1.json",
+    "formulation_summary": "乙二醇 : 氯化胆碱 (2:1)",
+    "formulation": {
+      "HBD": "乙二醇",
+      "HBA": "氯化胆碱",
+      "molar_ratio": "2:1"
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251018_105202_贵金属_1760755914978_1": {
     "task_id": "贵金属_1760755914978_1",
@@ -78,7 +220,15 @@
     "updated_at": "2025-10-18T10:52:02.541617",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_105202_贵金属_1760755914978_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_105202_贵金属_1760755914978_1.json",
+    "formulation_summary": "乙二醇 : 氯化胆碱 (2:1)",
+    "formulation": {
+      "HBD": "乙二醇",
+      "HBA": "氯化胆碱",
+      "molar_ratio": "2:1"
+    },
+    "confidence": 0.85,
+    "performance_score": null
   },
   "REC_20251018_121319_贵金属_1760760727201_1": {
     "task_id": "贵金属_1760760727201_1",
@@ -87,7 +237,56 @@
     "updated_at": "2025-10-18T12:13:19.593882",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_121319_贵金属_1760760727201_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_121319_贵金属_1760760727201_1.json",
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Lactic acid + Zinc chloride + Thiourea + Dimethyl sulfoxide (DMSO) (1:2:1.5:1:0.8:0.5:0.7:3)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, low-cost, biodegradable quaternary ammonium salt"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Strong hydrogen bond donor, lowers viscosity and melting point"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Polyol-based donor enhancing solvation of polar species and stabilizing metal complexes"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD",
+          "function": "Amide-type donor aiding in nitrogen coordination to noble metals"
+        },
+        {
+          "name": "Lactic acid",
+          "role": "HBD/acidic modifier",
+          "function": "Carboxylic acid providing protonation capacity and chelating ability for metal dissolution"
+        },
+        {
+          "name": "Zinc chloride",
+          "role": "Lewis acid/neutral (in DES context)",
+          "function": "Enhances oxidative dissolution of noble metals via complexation"
+        },
+        {
+          "name": "Thiourea",
+          "role": "HBD/Lewis base",
+          "function": "Sulfur- and nitrogen-donor ligand promoting selective coordination to gold, platinum, palladium"
+        },
+        {
+          "name": "Dimethyl sulfoxide (DMSO)",
+          "role": "neutral/polar aprotic solvent",
+          "function": "Reduces overall viscosity, improves ionic conductivity and solubility of organometallic species"
+        }
+      ],
+      "molar_ratio": "1:2:1.5:1:0.8:0.5:0.7:3",
+      "num_components": 8
+    },
+    "confidence": 0.78,
+    "performance_score": null
   },
   "REC_20251018_173938_贵金属_1760780314162_1": {
     "task_id": "贵金属_1760780314162_1",
@@ -96,6 +295,233 @@
     "updated_at": "2025-10-18T17:39:38.899513",
     "target_material": "贵金属",
     "target_temperature": 25.0,
-    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_173938_贵金属_1760780314162_1.json"
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251018_173938_贵金属_1760780314162_1.json",
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Lithium nitrate + Thiourea (1:2:1:1:0.5:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, provides structural stability and low-cost base"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, lowers viscosity and melting point"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Secondary hydrogen bond donor, enhances solvation power for metals"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD",
+          "function": "Tertiary hydrogen bond donor, improves thermal stability and metal complexation"
+        },
+        {
+          "name": "Lithium nitrate",
+          "role": "neutral/modifier",
+          "function": "Ionic additive to enhance ionic conductivity and promote noble metal dissolution via coordination"
+        },
+        {
+          "name": "Thiourea",
+          "role": "HBD/complexing agent",
+          "function": "Specialized donor that acts as a ligand for noble metals like Au, Pd, Pt"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5:0.5",
+      "num_components": 6
+    },
+    "confidence": 0.82,
+    "performance_score": null
+  },
+  "REC_20251020_155204_贵金属_贵金属_1760946724258_1": {
+    "task_id": "贵金属_1760946724258_1",
+    "status": "PENDING",
+    "created_at": "2025-10-20T15:53:32.284590",
+    "updated_at": "2025-10-20T15:53:32.297429",
+    "target_material": "贵金属",
+    "target_temperature": 25.0,
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + Malonic acid (1:2:1:1:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor, provides structural stability and low-cost ionic framework"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, lowers viscosity and melting point effectively"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD/modifier",
+          "function": "Secondary HBD to enhance solvation power for metal ions and increase polarity"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD/neutral",
+          "function": "Co-donor and complexing agent that improves coordination with noble metal ions"
+        },
+        {
+          "name": "Malonic acid",
+          "role": "HBD/acidic modifier",
+          "function": "Acidic component to promote dissolution of noble metals via proton-assisted oxidation and chelation"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5",
+      "num_components": 5
+    },
+    "confidence": 0.82,
+    "performance_score": null,
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251020_155204_贵金属_贵金属_1760946724258_1.json"
+  },
+  "REC_20251020_163035_贵金属_贵金属_1760949035738_1": {
+    "task_id": "贵金属_1760949035738_1",
+    "status": "PENDING",
+    "created_at": "2025-10-20T16:31:53.695540",
+    "updated_at": "2025-10-20T16:31:53.708203",
+    "target_material": "贵金属",
+    "target_temperature": 25.0,
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + FeCl₃ (1:2:1:1:0.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor, lowers viscosity"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Secondary hydrogen bond donor, enhances coordination to metals"
+        },
+        {
+          "name": "Urea",
+          "role": "Neutral/coordination enhancer",
+          "function": "Improves solvation and stabilizes metal ions via coordination"
+        },
+        {
+          "name": "FeCl₃",
+          "role": "Lewis acid additive",
+          "function": "Oxidizing agent and complexation site for noble metals"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:0.5",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": null,
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251020_163035_贵金属_贵金属_1760949035738_1.json"
+  },
+  "REC_20251020_175420_贵金属_贵金属_1760954060297_1": {
+    "task_id": "贵金属_1760954060297_1",
+    "status": "GENERATING",
+    "created_at": "2025-10-20T17:54:20.333466",
+    "updated_at": "2025-10-20T17:54:20.333471",
+    "target_material": "贵金属",
+    "target_temperature": 25.0,
+    "formulation_summary": "? : ? (Generating...)",
+    "formulation": {
+      "placeholder": true,
+      "molar_ratio": "Generating..."
+    },
+    "confidence": 0.0,
+    "performance_score": null,
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251020_175420_贵金属_贵金属_1760954060297_1.json"
+  },
+  "REC_20251020_181737_贵金属_贵金属_1760955457134_1": {
+    "task_id": "贵金属_1760955457134_1",
+    "status": "PENDING",
+    "created_at": "2025-10-20T18:18:57.216038",
+    "updated_at": "2025-10-20T18:18:57.228584",
+    "target_material": "贵金属",
+    "target_temperature": 25.0,
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + ZnCl₂ (1:2:1:1:1.0)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor and structural backbone"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Hydrogen bond donor to reduce melting point and enhance fluidity"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Polyol-based hydrogen bond donor improving coordination and metal solvation"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD",
+          "function": "Amide-type hydrogen bond donor aiding eutectic formation and potential weak coordination"
+        },
+        {
+          "name": "ZnCl₂",
+          "role": "neutral/Lewis acid",
+          "function": "Lewis acidic promoter for oxidative dissolution of noble metals"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:1.0",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": null,
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251020_181737_贵金属_贵金属_1760955457134_1.json"
+  },
+  "REC_20251020_182340_贵金属_贵金属_1760955820586_1": {
+    "task_id": "贵金属_1760955820586_1",
+    "status": "PENDING",
+    "created_at": "2025-10-20T18:25:00.170254",
+    "updated_at": "2025-10-20T18:25:00.195959",
+    "target_material": "贵金属",
+    "target_temperature": 25.0,
+    "formulation_summary": "Choline chloride + Ethylene glycol + Glycerol + Urea + ZnCl₂ (1:2:1:1:1.5)",
+    "formulation": {
+      "components": [
+        {
+          "name": "Choline chloride",
+          "role": "HBA",
+          "function": "Primary hydrogen bond acceptor and structural backbone"
+        },
+        {
+          "name": "Ethylene glycol",
+          "role": "HBD",
+          "function": "Primary hydrogen bond donor with low viscosity and good coordination ability"
+        },
+        {
+          "name": "Glycerol",
+          "role": "HBD",
+          "function": "Secondary hydrogen bond donor enhancing polarity and metal complex stabilization"
+        },
+        {
+          "name": "Urea",
+          "role": "HBD",
+          "function": "Amide-based donor promoting melting point depression via diverse H-bonding motifs"
+        },
+        {
+          "name": "ZnCl₂",
+          "role": "neutral/Lewis acid",
+          "function": "Lewis acidic promoter enabling oxidative dissolution of noble metals"
+        }
+      ],
+      "molar_ratio": "1:2:1:1:1.5",
+      "num_components": 5
+    },
+    "confidence": 0.85,
+    "performance_score": null,
+    "file": "C:\\D\\CursorProj\\DES-system-design\\data\\recommendations\\REC_20251020_182340_贵金属_贵金属_1760955820586_1.json"
   }
 }

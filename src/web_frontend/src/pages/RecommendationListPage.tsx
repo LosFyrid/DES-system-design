@@ -49,6 +49,59 @@ function RecommendationListPage() {
   // Track if there are any generating tasks for polling
   const [hasGeneratingTasks, setHasGeneratingTasks] = useState(false);
 
+  // Status counts for all tabs (always displayed)
+  const [statusCounts, setStatusCounts] = useState<{
+    all: number;
+    generating: number;
+    pending: number;
+    completed: number;
+    failed: number;
+  }>({
+    all: 0,
+    generating: 0,
+    pending: 0,
+    completed: 0,
+    failed: 0,
+  });
+
+  // Fetch counts for all statuses (fast - single API call)
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      // Use new fast statistics API (single call, index only)
+      const statsResp = await recommendationService.getStatistics({
+        material: materialFilter,
+      });
+
+      setStatusCounts({
+        all: statsResp.data.all,
+        generating: statsResp.data.GENERATING,
+        pending: statsResp.data.PENDING,
+        completed: statsResp.data.COMPLETED,
+        failed: statsResp.data.FAILED,
+      });
+
+      // Check if need to start/stop polling
+      if (statsResp.data.GENERATING > 0) {
+        setHasGeneratingTasks(true);
+        if (!pollingInterval) {
+          const interval = setInterval(() => {
+            fetchRecommendations();
+            fetchStatusCounts();
+          }, 5000);
+          setPollingInterval(interval);
+        }
+      } else {
+        setHasGeneratingTasks(false);
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch status counts:', error);
+    }
+  }, [materialFilter, pollingInterval]);
+
   // Determine status filter based on active tab
   const getStatusFilter = useCallback(() => {
     switch (activeTab) {
@@ -79,33 +132,15 @@ function RecommendationListPage() {
       setRecommendations(response.data.items);
       setTotal(response.data.pagination.total);
 
-      // Check if there are any GENERATING recommendations
-      const hasGenerating = response.data.items.some(
-        (rec) => rec.status === 'GENERATING'
-      );
-      setHasGeneratingTasks(hasGenerating);
-
-      // Set up or clear polling based on GENERATING status
-      if (hasGenerating) {
-        if (!pollingInterval) {
-          const interval = setInterval(() => {
-            fetchRecommendations();
-          }, 5000);
-          setPollingInterval(interval);
-        }
-      } else {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-      }
+      // Fetch status counts for tab badges
+      await fetchStatusCounts();
     } catch (error) {
       console.error('Failed to fetch recommendations:', error);
       message.error('获取推荐列表失败');
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, materialFilter, getStatusFilter, pollingInterval]);
+  }, [currentPage, pageSize, materialFilter, getStatusFilter, fetchStatusCounts]);
 
   // Initial fetch and when dependencies change
   useEffect(() => {
@@ -172,6 +207,7 @@ function RecommendationListPage() {
         const colorMap: Record<string, string> = {
           GENERATING: 'blue',
           PENDING: 'orange',
+          PROCESSING: 'cyan',
           COMPLETED: 'green',
           CANCELLED: 'red',
           FAILED: 'red',
@@ -179,6 +215,7 @@ function RecommendationListPage() {
         const labelMap: Record<string, string> = {
           GENERATING: '生成中',
           PENDING: '待实验',
+          PROCESSING: '处理中',
           COMPLETED: '已完成',
           CANCELLED: '已取消',
           FAILED: '生成失败',
@@ -186,6 +223,7 @@ function RecommendationListPage() {
         const iconMap: Record<string, React.ReactNode> = {
           GENERATING: <SyncOutlined spin />,
           PENDING: <ClockCircleOutlined />,
+          PROCESSING: <LoadingOutlined spin />,
           COMPLETED: <CheckCircleOutlined />,
           CANCELLED: <CloseCircleOutlined />,
           FAILED: <ExclamationCircleOutlined />,
@@ -214,7 +252,7 @@ function RecommendationListPage() {
             type="link"
             icon={<EyeOutlined />}
             onClick={() => navigate(`/recommendations/${record.recommendation_id}`)}
-            disabled={record.status === 'GENERATING'}
+            disabled={record.status === 'GENERATING' || record.status === 'PROCESSING'}
           >
             详情
           </Button>
@@ -227,9 +265,23 @@ function RecommendationListPage() {
               反馈
             </Button>
           )}
+          {record.status === 'COMPLETED' && (
+            <Button
+              type="link"
+              icon={<ExperimentOutlined />}
+              onClick={() => navigate(`/feedback/${record.recommendation_id}`)}
+            >
+              更新
+            </Button>
+          )}
           {record.status === 'GENERATING' && (
             <Text type="secondary" style={{ fontSize: '12px' }}>
               生成中...
+            </Text>
+          )}
+          {record.status === 'PROCESSING' && (
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              <LoadingOutlined spin /> 处理中...
             </Text>
           )}
         </Space>
@@ -237,18 +289,18 @@ function RecommendationListPage() {
     },
   ];
 
-  // Tab items configuration - each tab shows its own filtered total
+  // Tab items configuration - always show counts from statusCounts
   const tabItems = [
     {
       key: 'all',
-      label: `全部${activeTab === 'all' ? ` (${total})` : ''}`,
+      label: `全部 (${statusCounts.all})`,
       icon: null,
     },
     {
       key: 'generating',
       label: (
         <span>
-          <SyncOutlined spin={hasGeneratingTasks && activeTab === 'generating'} /> 生成中{activeTab === 'generating' ? ` (${total})` : ''}
+          <SyncOutlined spin={statusCounts.generating > 0} /> 生成中 ({statusCounts.generating})
         </span>
       ),
     },
@@ -256,7 +308,7 @@ function RecommendationListPage() {
       key: 'pending',
       label: (
         <span>
-          <ClockCircleOutlined /> 待实验{activeTab === 'pending' ? ` (${total})` : ''}
+          <ClockCircleOutlined /> 待实验 ({statusCounts.pending})
         </span>
       ),
     },
@@ -264,7 +316,7 @@ function RecommendationListPage() {
       key: 'completed',
       label: (
         <span>
-          <CheckCircleOutlined /> 已完成{activeTab === 'completed' ? ` (${total})` : ''}
+          <CheckCircleOutlined /> 已完成 ({statusCounts.completed})
         </span>
       ),
     },
@@ -272,7 +324,7 @@ function RecommendationListPage() {
       key: 'failed',
       label: (
         <span>
-          <ExclamationCircleOutlined /> 失败{activeTab === 'failed' ? ` (${total})` : ''}
+          <ExclamationCircleOutlined /> 失败 ({statusCounts.failed})
         </span>
       ),
     },

@@ -41,7 +41,7 @@ export interface RecommendationSummary {
   target_temperature: number;
   formulation: FormulationData;
   confidence: number;
-  status: 'GENERATING' | 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
+  status: 'GENERATING' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
   created_at: string;
   updated_at: string;
   performance_score?: number;
@@ -67,6 +67,13 @@ export interface TaskResponse {
 // ============================================
 // Recommendation Related Types
 // ============================================
+
+export interface MemoryItemSummary {
+  title: string;
+  description: string;
+  content: string;
+  is_from_success: boolean;
+}
 
 export interface TrajectoryStep {
   action: string;
@@ -99,7 +106,8 @@ export interface RecommendationDetail {
   reasoning: string;
   confidence: number;
   supporting_evidence: string[];
-  status: 'GENERATING' | 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
+  memories_used?: MemoryItemSummary[];
+  status: 'GENERATING' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
   trajectory: Trajectory;
   experiment_result?: ExperimentResult;
   created_at: string;
@@ -170,6 +178,37 @@ export interface FeedbackResponse {
   data: FeedbackData;
 }
 
+export interface FeedbackAsyncResponse {
+  status: 'accepted';
+  recommendation_id: string;
+  processing: 'started';
+  message: string;
+}
+
+export interface FeedbackStatusData {
+  status: 'processing' | 'completed' | 'failed';
+  started_at: string;
+  completed_at?: string;
+  failed_at?: string;
+  result?: {
+    recommendation_id: string;
+    solubility?: number;
+    solubility_unit: string;
+    is_liquid_formed?: boolean;
+    memories_extracted: string[];
+    num_memories: number;
+  };
+  error?: string;
+  is_update?: boolean;
+  deleted_memories?: number;
+}
+
+export interface FeedbackStatusResponse {
+  status: string;
+  message?: string;
+  data: FeedbackStatusData;
+}
+
 // ============================================
 // Statistics Related Types
 // ============================================
@@ -186,6 +225,7 @@ export interface SummaryStatistics {
 export interface PerformanceTrendPoint {
   date: string;
   avg_solubility: number;
+  solubility_unit: string;
   avg_performance_score: number;
   experiment_count: number;
   liquid_formation_rate: number;
@@ -194,6 +234,7 @@ export interface PerformanceTrendPoint {
 export interface TopFormulation {
   formulation: string;
   avg_performance: number;
+  solubility_unit: string;
   success_count: number;
 }
 
@@ -215,6 +256,80 @@ export interface PerformanceTrendResponse {
   status: string;
   message: string;
   data: PerformanceTrendPoint[];
+}
+
+// ============================================
+// Memory Management Types
+// ============================================
+
+export interface MemoryItemDetail {
+  title: string;
+  description: string;
+  content: string;
+  is_from_success: boolean;
+  source_task_id?: string;
+  created_at: string;
+  metadata: Record<string, any>;
+}
+
+export interface MemoryItemCreate {
+  title: string;
+  description: string;
+  content: string;
+  is_from_success?: boolean;
+  source_task_id?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface MemoryItemUpdate {
+  description?: string;
+  content?: string;
+  is_from_success?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface MemoryListData {
+  items: MemoryItemDetail[];
+  pagination: {
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  };
+  filters: Record<string, any>;
+}
+
+export interface MemoryListResponse {
+  status: string;
+  message: string;
+  data: MemoryListData;
+}
+
+export interface MemoryDetailResponse {
+  status: string;
+  message: string;
+  data: MemoryItemDetail;
+}
+
+export interface MemoryCreateResponse {
+  status: string;
+  message: string;
+  data: MemoryItemDetail;
+}
+
+export interface MemoryUpdateResponse {
+  status: string;
+  message: string;
+  data: MemoryItemDetail;
+}
+
+export interface MemoryDeleteResponse {
+  status: string;
+  message: string;
+  data: {
+    title: string;
+    deleted_at: string;
+  };
 }
 
 // ============================================

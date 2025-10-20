@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "max_items": 1000,
+  "num_memories": 3,
+  "memories": [
+    {
+      "title": "ChCl:EG:Gly:Urea:ZnCl₂ (1:2:1:1:0.5) Forms DES at 25°C with 0.5 g/L Noble Metal Solubility",
+      "description": "A 5-component DES with choline chloride, ethylene glycol, glycerol, urea, and zinc chloride in a 1:2:1:1:0.5 molar ratio successfully formed a liquid solvent at 25°C and achieved 0.5 g/L solubility for noble metals.",
+      "content": "The formulation consisted of choline chloride (HBA), ethylene glycol and glycerol (HBDs), urea (coordination enhancer), and ZnCl₂ (Lewis acid additive) at a molar ratio of 1:2:1:1:0.5. The mixture formed a homogeneous liquid at 25°C, confirming successful DES formation under ambient conditions. Experimental testing showed a noble metal solubility of 0.5 g/L, indicating moderate solvation capability despite the complexity of the system.",
+      "source_task_id": "贵金属_1760689426220_1",
+      "is_from_success": true,
+      "created_at": "2025-10-20T14:31:45.005503",
+      "embedding": null,
+      "metadata": {
+        "target_material": "贵金属",
+        "extraction_type": "experiment_feedback",
+        "solubility": 0.5,
+        "solubility_unit": "g/L",
+        "is_liquid_formed": true,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251017_162459_贵金属_1760689426220_1",
+        "experiment_date": "2025-10-20T14:31:16.502631"
+      }
+    },
+    {
+      "title": "Inclusion of ZnCl₂ at 0.5 Molar Ratio Enables DES Formation but Limits Noble Metal Solubility to 0.5 g/L",
+      "description": "Incorporating ZnCl₂ as a Lewis acid component in a multi-HBD/HBA DES enables phase stability at 25°C but may limit solubility enhancement for noble metals.",
+      "content": "The addition of ZnCl₂ at a 0.5 molar ratio relative to choline chloride contributed to eutectic depression and successful liquid formation at room temperature, likely due to strong coordination interactions. However, the measured solubility of noble metals was only 0.5 g/L, suggesting that while ZnCl₂ supports DES formation, its concentration or interaction strength may restrict free coordination sites or generate less effective oxidizing species for noble metal dissolution.",
+      "source_task_id": "贵金属_1760689426220_1",
+      "is_from_success": true,
+      "created_at": "2025-10-20T14:31:45.005798",
+      "embedding": null,
+      "metadata": {
+        "target_material": "贵金属",
+        "extraction_type": "experiment_feedback",
+        "solubility": 0.5,
+        "solubility_unit": "g/L",
+        "is_liquid_formed": true,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251017_162459_贵金属_1760689426220_1",
+        "experiment_date": "2025-10-20T14:31:16.502631"
+      }
+    },
+    {
+      "title": "Multi-HBD System (EG:Gly:Urea) at 2:1:1 Ratio with ChCl Yields Functional DES at 25°C",
+      "description": "A hydrogen bond donor blend of ethylene glycol, glycerol, and urea in a 2:1:1 ratio with choline chloride produces a viable DES matrix at ambient temperature.",
+      "content": "The combination of ethylene glycol (2 mol), glycerol (1 mol), and urea (1 mol) with choline chloride (1 mol) effectively suppressed crystallization and produced a stable liquid DES at 25°C. This indicates synergistic hydrogen bonding between multiple HBDs and the HBA, even in complex mixtures. The system enabled measurable noble metal solubility (0.5 g/L), demonstrating that carefully balanced multi-HBD formulations can maintain fluidity and functionality at room temperature. ```",
+      "source_task_id": "贵金属_1760689426220_1",
+      "is_from_success": true,
+      "created_at": "2025-10-20T14:31:45.006114",
+      "embedding": null,
+      "metadata": {
+        "target_material": "贵金属",
+        "extraction_type": "experiment_feedback",
+        "solubility": 0.5,
+        "solubility_unit": "g/L",
+        "is_liquid_formed": true,
+        "source": "experiment_validated",
+        "recommendation_id": "REC_20251017_162459_贵金属_1760689426220_1",
+        "experiment_date": "2025-10-20T14:31:16.502631"
+      }
+    }
+  ]
+}

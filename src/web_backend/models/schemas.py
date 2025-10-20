@@ -202,6 +202,14 @@ class ExperimentResultData(BaseModel):
     performance_score: float = Field(..., ge=0.0, le=10.0, description="Performance score (0-10)")
 
 
+class MemoryItemSummary(BaseModel):
+    """Summary of a memory item used in recommendation"""
+    title: str = Field(..., description="Memory title")
+    description: str = Field(..., description="One-sentence description")
+    content: str = Field(..., description="Detailed content")
+    is_from_success: bool = Field(..., description="Whether from successful experiment")
+
+
 class RecommendationDetail(BaseModel):
     """Detailed recommendation data"""
     recommendation_id: str
@@ -210,6 +218,7 @@ class RecommendationDetail(BaseModel):
     reasoning: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     supporting_evidence: List[str]
+    memories_used: Optional[List[MemoryItemSummary]] = Field(default_factory=list, description="Memories retrieved and used for this recommendation")
     status: str
     trajectory: Trajectory
     experiment_result: Optional[ExperimentResultData] = None
@@ -298,6 +307,31 @@ class FeedbackResponse(BaseResponse):
     data: FeedbackData
 
 
+class FeedbackAsyncResponse(BaseResponse):
+    """Response model for async feedback submission"""
+    status: str = Field(default="accepted")
+    recommendation_id: str = Field(..., description="Recommendation ID")
+    processing: str = Field(default="started", description="Processing status")
+
+
+class FeedbackStatusData(BaseModel):
+    """Feedback processing status data"""
+    status: str = Field(..., description="processing|completed|failed")
+    started_at: str = Field(..., description="Processing start time")
+    completed_at: Optional[str] = Field(None, description="Processing completion time")
+    failed_at: Optional[str] = Field(None, description="Processing failure time")
+    result: Optional[FeedbackData] = Field(None, description="Processing result (if completed)")
+    error: Optional[str] = Field(None, description="Error message (if failed)")
+    is_update: Optional[bool] = Field(None, description="Whether this is an update operation")
+    deleted_memories: Optional[int] = Field(None, description="Number of deleted memories (if update)")
+
+
+class FeedbackStatusResponse(BaseResponse):
+    """Response model for feedback processing status"""
+    status: str = Field(default="success")
+    data: FeedbackStatusData
+
+
 # ===== Statistics Models =====
 
 class SummaryStatistics(BaseModel):
@@ -314,6 +348,7 @@ class PerformanceTrendPoint(BaseModel):
     """Single point in performance trend"""
     date: str = Field(..., description="Date (YYYY-MM-DD)")
     avg_solubility: float = Field(..., ge=0.0)
+    solubility_unit: str = Field(default="g/L", description="Unit for solubility (common unit if mixed)")
     avg_performance_score: float = Field(..., ge=0.0, le=10.0)
     experiment_count: int = Field(..., ge=0)
     liquid_formation_rate: float = Field(..., ge=0.0, le=1.0)
@@ -322,7 +357,8 @@ class PerformanceTrendPoint(BaseModel):
 class TopFormulation(BaseModel):
     """Top performing formulation"""
     formulation: str = Field(..., description="Formulation string (e.g., 'ChCl:Urea (1:2)')")
-    avg_performance: float = Field(..., ge=0.0, le=10.0)
+    avg_performance: float = Field(..., ge=0.0, le=10.0, description="Average solubility (note: field name kept for API compatibility)")
+    solubility_unit: str = Field(default="g/L", description="Unit for avg_performance (solubility)")
     success_count: int = Field(..., ge=0)
 
 
@@ -373,3 +409,81 @@ class LoadHistoricalDataResponse(BaseResponse):
     """Response model for historical data loading"""
     status: str = Field(default="success")
     data: LoadHistoricalDataResult
+
+
+# ===== Memory Management Models =====
+
+class MemoryItemDetail(BaseModel):
+    """Detailed memory item for management"""
+    title: str = Field(..., min_length=1, max_length=200, description="Memory title")
+    description: str = Field(..., min_length=1, max_length=500, description="One-sentence description")
+    content: str = Field(..., min_length=1, max_length=2000, description="Detailed content (1-5 sentences)")
+    is_from_success: bool = Field(default=True, description="Whether from successful experiment")
+    source_task_id: Optional[str] = Field(None, description="Source task/recommendation ID")
+    created_at: str = Field(..., description="Creation timestamp")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+
+
+class MemoryItemCreate(BaseModel):
+    """Request model for creating a memory"""
+    title: str = Field(..., min_length=1, max_length=200, description="Memory title (must be unique)")
+    description: str = Field(..., min_length=1, max_length=500, description="One-sentence description")
+    content: str = Field(..., min_length=1, max_length=2000, description="Detailed content")
+    is_from_success: bool = Field(default=True, description="Whether from successful experiment")
+    source_task_id: Optional[str] = Field(None, description="Source task/recommendation ID")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
+
+
+class MemoryItemUpdate(BaseModel):
+    """Request model for updating a memory"""
+    description: Optional[str] = Field(None, min_length=1, max_length=500, description="One-sentence description")
+    content: Optional[str] = Field(None, min_length=1, max_length=2000, description="Detailed content")
+    is_from_success: Optional[bool] = Field(None, description="Whether from successful experiment")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata to merge")
+
+
+class MemoryListData(BaseModel):
+    """Data for memory list response"""
+    items: List[MemoryItemDetail]
+    pagination: Dict[str, int] = Field(
+        ...,
+        description="Pagination info",
+        json_schema_extra={"example": {"total": 50, "page": 1, "page_size": 20, "total_pages": 3}}
+    )
+    filters: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Applied filters"
+    )
+
+
+class MemoryListResponse(BaseResponse):
+    """Response model for memory list"""
+    status: str = Field(default="success")
+    data: MemoryListData
+
+
+class MemoryDetailResponse(BaseResponse):
+    """Response model for single memory detail"""
+    status: str = Field(default="success")
+    data: MemoryItemDetail
+
+
+class MemoryCreateResponse(BaseResponse):
+    """Response model for memory creation"""
+    status: str = Field(default="success")
+    data: MemoryItemDetail
+    message: str = Field(default="Memory created successfully")
+
+
+class MemoryUpdateResponse(BaseResponse):
+    """Response model for memory update"""
+    status: str = Field(default="success")
+    data: MemoryItemDetail
+    message: str = Field(default="Memory updated successfully")
+
+
+class MemoryDeleteResponse(BaseResponse):
+    """Response model for memory deletion"""
+    status: str = Field(default="success")
+    data: Dict[str, str] = Field(..., description="Deletion confirmation")
+    message: str = Field(default="Memory deleted successfully")

@@ -105,7 +105,11 @@ class AgentLoader:
             memory_config = agent_config.get_memory_config()
 
             # Initialize ReasoningBank components
-            memory_bank = ReasoningBank()
+            # CRITICAL: Pass embedding_func to enable automatic embedding generation
+            memory_bank = ReasoningBank(
+                embedding_func=embedding_client.embed,  # Enable embedding for new memories
+                max_items=memory_config.get("max_items", 1000)
+            )
             retriever = MemoryRetriever(
                 bank=memory_bank,
                 embedding_func=embedding_client.embed  # Use embedding client's embed method

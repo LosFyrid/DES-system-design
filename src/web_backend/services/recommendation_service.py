@@ -17,9 +17,10 @@ from models.schemas import (
     ComponentData,
     Trajectory,
     TrajectoryStep,
-    ExperimentResultData
+    ExperimentResultData,
+    MemoryItemSummary
 )
-from utils.agent_loader import get_rec_manager
+from utils.agent_loader import get_rec_manager, get_agent
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class RecommendationService:
         page_size: int = 20
     ) -> RecommendationListData:
         """
-        List recommendations with filtering and pagination.
+        List recommendations with filtering and pagination (fast - index only).
 
         Args:
             status: Filter by status (PENDING, COMPLETED, CANCELLED)
@@ -51,6 +52,85 @@ class RecommendationService:
             RecommendationListData with items and pagination
         """
         logger.info(f"Listing recommendations: status={status}, material={material}, page={page}")
+
+        try:
+            # Get recommendation manager
+            rec_manager = get_rec_manager()
+
+            # Use fast list method (index only, no file I/O)
+            result = rec_manager.list_recommendations_fast(
+                status=status,
+                target_material=material,
+                page=page,
+                page_size=page_size
+            )
+
+            # Convert index metadata to RecommendationSummary objects
+            items = []
+            for meta in result["items"]:
+                # Parse formulation from index
+                formulation_dict = meta.get("formulation", {})
+
+                # Check if multi-component or binary
+                if "components" in formulation_dict and formulation_dict.get("components"):
+                    # Multi-component
+                    components = [
+                        ComponentData(
+                            name=comp.get("name", "Unknown"),
+                            role=comp.get("role", "Unknown"),
+                            function=comp.get("function")
+                        )
+                        for comp in formulation_dict["components"]
+                    ]
+                    formulation = FormulationData(
+                        components=components,
+                        num_components=formulation_dict.get("num_components", len(components)),
+                        molar_ratio=formulation_dict.get("molar_ratio", "Unknown")
+                    )
+                else:
+                    # Binary formulation
+                    formulation = FormulationData(
+                        HBD=formulation_dict.get("HBD", "Unknown"),
+                        HBA=formulation_dict.get("HBA", "Unknown"),
+                        molar_ratio=formulation_dict.get("molar_ratio", "Unknown")
+                    )
+
+                summary = RecommendationSummary(
+                    recommendation_id=meta["recommendation_id"],
+                    task_id=meta["task_id"],
+                    target_material=meta.get("target_material", "unknown"),
+                    target_temperature=meta.get("target_temperature", 25.0),
+                    formulation=formulation,
+                    confidence=meta.get("confidence", 0.0),
+                    status=meta["status"],
+                    created_at=meta["created_at"],
+                    updated_at=meta["updated_at"],
+                    performance_score=meta.get("performance_score")
+                )
+                items.append(summary)
+
+            return RecommendationListData(
+                items=items,
+                pagination=result["pagination"]
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to list recommendations: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to list recommendations: {str(e)}")
+
+    def list_recommendations_old(
+        self,
+        status: Optional[str] = None,
+        material: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> RecommendationListData:
+        """
+        [DEPRECATED] List recommendations (old method - loads full files).
+
+        Kept for reference. Use list_recommendations() instead.
+        """
+        logger.info(f"Listing recommendations (OLD): status={status}, material={material}, page={page}")
 
         try:
             # Get recommendation manager
@@ -232,6 +312,28 @@ class RecommendationService:
                     performance_score=exp.get_performance_score()
                 )
 
+            # Get memories_used from trajectory final_result
+            memories_used_titles = rec.trajectory.final_result.get("memories_used", [])
+            memories_used = []
+
+            if memories_used_titles:
+                try:
+                    # Get agent to access memory bank
+                    agent = get_agent()
+                    for title in memories_used_titles:
+                        memory = agent.memory.get_memory_by_title(title)
+                        if memory:
+                            memories_used.append(MemoryItemSummary(
+                                title=memory.title,
+                                description=memory.description,
+                                content=memory.content,
+                                is_from_success=memory.is_from_success
+                            ))
+                        else:
+                            logger.warning(f"Memory with title '{title}' not found in ReasoningBank")
+                except Exception as e:
+                    logger.error(f"Failed to retrieve memory details: {e}")
+
             # Build detail
             detail = RecommendationDetail(
                 recommendation_id=rec.recommendation_id,
@@ -240,6 +342,7 @@ class RecommendationService:
                 reasoning=rec.reasoning,
                 confidence=rec.confidence,
                 supporting_evidence=rec.trajectory.final_result.get("supporting_evidence", []),
+                memories_used=memories_used,
                 status=rec.status,
                 trajectory=trajectory,
                 experiment_result=experiment_result,
@@ -310,6 +413,34 @@ class RecommendationService:
         except Exception as e:
             logger.error(f"Failed to cancel recommendation: {e}", exc_info=True)
             raise RuntimeError(f"Failed to cancel recommendation: {str(e)}")
+
+    def get_statistics_fast(self, material: Optional[str] = None) -> Dict[str, int]:
+        """
+        Get lightweight statistics from index only (fast - no file I/O).
+
+        Args:
+            material: Optional material filter
+
+        Returns:
+            Dict with counts by status
+
+        Raises:
+            RuntimeError: If retrieval fails
+        """
+        logger.info(f"Getting fast statistics: material={material}")
+
+        try:
+            # Get recommendation manager
+            rec_manager = get_rec_manager()
+
+            # Get statistics from index only
+            stats = rec_manager.get_statistics_fast(material=material)
+
+            return stats
+
+        except Exception as e:
+            logger.error(f"Failed to get statistics: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to get statistics: {str(e)}")
 
 
 # Singleton instance

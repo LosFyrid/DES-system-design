@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { statisticsService } from '../services';
-import type { StatisticsData, PerformanceTrendPoint } from '../types';
+import type { StatisticsData, PerformanceTrendPoint, TopFormulation } from '../types';
 
 const { Title, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -99,21 +99,11 @@ function StatisticsPage() {
       title: '平均溶解度',
       dataIndex: 'avg_solubility',
       key: 'avg_solubility',
-      render: (val: number) => val.toFixed(2),
-      sorter: (a: PerformanceTrendPoint, b: PerformanceTrendPoint) =>
-        a.avg_solubility - b.avg_solubility,
-    },
-    {
-      title: '平均性能得分',
-      dataIndex: 'avg_performance_score',
-      key: 'avg_performance_score',
-      render: (val: number) => (
-        <Tag color={val >= 7 ? 'green' : val >= 5 ? 'orange' : 'red'}>
-          {val.toFixed(2)}
-        </Tag>
+      render: (val: number, record: PerformanceTrendPoint) => (
+        <Tag color="blue">{val.toFixed(2)} {record.solubility_unit}</Tag>
       ),
       sorter: (a: PerformanceTrendPoint, b: PerformanceTrendPoint) =>
-        a.avg_performance_score - b.avg_performance_score,
+        a.avg_solubility - b.avg_solubility,
     },
     {
       title: '液体形成率',
@@ -140,11 +130,11 @@ function StatisticsPage() {
       render: (text: string) => <Typography.Text strong>{text}</Typography.Text>,
     },
     {
-      title: '平均性能得分',
+      title: '平均溶解度',
       dataIndex: 'avg_performance',
       key: 'avg_performance',
-      render: (val: number) => (
-        <Tag color="green">{val.toFixed(2)}</Tag>
+      render: (val: number, record: TopFormulation) => (
+        <Tag color="blue">{val.toFixed(2)} {record.solubility_unit}</Tag>
       ),
     },
     {
@@ -206,23 +196,6 @@ function StatisticsPage() {
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12}>
-          <Card>
-            <Statistic
-              title="平均性能得分"
-              value={statistics.summary.average_performance_score.toFixed(2)}
-              suffix="/ 10.0"
-              valueStyle={{
-                color:
-                  statistics.summary.average_performance_score >= 7
-                    ? '#52c41a'
-                    : statistics.summary.average_performance_score >= 5
-                    ? '#faad14'
-                    : '#ff4d4f',
-              }}
-            />
-          </Card>
-        </Col>
         <Col xs={24} sm={12}>
           <Card>
             <Statistic

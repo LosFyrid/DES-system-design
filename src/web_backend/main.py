@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 
 from config import get_web_config
 from utils.agent_loader import initialize_agent
-from api import tasks, recommendations, feedback, statistics
+from api import tasks, recommendations, feedback, statistics, memories
 
 # Configure logging
 web_config = get_web_config()
@@ -95,6 +95,12 @@ app.include_router(
     statistics.router,
     prefix="/api/v1/statistics",
     tags=["Statistics"]
+)
+
+app.include_router(
+    memories.router,
+    prefix="/api/v1/memories",
+    tags=["Memories"]
 )
 
 # Root endpoint

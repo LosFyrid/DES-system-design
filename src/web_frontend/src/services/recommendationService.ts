@@ -16,6 +16,20 @@ export interface RecommendationListParams {
   page_size?: number;
 }
 
+export interface RecommendationStatistics {
+  all: number;
+  GENERATING: number;
+  PENDING: number;
+  COMPLETED: number;
+  FAILED: number;
+  CANCELLED: number;
+}
+
+export interface StatisticsResponse {
+  status: string;
+  data: RecommendationStatistics;
+}
+
 export const recommendationService = {
   /**
    * Get list of recommendations with optional filters and pagination
@@ -53,6 +67,20 @@ export const recommendationService = {
   ): Promise<CancelRecommendationResponse> => {
     const response = await api.patch<CancelRecommendationResponse>(
       `/api/v1/recommendations/${recommendationId}/cancel`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get recommendation statistics (fast - index only)
+   * GET /api/v1/recommendations/statistics
+   */
+  getStatistics: async (params?: {
+    material?: string;
+  }): Promise<StatisticsResponse> => {
+    const response = await api.get<StatisticsResponse>(
+      '/api/v1/recommendations/statistics',
+      { params }
     );
     return response.data;
   },

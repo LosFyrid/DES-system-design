@@ -140,6 +140,17 @@ class DESAgent:
         failed_theory = knowledge_state.get('failed_theory_attempts', 0)
         failed_literature = knowledge_state.get('failed_literature_attempts', 0)
 
+        # Format memory summary
+        memory_summary = ""
+        if knowledge_state['memories'] and len(knowledge_state['memories']) > 0:
+            memory_summary = "\n**Retrieved Memories Summary**:\n"
+            for i, mem in enumerate(knowledge_state['memories'][:3], 1):
+                solubility = mem.metadata.get('solubility', 'N/A')
+                sol_unit = mem.metadata.get('solubility_unit', '')
+                memory_summary += f"  {i}. {mem.title[:80]}... (溶解度: {solubility} {sol_unit})\n"
+            if len(knowledge_state['memories']) > 3:
+                memory_summary += f"  ... and {len(knowledge_state['memories']) - 3} more\n"
+
         think_prompt = f"""You are a DES (Deep Eutectic Solvent) formulation expert planning your research approach.
 
 **Task**: {task['description']}
@@ -151,6 +162,7 @@ class DESAgent:
 
 **Current Knowledge State**:
 - Memories retrieved: {knowledge_state['memories_retrieved']} ({len(knowledge_state['memories'] or [])} items)
+{memory_summary}
 - Theoretical knowledge (CoreRAG): {theory_summary} (failed attempts: {failed_theory})
 - Literature knowledge (LargeRAG): {literature_summary} (failed attempts: {failed_literature})
 - Formulation candidates generated: {len(knowledge_state['formulation_candidates'])}
@@ -160,7 +172,7 @@ class DESAgent:
 {self._format_observations(knowledge_state['observations'][-2:] if len(knowledge_state['observations']) > 0 else [])}
 
 **Available Actions**:
-1. **retrieve_memories** - Get past experiences from ReasoningBank
+1. **retrieve_memories** - Get past experiences from ReasoningBank (validated experimental data)
 2. **query_theory** - Query CoreRAG ontology for theoretical principles
 3. **query_literature** - Query LargeRAG for literature data
 4. **query_parallel** - Query both CoreRAG and LargeRAG simultaneously
@@ -169,15 +181,19 @@ class DESAgent:
 7. **finish** - Complete task (only if formulation is ready)
 
 **Tool Characteristics**:
-- **ReasoningBank (retrieve_memories)**: Fast retrieval of validated past experiments
+- **ReasoningBank (retrieve_memories)**: Instant retrieval of validated past experiments - **MOST RELIABLE**
 - **LargeRAG (query_literature)**: Fast vector search (~1-2 seconds) across 10,000+ papers
 - **CoreRAG (query_theory)**: Deep ontology reasoning (~5-10 minutes per query)
 
-**IMPORTANT: Research Requirements**:
-**DES formulation design REQUIRES both theoretical understanding AND empirical precedents.**
-- CoreRAG provides theoretical foundations (hydrogen bonding, component interactions) - **ESSENTIAL** for scientific rigor
-- LargeRAG provides empirical precedents (reported formulations, experimental conditions)
-- **You MUST query both tools before generating formulation** (unless you have high-quality memories that contain both theory and data)
+**CRITICAL: Memory-First Strategy**:
+1. **ALWAYS retrieve memories FIRST** (in iteration 1) if not yet retrieved - memories contain validated experimental data
+2. Memories from real experiments are the **MOST RELIABLE** knowledge source
+3. Only query CoreRAG/LargeRAG if memories are insufficient or missing critical details
+
+**Research Requirements**:
+- **Preferred**: Memories + Theory (CoreRAG) + Literature (LargeRAG)
+- **Acceptable**: Memories + LLM parametric knowledge (if tools unavailable)
+- **Minimum**: High-quality memories from similar experiments
 
 **CoreRAG Usage Guidelines**:
 - CoreRAG is NECESSARY (DES design needs theoretical basis), but takes 5-10 minutes
@@ -187,13 +203,17 @@ class DESAgent:
 - Poor query: Multiple narrow queries like "What is hydrogen bonding?" then "What about molar ratios?" (wasteful)
 
 **Decision Guidelines by Stage**:
-- **Early ({stage == 'Early' and '✓' or '✗'})**: Gather knowledge from all three sources (memories, literature, theory). This is the information-gathering phase.
-- **Mid ({stage == 'Mid' and '✓' or '✗'})**: Ensure you have sufficient knowledge from all sources. If any source is missing, query it now.
-- **Late ({stage == 'Late' and '✓' or '✗'})**: Must generate formulation soon. If you lack critical knowledge, query immediately; otherwise generate.
+- **Early ({stage == 'Early' and '✓' or '✗'})**:
+  - **Priority 1**: Retrieve memories if not yet done
+  - **Priority 2**: Query literature/theory only if memories insufficient
+- **Mid ({stage == 'Mid' and '✓' or '✗'})**: Ensure sufficient knowledge from memories + available tools
+- **Late ({stage == 'Late' and '✓' or '✗'})**: Must generate formulation soon. If you have memories + any additional knowledge → generate now
 
-**Anti-Loop Rules**:
-- **DO NOT repeat the same action if result is unchanged** (e.g., retrieve_memories returns 0 twice → move on)
-- **DO NOT make redundant queries**: If you already queried a tool and got results, don't query again unless you need DIFFERENT information
+**STRICT Anti-Loop Rules**:
+- **STOP after 2 consecutive failures**: If a tool fails 2 times in a row → STOP trying, move to alternative action
+- **Failed tool tracking**: CoreRAG failed {failed_theory} times, LargeRAG failed {failed_literature} times
+- **If both tools unavailable ({failed_theory >= 2 and failed_literature >= 2})**: RELY ON MEMORIES + LLM parametric knowledge and generate formulation immediately
+- **DO NOT repeat the same action if result is unchanged**: (e.g., retrieve_memories returns 0 twice → move on)
 - **Progress awareness**: At {progress_pct}% complete, prioritize actions that move towards formulation generation
 
 **Your Task**:
@@ -1167,11 +1187,25 @@ Format your response as JSON:
         logger.info(f"Processing experimental feedback for recommendation {recommendation_id}")
 
         try:
+            # Check if this is an update (recommendation already has feedback)
+            existing_rec = self.rec_manager.get_recommendation(recommendation_id)
+            is_update = (
+                existing_rec is not None and
+                existing_rec.experiment_result is not None and
+                existing_rec.trajectory.metadata.get("feedback_processed_at") is not None
+            )
+
+            if is_update:
+                logger.info(f"Detected feedback update for {recommendation_id}")
+
             # Step 1: Submit experimental feedback to recommendation manager
             self.rec_manager.submit_feedback(recommendation_id, experiment_result)
 
             # Step 2: Use FeedbackProcessor to extract memories and update ReasoningBank
-            process_result = self.feedback_processor.process_feedback(recommendation_id)
+            process_result = self.feedback_processor.process_feedback(
+                recommendation_id,
+                is_update=is_update
+            )
 
             # Log using raw solubility instead of performance_score
             solubility_str = (
@@ -1197,6 +1231,12 @@ Format your response as JSON:
                 else "N/A (DES not formed)"
             )
 
+            message = f"Experimental feedback processed successfully. Solubility: {solubility_str}. "
+            if is_update:
+                deleted = process_result.get("deleted_memories", 0)
+                message += f"Updated feedback (deleted {deleted} old memories). "
+            message += f"Extracted {process_result['num_memories']} new memories."
+
             return {
                 "status": "success",
                 "recommendation_id": recommendation_id,
@@ -1204,11 +1244,9 @@ Format your response as JSON:
                 "solubility_unit": process_result.get("solubility_unit"),
                 "is_liquid_formed": process_result.get("is_liquid_formed"),
                 "memories_extracted": process_result["memories_extracted"],
-                "message": (
-                    f"Experimental feedback processed successfully. "
-                    f"Solubility: {solubility_str}. "
-                    f"Extracted {process_result['num_memories']} new memories."
-                )
+                "is_update": is_update,
+                "deleted_memories": process_result.get("deleted_memories", 0) if is_update else None,
+                "message": message
             }
 
         except Exception as e:

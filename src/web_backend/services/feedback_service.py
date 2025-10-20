@@ -2,11 +2,14 @@
 Feedback Service
 
 Business logic for submitting and processing experimental feedback.
+Supports both synchronous and asynchronous (background) processing.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 from models.schemas import ExperimentResultRequest, FeedbackData
 from utils.agent_loader import get_agent, get_rec_manager
@@ -17,34 +20,40 @@ logger = logging.getLogger(__name__)
 class FeedbackService:
     """Service for managing experimental feedback"""
 
-    def __init__(self):
-        """Initialize feedback service"""
-        pass
+    def __init__(self, max_workers: int = 2):
+        """
+        Initialize feedback service with background processing support.
+
+        Args:
+            max_workers: Maximum number of concurrent background tasks
+        """
+        self.executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="feedback")
+        self.processing_status = {}  # {rec_id: {"status": "processing|completed|failed", "result": ...}}
+        self.status_lock = threading.Lock()
+        logger.info(f"Initialized FeedbackService with {max_workers} worker threads")
 
     def submit_feedback(
         self,
         recommendation_id: str,
-        experiment_result: ExperimentResultRequest
-    ) -> FeedbackData:
+        experiment_result: ExperimentResultRequest,
+        async_processing: bool = True
+    ) -> Dict[str, Any]:
         """
         Submit experimental feedback for a recommendation.
-
-        This method:
-        1. Validates the experiment result data
-        2. Converts to ExperimentResult (agent format)
-        3. Calls agent.submit_experiment_feedback()
-        4. Returns processing results
 
         Args:
             recommendation_id: ID of the recommendation
             experiment_result: Experimental result data
+            async_processing: If True, process in background and return immediately
+                             If False, process synchronously (blocks until done)
 
         Returns:
-            FeedbackData with processing results
+            If async_processing=True: {"status": "accepted", "processing": "started"}
+            If async_processing=False: FeedbackData with complete results
 
         Raises:
             ValueError: If validation fails or recommendation not found
-            RuntimeError: If feedback processing fails
+            RuntimeError: If feedback processing fails (sync mode only)
         """
         logger.info(f"Submitting feedback for recommendation: {recommendation_id}")
 
@@ -88,39 +97,11 @@ class FeedbackService:
                 f"solubility={agent_exp_result.solubility} {agent_exp_result.solubility_unit}"
             )
 
-            # Call agent to process feedback
-            agent = get_agent()
-            result = agent.submit_experiment_feedback(
-                recommendation_id,
-                agent_exp_result
-            )
-
-            # Check if processing succeeded
-            if result["status"] != "success":
-                raise RuntimeError(f"Feedback processing failed: {result.get('message')}")
-
-            # Log using raw solubility instead of performance_score
-            solubility_str = (
-                f"{result.get('solubility')} {result.get('solubility_unit')}"
-                if result.get('solubility') is not None
-                else "N/A"
-            )
-            logger.info(
-                f"Feedback processed: solubility={solubility_str}, "
-                f"memories={len(result['memories_extracted'])}"
-            )
-
-            # Build response data
-            feedback_data = FeedbackData(
-                recommendation_id=recommendation_id,
-                solubility=result.get("solubility"),
-                solubility_unit=result.get("solubility_unit"),
-                is_liquid_formed=result.get("is_liquid_formed"),
-                memories_extracted=result["memories_extracted"],
-                num_memories=len(result["memories_extracted"])
-            )
-
-            return feedback_data
+            # Decide: async or sync processing
+            if async_processing:
+                return self._submit_feedback_async(recommendation_id, agent_exp_result)
+            else:
+                return self._submit_feedback_sync(recommendation_id, agent_exp_result)
 
         except ValueError as e:
             # Re-raise validation errors
@@ -128,6 +109,135 @@ class FeedbackService:
         except Exception as e:
             logger.error(f"Failed to submit feedback: {e}", exc_info=True)
             raise RuntimeError(f"Failed to submit feedback: {str(e)}")
+
+    def _submit_feedback_sync(self, recommendation_id: str, agent_exp_result) -> FeedbackData:
+        """Synchronous feedback processing (blocks until complete)"""
+        agent = get_agent()
+        result = agent.submit_experiment_feedback(recommendation_id, agent_exp_result)
+
+        # Check if processing succeeded
+        if result["status"] != "success":
+            raise RuntimeError(f"Feedback processing failed: {result.get('message')}")
+
+        # Log using raw solubility
+        solubility_str = (
+            f"{result.get('solubility')} {result.get('solubility_unit')}"
+            if result.get('solubility') is not None else "N/A"
+        )
+        logger.info(f"Feedback processed: solubility={solubility_str}, memories={len(result['memories_extracted'])}")
+
+        # Build response data
+        return FeedbackData(
+            recommendation_id=recommendation_id,
+            solubility=result.get("solubility"),
+            solubility_unit=result.get("solubility_unit"),
+            is_liquid_formed=result.get("is_liquid_formed"),
+            memories_extracted=result["memories_extracted"],
+            num_memories=len(result["memories_extracted"])
+        )
+
+    def _submit_feedback_async(self, recommendation_id: str, agent_exp_result) -> Dict[str, Any]:
+        """Asynchronous feedback processing (returns immediately)"""
+        # Update recommendation status to PROCESSING
+        rec_manager = get_rec_manager()
+        rec_manager.update_status(recommendation_id, "PROCESSING")
+
+        # Initialize processing status
+        with self.status_lock:
+            self.processing_status[recommendation_id] = {
+                "status": "processing",
+                "started_at": datetime.now().isoformat(),
+                "result": None,
+                "error": None
+            }
+
+        # Submit to thread pool
+        future = self.executor.submit(
+            self._background_process_feedback,
+            recommendation_id,
+            agent_exp_result
+        )
+
+        logger.info(f"Submitted feedback processing for {recommendation_id} to background thread")
+
+        return {
+            "status": "accepted",
+            "recommendation_id": recommendation_id,
+            "processing": "started",
+            "message": "Feedback accepted and processing in background"
+        }
+
+    def _background_process_feedback(self, recommendation_id: str, agent_exp_result):
+        """Background task to process feedback (runs in thread pool)"""
+        try:
+            logger.info(f"[Background] Processing feedback for {recommendation_id}")
+
+            # Call agent to process feedback
+            agent = get_agent()
+            result = agent.submit_experiment_feedback(recommendation_id, agent_exp_result)
+
+            # Check if processing succeeded
+            if result["status"] != "success":
+                raise RuntimeError(f"Feedback processing failed: {result.get('message')}")
+
+            # Update status to completed
+            with self.status_lock:
+                self.processing_status[recommendation_id] = {
+                    "status": "completed",
+                    "started_at": self.processing_status[recommendation_id]["started_at"],
+                    "completed_at": datetime.now().isoformat(),
+                    "result": {
+                        "solubility": result.get("solubility"),
+                        "solubility_unit": result.get("solubility_unit"),
+                        "is_liquid_formed": result.get("is_liquid_formed"),
+                        "memories_extracted": result["memories_extracted"],
+                        "num_memories": len(result["memories_extracted"]),
+                        "is_update": result.get("is_update", False),
+                        "deleted_memories": result.get("deleted_memories", 0)
+                    },
+                    "error": None
+                }
+
+            logger.info(f"[Background] Completed feedback processing for {recommendation_id}")
+
+        except Exception as e:
+            logger.error(f"[Background] Failed to process feedback for {recommendation_id}: {e}", exc_info=True)
+
+            # Update recommendation status to FAILED
+            rec_manager = get_rec_manager()
+            rec_manager.update_status(recommendation_id, "FAILED")
+
+            # Update processing status
+            with self.status_lock:
+                self.processing_status[recommendation_id] = {
+                    "status": "failed",
+                    "started_at": self.processing_status[recommendation_id]["started_at"],
+                    "failed_at": datetime.now().isoformat(),
+                    "result": None,
+                    "error": str(e)
+                }
+
+    def check_processing_status(self, recommendation_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Check the processing status of a feedback submission.
+
+        Args:
+            recommendation_id: Recommendation ID to check
+
+        Returns:
+            Dict with status info, or None if not found
+
+        Example:
+            {
+                "status": "processing|completed|failed",
+                "started_at": "2025-10-20T14:30:00",
+                "completed_at": "2025-10-20T14:30:45",  # if completed
+                "result": {...},  # if completed
+                "error": "..."    # if failed
+            }
+        """
+        with self.status_lock:
+            return self.processing_status.get(recommendation_id)
 
     def _validate_experiment_result(self, exp_result: ExperimentResultRequest) -> None:
         """

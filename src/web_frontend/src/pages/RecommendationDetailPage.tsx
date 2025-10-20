@@ -18,6 +18,7 @@ import {
   ExperimentOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { recommendationService } from '../services';
@@ -227,6 +228,53 @@ function RecommendationDetailPage() {
               renderItem={(evidence, index) => (
                 <List.Item>
                   <Text>[{index + 1}] {evidence}</Text>
+                </List.Item>
+              )}
+            />
+          </>
+        )}
+
+        {detail.memories_used && detail.memories_used.length > 0 && (
+          <>
+            <Divider orientation="left">使用的记忆</Divider>
+            <Alert
+              message="Agent从记忆库中检索到以下相关经验"
+              description="这些记忆来自历史实验的成功/失败经验，帮助Agent做出更准确的推荐"
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <List
+              dataSource={detail.memories_used}
+              renderItem={(memory, index) => (
+                <List.Item>
+                  <Card
+                    type="inner"
+                    size="small"
+                    title={
+                      <Space>
+                        <Text strong>[记忆 {index + 1}] {memory.title}</Text>
+                        <Tag
+                          color={memory.is_from_success ? 'success' : 'error'}
+                          icon={memory.is_from_success ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+                        >
+                          {memory.is_from_success ? '成功经验' : '失败教训'}
+                        </Tag>
+                      </Space>
+                    }
+                    style={{ width: '100%' }}
+                  >
+                    <Paragraph>
+                      <Text type="secondary">描述：</Text>
+                      {memory.description}
+                    </Paragraph>
+                    <Paragraph style={{ marginBottom: 0 }}>
+                      <Text type="secondary">内容：</Text>
+                      <div style={{ marginTop: 8, whiteSpace: 'pre-wrap', background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                        {memory.content}
+                      </div>
+                    </Paragraph>
+                  </Card>
                 </List.Item>
               )}
             />

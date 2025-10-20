@@ -203,6 +203,15 @@ class StatisticsService:
             ]
             avg_solubility = sum(solubilities) / len(solubilities) if solubilities else 0.0
 
+            # Determine most common solubility unit
+            units = [
+                rec.experiment_result.solubility_unit
+                for rec in recs
+                if rec.experiment_result.solubility is not None
+            ]
+            # Use most common unit, default to "g/L"
+            common_unit = max(set(units), key=units.count) if units else "g/L"
+
             performances = [
                 rec.experiment_result.get_performance_score()
                 for rec in recs
@@ -218,6 +227,7 @@ class StatisticsService:
             trend_point = PerformanceTrendPoint(
                 date=date_str,
                 avg_solubility=avg_solubility,
+                solubility_unit=common_unit,
                 avg_performance_score=avg_performance,
                 experiment_count=len(recs),
                 liquid_formation_rate=liquid_formation_rate
@@ -232,38 +242,61 @@ class StatisticsService:
         by_formulation = defaultdict(list)
         for rec in all_recs:
             if rec.status == "COMPLETED" and rec.experiment_result:
-                # Build formulation string
+                # Build formulation string using the same logic as RecommendationManager
                 f = rec.formulation
-                formulation_str = f"{f.get('HBA', 'Unknown')}:{f.get('HBD', 'Unknown')} ({f.get('molar_ratio', 'Unknown')})"
+                if "components" in f and f.get("components"):
+                    # Multi-component formulation
+                    names = [c.get("name", "Unknown") for c in f["components"]]
+                    molar_ratio = f.get("molar_ratio", "?")
+                    formulation_str = f"{' + '.join(names)} ({molar_ratio})"
+                else:
+                    # Binary formulation
+                    hbd = f.get("HBD", "?")
+                    hba = f.get("HBA", "?")
+                    molar_ratio = f.get("molar_ratio", "?")
+                    formulation_str = f"{hbd} : {hba} ({molar_ratio})"
                 by_formulation[formulation_str].append(rec)
 
-        # Calculate average performance for each formulation
+        # Calculate average solubility for each formulation
         formulation_stats = []
         for formulation_str, recs in by_formulation.items():
-            performances = [
-                rec.experiment_result.get_performance_score()
+            # Use average solubility instead of performance score
+            solubilities = [
+                rec.experiment_result.solubility
                 for rec in recs
+                if rec.experiment_result.solubility is not None
             ]
-            avg_performance = sum(performances) / len(performances) if performances else 0.0
+            avg_solubility = sum(solubilities) / len(solubilities) if solubilities else 0.0
+
+            # Determine most common solubility unit
+            units = [
+                rec.experiment_result.solubility_unit
+                for rec in recs
+                if rec.experiment_result.solubility is not None
+            ]
+            common_unit = max(set(units), key=units.count) if units else "g/L"
 
             formulation_stats.append((
                 formulation_str,
-                avg_performance,
+                avg_solubility,
+                common_unit,
                 len(recs)
             ))
 
-        # Sort by average performance (descending) and take top 10
+        # Sort by average solubility (descending) and take top 10
         formulation_stats.sort(key=lambda x: x[1], reverse=True)
         top_10 = formulation_stats[:10]
 
         # Build TopFormulation objects
+        # Note: avg_performance field name kept for API compatibility, but contains avg solubility
         top_formulations = [
             TopFormulation(
                 formulation=f_str,
-                avg_performance=avg_perf,
+                avg_performance=avg_sol,  # Contains avg solubility (API field name kept for compatibility)
+                solubility_unit=unit,
                 success_count=count
             )
-            for f_str, avg_perf, count in top_10
+            for f_str, avg_sol, unit, count in top_10
         ]
 
         return top_formulations

@@ -13,10 +13,22 @@ import {
   Spin,
   message,
   Divider,
+  Progress,
+  Result,
 } from 'antd';
-import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  SendOutlined,
+  LoadingOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined
+} from '@ant-design/icons';
 import { feedbackService, recommendationService } from '../services';
-import type { ExperimentResultRequest, RecommendationDetail } from '../types';
+import type {
+  ExperimentResultRequest,
+  RecommendationDetail,
+  FeedbackStatusData
+} from '../types';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -30,6 +42,10 @@ function FeedbackPage() {
   const [detail, setDetail] = useState<RecommendationDetail | null>(null);
   const [isLiquidFormed, setIsLiquidFormed] = useState<boolean>(true);
 
+  // Processing status
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<FeedbackStatusData | null>(null);
+
   useEffect(() => {
     if (!id) return;
 
@@ -39,9 +55,23 @@ function FeedbackPage() {
         const response = await recommendationService.getRecommendationDetail(id);
         setDetail(response.data);
 
-        // Check if already has experiment result
+        // If already has experiment result, pre-fill the form
         if (response.data.experiment_result) {
-          message.warning('该推荐已经提交过实验反馈');
+          const expResult = response.data.experiment_result;
+          form.setFieldsValue({
+            is_liquid_formed: expResult.is_liquid_formed,
+            solubility: expResult.solubility,
+            solubility_unit: expResult.solubility_unit || 'g/L',
+            notes: expResult.notes || '',
+            // Convert properties object to text format
+            properties_text: expResult.properties
+              ? Object.entries(expResult.properties)
+                  .map(([key, value]) => `${key}=${value}`)
+                  .join('\n')
+              : '',
+          });
+          setIsLiquidFormed(expResult.is_liquid_formed);
+          message.info('已加载当前反馈数据，您可以修改后重新提交');
         }
       } catch (error) {
         console.error('Failed to fetch recommendation detail:', error);
@@ -51,24 +81,67 @@ function FeedbackPage() {
     };
 
     fetchDetail();
-  }, [id]);
+  }, [id, form]);
 
   const handleSubmit = async (values: ExperimentResultRequest) => {
     if (!id) return;
 
     setSubmitting(true);
     try {
+      // Submit feedback (async)
       const response = await feedbackService.submitFeedback({
         recommendation_id: id,
         experiment_result: values,
       });
 
-      message.success(response.message);
-      // Navigate to detail page
-      navigate(`/recommendations/${id}`);
-    } catch (error) {
+      message.success('反馈已提交，正在后台处理...');
+
+      // Switch to processing mode
+      setSubmitting(false);
+      setIsProcessing(true);
+      setProcessingStatus({
+        status: 'processing',
+        started_at: new Date().toISOString(),
+      });
+
+      // Start polling
+      try {
+        const finalStatus = await feedbackService.pollStatus(
+          id,
+          (statusResponse) => {
+            // Update status during polling
+            setProcessingStatus(statusResponse.data);
+          },
+          2000, // Poll every 2 seconds
+          300000 // 5 minute timeout
+        );
+
+        // Processing completed
+        setProcessingStatus(finalStatus.data);
+        message.success({
+          content: `反馈处理完成！提取了 ${finalStatus.data.result?.num_memories || 0} 条记忆`,
+          duration: 5,
+        });
+
+        // Wait a bit then navigate
+        setTimeout(() => {
+          navigate(`/recommendations/${id}`);
+        }, 2000);
+
+      } catch (pollError: any) {
+        console.error('Polling error:', pollError);
+        message.error(pollError.message || '处理超时或失败');
+        setProcessingStatus({
+          status: 'failed',
+          started_at: processingStatus?.started_at || new Date().toISOString(),
+          failed_at: new Date().toISOString(),
+          error: pollError.message || '处理失败',
+        });
+      }
+
+    } catch (error: any) {
       console.error('Failed to submit feedback:', error);
-    } finally {
+      message.error(error.response?.data?.message || '提交失败');
       setSubmitting(false);
     }
   };
@@ -92,14 +165,116 @@ function FeedbackPage() {
     );
   }
 
-  if (detail.status !== 'PENDING') {
+  if (detail.status !== 'PENDING' && detail.status !== 'PROCESSING' && detail.status !== 'COMPLETED') {
     return (
       <Alert
         message="无法提交反馈"
-        description={`该推荐的状态为 ${detail.status}，只有待实验状态的推荐才能提交反馈`}
+        description={`该推荐的状态为 ${detail.status}，只有待实验或已完成状态的推荐才能提交/更新反馈`}
         type="warning"
         showIcon
       />
+    );
+  }
+
+  // Show processing status
+  if (isProcessing && processingStatus) {
+    return (
+      <div>
+        <Space style={{ marginBottom: 16 }}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(`/recommendations/${id}`)}
+            disabled={processingStatus.status === 'processing'}
+          >
+            返回详情
+          </Button>
+        </Space>
+
+        <Card>
+          {processingStatus.status === 'processing' && (
+            <Result
+              icon={<LoadingOutlined style={{ fontSize: 48, color: '#1890ff' }} />}
+              title="正在处理反馈..."
+              subTitle="系统正在提取实验记忆并更新知识库，这可能需要几秒钟"
+              extra={
+                <div style={{ textAlign: 'center' }}>
+                  <Progress percent={100} status="active" showInfo={false} />
+                  <Paragraph style={{ marginTop: 16 }}>
+                    <Text type="secondary">
+                      开始时间: {new Date(processingStatus.started_at).toLocaleString()}
+                    </Text>
+                  </Paragraph>
+                </div>
+              }
+            />
+          )}
+
+          {processingStatus.status === 'completed' && processingStatus.result && (
+            <Result
+              status="success"
+              icon={<CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a' }} />}
+              title="反馈处理完成！"
+              subTitle={
+                <div>
+                  <Paragraph>
+                    {processingStatus.result.is_liquid_formed
+                      ? `溶解度: ${processingStatus.result.solubility} ${processingStatus.result.solubility_unit}`
+                      : 'DES液体未成功形成'}
+                  </Paragraph>
+                  <Paragraph>
+                    提取了 <Text strong>{processingStatus.result.num_memories}</Text> 条记忆
+                  </Paragraph>
+                  {processingStatus.is_update && processingStatus.deleted_memories !== undefined && processingStatus.deleted_memories > 0 && (
+                    <Alert
+                      type="warning"
+                      message="更新操作"
+                      description={`已删除 ${processingStatus.deleted_memories} 条旧记忆并更新为新的实验记忆`}
+                      showIcon
+                      style={{ marginTop: 8 }}
+                    />
+                  )}
+                </div>
+              }
+              extra={[
+                <Button
+                  key="detail"
+                  type="primary"
+                  onClick={() => navigate(`/recommendations/${id}`)}
+                >
+                  查看详情
+                </Button>,
+                <Button key="list" onClick={() => navigate('/recommendations')}>
+                  返回列表
+                </Button>,
+              ]}
+            />
+          )}
+
+          {processingStatus.status === 'failed' && (
+            <Result
+              status="error"
+              icon={<CloseCircleOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />}
+              title="处理失败"
+              subTitle={processingStatus.error || '反馈处理过程中发生错误'}
+              extra={[
+                <Button
+                  key="retry"
+                  type="primary"
+                  onClick={() => {
+                    setIsProcessing(false);
+                    setProcessingStatus(null);
+                  }}
+                >
+                  重新提交
+                </Button>,
+                <Button key="back" onClick={() => navigate(`/recommendations/${id}`)}>
+                  返回详情
+                </Button>,
+              ]}
+            />
+          )}
+        </Card>
+      </div>
     );
   }
 
@@ -114,9 +289,33 @@ function FeedbackPage() {
         </Button>
       </Space>
 
-      <Title level={2}>提交实验反馈</Title>
+      <Title level={2}>
+        {detail.status === 'COMPLETED' ? '更新实验反馈' : '提交实验反馈'}
+      </Title>
       <Paragraph>
-        请填写您的实验结果，系统将自动学习并优化未来的推荐。
+        {detail.status === 'COMPLETED' ? (
+          <>
+            您正在更新已提交的反馈。系统将删除旧记忆并提取新的实验记忆。
+            {detail.experiment_result && (
+              <Alert
+                type="info"
+                message="当前反馈数据"
+                description={
+                  <div>
+                    <div>液体形成：{detail.experiment_result.is_liquid_formed ? '是' : '否'}</div>
+                    {detail.experiment_result.solubility && (
+                      <div>溶解度：{detail.experiment_result.solubility} {detail.experiment_result.solubility_unit}</div>
+                    )}
+                  </div>
+                }
+                showIcon
+                style={{ marginTop: 8 }}
+              />
+            )}
+          </>
+        ) : (
+          '请填写您的实验结果，系统将自动学习并优化未来的推荐。'
+        )}
       </Paragraph>
 
       <Card title="推荐配方信息" style={{ marginBottom: 24 }}>
@@ -205,7 +404,11 @@ function FeedbackPage() {
 
           <Divider orientation="left">其他性质（可选）</Divider>
 
-          <Form.Item label="其他观察到的性质" help="每行一个属性，格式: 属性名=值">
+          <Form.Item
+            label="其他观察到的性质"
+            name="properties_text"
+            help="每行一个属性，格式: 属性名=值"
+          >
             <TextArea
               rows={4}
               placeholder="例如:
@@ -254,7 +457,7 @@ stability=good"
                 loading={submitting}
                 size="large"
               >
-                提交反馈
+                {detail.status === 'COMPLETED' ? '更新反馈' : '提交反馈'}
               </Button>
               <Button
                 onClick={() => navigate(`/recommendations/${id}`)}

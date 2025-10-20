@@ -5,6 +5,7 @@ import {
   ExperimentOutlined,
   UnorderedListOutlined,
   BarChartOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import './App.css';
@@ -15,6 +16,7 @@ import RecommendationListPage from './pages/RecommendationListPage';
 import RecommendationDetailPage from './pages/RecommendationDetailPage';
 import FeedbackPage from './pages/FeedbackPage';
 import StatisticsPage from './pages/StatisticsPage';
+import MemoriesPage from './pages/MemoriesPage';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -32,6 +34,11 @@ const menuItems: MenuItem[] = [
     key: '/recommendations',
     icon: <UnorderedListOutlined />,
     label: <Link to="/recommendations">推荐列表</Link>,
+  },
+  {
+    key: '/memories',
+    icon: <DatabaseOutlined />,
+    label: <Link to="/memories">记忆库</Link>,
   },
   {
     key: '/statistics',
@@ -80,6 +87,7 @@ function AppLayout() {
               <Route path="/recommendations" element={<RecommendationListPage />} />
               <Route path="/recommendations/:id" element={<RecommendationDetailPage />} />
               <Route path="/feedback/:id" element={<FeedbackPage />} />
+              <Route path="/memories" element={<MemoriesPage />} />
               <Route path="/statistics" element={<StatisticsPage />} />
             </Routes>
           </Content>

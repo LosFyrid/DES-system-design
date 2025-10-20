@@ -23,6 +23,55 @@ router = APIRouter()
 
 
 @router.get(
+    "/statistics",
+    summary="Get recommendation statistics",
+    description="Get lightweight statistics (fast - index only)",
+    responses={
+        200: {"description": "Statistics retrieved successfully"},
+        500: {"description": "Internal server error", "model": ErrorResponse}
+    }
+)
+async def get_statistics(
+    material: Optional[str] = Query(
+        None,
+        description="Filter by target material",
+        example="cellulose"
+    )
+):
+    """
+    Get lightweight statistics from index only (no file I/O).
+
+    Query parameters:
+    - material: Optional filter by target material
+
+    Returns counts by status: all, GENERATING, PENDING, COMPLETED, FAILED, CANCELLED
+    """
+    try:
+        # Call service
+        rec_service = get_recommendation_service()
+        stats = rec_service.get_statistics_fast(material=material)
+
+        # Return success response
+        return {
+            "status": "success",
+            "data": stats
+        }
+
+    except RuntimeError as e:
+        logger.error(f"Failed to get statistics: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_response(message=str(e))
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_response(message=f"Unexpected error: {str(e)}")
+        )
+
+
+@router.get(
     "/",
     response_model=RecommendationListResponse,
     summary="List recommendations",

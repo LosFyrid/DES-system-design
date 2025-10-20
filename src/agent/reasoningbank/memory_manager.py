@@ -235,6 +235,53 @@ class ReasoningBank:
 
         logger.info(f"Loaded {len(self.memories)} memories from {filepath}")
 
+    def delete_by_title(self, title: str) -> bool:
+        """
+        Delete a memory by its title.
+
+        Args:
+            title: Exact title to match
+
+        Returns:
+            True if memory was deleted, False if not found
+        """
+        original_count = len(self.memories)
+        self.memories = [m for m in self.memories if m.title != title]
+        deleted = len(self.memories) < original_count
+
+        if deleted:
+            logger.info(f"Deleted memory with title: {title}")
+        else:
+            logger.warning(f"No memory found with title: {title}")
+
+        return deleted
+
+    def delete_by_recommendation_id(self, recommendation_id: str) -> int:
+        """
+        Delete all memories associated with a specific recommendation.
+
+        This is used when updating experimental feedback to remove old memories
+        before extracting new ones.
+
+        Args:
+            recommendation_id: Recommendation ID to filter by
+
+        Returns:
+            Number of memories deleted
+        """
+        original_count = len(self.memories)
+        self.memories = [
+            m for m in self.memories
+            if m.metadata.get("recommendation_id") != recommendation_id
+        ]
+        deleted_count = original_count - len(self.memories)
+
+        logger.info(
+            f"Deleted {deleted_count} memories for recommendation {recommendation_id} "
+            f"(remaining: {len(self.memories)})"
+        )
+        return deleted_count
+
     def clear(self) -> None:
         """Clear all memories from the bank."""
         count = len(self.memories)

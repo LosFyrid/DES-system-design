@@ -229,6 +229,28 @@ class RecommendationManager:
             json.dump(self.index, f, indent=2, ensure_ascii=False)
         logger.debug(f"Saved index with {len(self.index)} entries")
 
+    def _get_formulation_summary(self, formulation: Dict) -> str:
+        """
+        Generate formulation summary string for list display.
+
+        Args:
+            formulation: Formulation dictionary
+
+        Returns:
+            Human-readable formulation string
+        """
+        if "components" in formulation and formulation.get("components"):
+            # Multi-component formulation
+            names = [c.get("name", "Unknown") for c in formulation["components"]]
+            molar_ratio = formulation.get("molar_ratio", "?")
+            return f"{' + '.join(names)} ({molar_ratio})"
+        else:
+            # Binary formulation
+            hbd = formulation.get("HBD", "?")
+            hba = formulation.get("HBA", "?")
+            molar_ratio = formulation.get("molar_ratio", "?")
+            return f"{hbd} : {hba} ({molar_ratio})"
+
     def save_recommendation(self, rec: Recommendation) -> str:
         """
         Save recommendation to disk.
@@ -245,7 +267,7 @@ class RecommendationManager:
         with open(rec_file, "w", encoding="utf-8") as f:
             json.dump(rec.to_dict(), f, indent=2, ensure_ascii=False)
 
-        # Update index
+        # Update index with extended fields for fast list access
         self.index[rec.recommendation_id] = {
             "task_id": rec.task_id,
             "status": rec.status,
@@ -253,6 +275,11 @@ class RecommendationManager:
             "updated_at": rec.updated_at,
             "target_material": rec.task.get("target_material"),
             "target_temperature": rec.task.get("target_temperature"),
+            # New fields for list view (v2)
+            "formulation_summary": self._get_formulation_summary(rec.formulation),
+            "formulation": rec.formulation,  # Store full formulation dict
+            "confidence": rec.confidence,
+            "performance_score": rec.experiment_result.get_performance_score() if rec.experiment_result else None,
             "file": str(rec_file),
         }
         self._save_index()
@@ -387,6 +414,92 @@ class RecommendationManager:
 
         return stats
 
+    def get_statistics_fast(self, material: Optional[str] = None) -> Dict[str, int]:
+        """
+        Get lightweight statistics from index only (no file I/O).
+
+        Args:
+            material: Optional material filter
+
+        Returns:
+            Dict with counts by status
+        """
+        stats = {
+            "all": 0,
+            "GENERATING": 0,
+            "PENDING": 0,
+            "COMPLETED": 0,
+            "FAILED": 0,
+            "CANCELLED": 0
+        }
+
+        for rec_id, meta in self.index.items():
+            # Apply material filter if specified
+            if material and meta.get("target_material") != material:
+                continue
+
+            stats["all"] += 1
+            status = meta["status"]
+            if status in stats:
+                stats[status] += 1
+
+        logger.debug(f"Fast statistics: {stats} (material={material})")
+        return stats
+
+    def list_recommendations_fast(
+        self,
+        status: Optional[str] = None,
+        target_material: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Fast list recommendations using index only (no file I/O).
+
+        Args:
+            status: Filter by status
+            target_material: Filter by material
+            page: Page number (1-indexed)
+            page_size: Items per page
+
+        Returns:
+            Dict with items (index metadata) and pagination info
+        """
+        # Filter from index
+        filtered = []
+        for rec_id, meta in self.index.items():
+            if status and meta["status"] != status:
+                continue
+            if target_material and meta.get("target_material") != target_material:
+                continue
+
+            # Add rec_id to meta for response
+            filtered.append({**meta, "recommendation_id": rec_id})
+
+        # Sort by created_at (descending)
+        filtered.sort(key=lambda x: x["created_at"], reverse=True)
+
+        # Pagination
+        total = len(filtered)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        page_items = filtered[start_idx:end_idx]
+
+        logger.debug(
+            f"Fast list: {len(page_items)}/{total} items "
+            f"(status={status}, material={target_material}, page={page})"
+        )
+
+        return {
+            "items": page_items,
+            "pagination": {
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": (total + page_size - 1) // page_size if total > 0 else 1
+            }
+        }
+
 
 class FeedbackProcessor:
     """
@@ -416,12 +529,13 @@ class FeedbackProcessor:
         self.rec_manager = rec_manager
         logger.info("Initialized FeedbackProcessor")
 
-    def process_feedback(self, rec_id: str) -> Dict:
+    def process_feedback(self, rec_id: str, is_update: bool = False) -> Dict:
         """
         Process experimental feedback for one recommendation.
 
         Args:
             rec_id: Recommendation ID
+            is_update: If True, delete old memories before extracting new ones
 
         Returns:
             Dict with processing results
@@ -434,9 +548,15 @@ class FeedbackProcessor:
         if not rec.experiment_result:
             raise ValueError(f"No experiment result for {rec_id}")
 
-        logger.info(f"Processing feedback for {rec_id}")
+        logger.info(f"Processing feedback for {rec_id} (is_update={is_update})")
 
-        # 2. Update Trajectory (no binary outcome, unified as "experiment_completed")
+        # 2. If updating, delete old memories first
+        deleted_count = 0
+        if is_update:
+            deleted_count = self.agent.memory.delete_by_recommendation_id(rec_id)
+            logger.info(f"Deleted {deleted_count} old memories before re-extraction")
+
+        # 3. Update Trajectory (no binary outcome, unified as "experiment_completed")
         exp_result = rec.experiment_result
         rec.trajectory.outcome = "experiment_completed"
 
@@ -444,9 +564,11 @@ class FeedbackProcessor:
         rec.trajectory.metadata["experiment_result"] = exp_result.to_dict()
         # Note: performance_score removed - use raw solubility instead
         rec.trajectory.metadata["feedback_processed_at"] = datetime.now().isoformat()
+        if is_update:
+            rec.trajectory.metadata["feedback_updated_at"] = datetime.now().isoformat()
 
-        # 3. Extract experiment-based memories
-        logger.info("Extracting experiment-based memories")
+        # 4. Extract experiment-based memories
+        logger.info(f"Extracting experiment-based memories (is_update={is_update})")
         new_memories = self.agent.extractor.extract_from_experiment(
             rec.trajectory, exp_result
         )
@@ -460,8 +582,10 @@ class FeedbackProcessor:
             memory.metadata["solubility"] = exp_result.solubility
             memory.metadata["solubility_unit"] = exp_result.solubility_unit
             memory.metadata["experiment_date"] = exp_result.experiment_date
+            if is_update:
+                memory.metadata["is_updated"] = True
 
-        # 4. Consolidate to ReasoningBank
+        # 5. Consolidate to ReasoningBank
         if new_memories:
             self.agent.memory.consolidate(new_memories)
             logger.info(
@@ -474,10 +598,10 @@ class FeedbackProcessor:
                 self.agent.memory.save(save_path)
                 logger.info(f"Auto-saved memory bank to {save_path}")
 
-        # 5. Save updated recommendation
+        # 6. Save updated recommendation
         self.rec_manager.save_recommendation(rec)
 
-        return {
+        result = {
             "recommendation_id": rec_id,
             "is_liquid_formed": exp_result.is_liquid_formed,
             "solubility": exp_result.solubility,
@@ -485,6 +609,12 @@ class FeedbackProcessor:
             "memories_extracted": [m.title for m in new_memories],
             "num_memories": len(new_memories),
         }
+
+        if is_update:
+            result["deleted_memories"] = deleted_count
+            result["is_update"] = True
+
+        return result
 
     def process_all_pending_feedback(self) -> List[Dict]:
         """
