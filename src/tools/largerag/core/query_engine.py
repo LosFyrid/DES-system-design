@@ -10,6 +10,8 @@ from typing import List, Dict, Any, Optional
 from llama_index.core import VectorStoreIndex
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.postprocessor.types import BaseNodePostprocessor
+from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.postprocessor.dashscope_rerank import DashScopeRerank
 from llama_index.llms.dashscope import DashScope
 import logging
@@ -17,6 +19,41 @@ import logging
 from ..config.settings import SETTINGS, DASHSCOPE_API_KEY
 
 logger = logging.getLogger(__name__)
+
+
+class SimilarityThresholdFilter(BaseNodePostprocessor):
+    """Reranker 之后的相似度阈值过滤器"""
+
+    threshold: float  # Pydantic 字段声明
+
+    def _postprocess_nodes(
+        self,
+        nodes: List[NodeWithScore],
+        query_bundle: Optional[QueryBundle] = None,
+    ) -> List[NodeWithScore]:
+        """
+        过滤低于阈值的节点
+
+        Args:
+            nodes: 输入节点列表（已包含分数）
+            query_bundle: 查询信息（未使用）
+
+        Returns:
+            过滤后的节点列表
+        """
+        if self.threshold <= 0:
+            return nodes
+
+        original_count = len(nodes)
+        filtered_nodes = [n for n in nodes if n.score is not None and n.score >= self.threshold]
+
+        if len(filtered_nodes) < original_count:
+            logger.info(
+                f"SimilarityThresholdFilter: Filtered {original_count - len(filtered_nodes)} nodes "
+                f"(threshold: {self.threshold}, remaining: {len(filtered_nodes)})"
+            )
+
+        return filtered_nodes
 
 
 class LargeRAGQueryEngine:
@@ -54,22 +91,37 @@ class LargeRAGQueryEngine:
         self._build_query_engine()
 
     def _build_query_engine(self):
-        """构建查询引擎（含 Reranker）"""
+        """构建查询引擎（含 Reranker 和阈值过滤）"""
         # Retriever（支持相似度阈值）
         retriever_kwargs = {
             "index": self.index,
             "similarity_top_k": self.settings.retrieval.similarity_top_k,
         }
 
-        # 如果设置了相似度阈值（> 0），则启用过滤
+        # 如果设置了相似度阈值（> 0），则在向量检索阶段启用过滤
         if self.settings.retrieval.similarity_threshold > 0:
             retriever_kwargs["similarity_cutoff"] = self.settings.retrieval.similarity_threshold
-            logger.info(f"Similarity threshold enabled: {self.settings.retrieval.similarity_threshold}")
+            logger.info(f"Vector retrieval threshold enabled: {self.settings.retrieval.similarity_threshold}")
 
         retriever = VectorIndexRetriever(**retriever_kwargs)
 
-        # Query Engine
-        postprocessors = [self.reranker] if self.reranker else []
+        # 构建 Node Postprocessors 流水线
+        postprocessors = []
+
+        # 1. Reranker（如果启用）
+        if self.reranker:
+            postprocessors.append(self.reranker)
+            logger.info(f"Reranker enabled: {self.settings.reranker.model}")
+
+        # 2. Reranker 之后的阈值过滤（如果启用）
+        if self.settings.retrieval.similarity_threshold > 0:
+            threshold_filter = SimilarityThresholdFilter(
+                threshold=self.settings.retrieval.similarity_threshold
+            )
+            postprocessors.append(threshold_filter)
+            logger.info(f"Post-rerank threshold filter enabled: {self.settings.retrieval.similarity_threshold}")
+
+        # 构建 Query Engine
         self.query_engine = RetrieverQueryEngine.from_args(
             retriever=retriever,
             node_postprocessors=postprocessors,
@@ -151,6 +203,17 @@ class LargeRAGQueryEngine:
                 top_n=max(final_top_k, self.settings.retrieval.rerank_top_n),
             )
             nodes = reranker.postprocess_nodes(nodes, query_str=query_text)
+
+            # 如果启用了相似度阈值，也对Reranker分数进行过滤
+            # 注意：Reranker分数和向量相似度是不同的度量，这里使用相同阈值可能过于严格
+            if self.settings.retrieval.similarity_threshold > 0:
+                original_count = len(nodes)
+                nodes = [n for n in nodes if n.score >= self.settings.retrieval.similarity_threshold]
+                if len(nodes) < original_count:
+                    logger.info(
+                        f"Filtered {original_count - len(nodes)} nodes by rerank score threshold "
+                        f"(threshold: {self.settings.retrieval.similarity_threshold})"
+                    )
 
         # 格式化结果并返回前 top_k 个
         results = []

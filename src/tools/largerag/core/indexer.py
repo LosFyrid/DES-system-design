@@ -65,9 +65,12 @@ class RetryableDashScopeEmbedding(DashScopeEmbedding):
 class LargeRAGIndexer:
     """向量索引构建和管理器"""
 
-    def __init__(self):
+    def __init__(self, collection_name: Optional[str] = None):
         self.settings = SETTINGS
         self.api_key = DASHSCOPE_API_KEY
+
+        # 使用自定义 collection 名称或配置文件中的默认值
+        self.collection_name = collection_name or self.settings.vector_store.collection_name
 
         if not self.api_key:
             raise ValueError(
@@ -195,7 +198,7 @@ class LargeRAGIndexer:
 
         # 创建 Chroma collection（添加距离度量配置）
         collection = self.chroma_client.get_or_create_collection(
-            name=self.settings.vector_store.collection_name,
+            name=self.collection_name,
             metadata={"hnsw:space": self.settings.vector_store.distance_metric}
         )
         vector_store = ChromaVectorStore(chroma_collection=collection)
@@ -203,11 +206,11 @@ class LargeRAGIndexer:
         # 创建 StorageContext
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-        # 构建索引（nodes 已包含 embedding，不需要重新计算）
+        # 构建索引（nodes 已包含 embedding，但仍需指定 embed_model 用于查询）
         index = VectorStoreIndex(
             nodes=nodes,
             storage_context=storage_context,
-            # ✓ 移除 embed_model 参数，避免重复计算 embedding
+            embed_model=self.embed_model,  # 必须指定，用于后续查询时的 embedding
             show_progress=True,
         )
 
@@ -218,7 +221,7 @@ class LargeRAGIndexer:
         """从持久化存储加载索引"""
         try:
             collection = self.chroma_client.get_collection(
-                name=self.settings.vector_store.collection_name
+                name=self.collection_name
             )
             vector_store = ChromaVectorStore(chroma_collection=collection)
 
@@ -232,22 +235,22 @@ class LargeRAGIndexer:
                 embed_model=self.embed_model,
             )
 
-            logger.info("Index loaded from Chroma successfully")
+            logger.info(f"Index loaded from Chroma successfully (collection: {self.collection_name})")
             return index
         except Exception as e:
-            logger.error(f"Failed to load index: {e}")
+            logger.error(f"Failed to load index from collection '{self.collection_name}': {e}")
             return None
 
     def get_index_stats(self) -> Dict[str, Any]:
         """获取索引统计信息"""
         try:
             collection = self.chroma_client.get_collection(
-                name=self.settings.vector_store.collection_name
+                name=self.collection_name
             )
             return {
-                "collection_name": self.settings.vector_store.collection_name,
+                "collection_name": self.collection_name,
                 "document_count": collection.count(),
                 "persist_directory": self.settings.vector_store.persist_directory,
             }
         except:
-            return {"error": "Index not found"}
+            return {"error": "Index not found", "collection_name": self.collection_name}

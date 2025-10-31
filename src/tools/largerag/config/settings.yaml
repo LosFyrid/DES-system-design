@@ -4,10 +4,10 @@
 # ============ Embedding 配置 ============
 embedding:
   provider: "dashscope"                          # 固定值，不可修改
-  model: "text-embedding-v3"                    # Qwen embedding 模型
+  model: "text-embedding-v4"                    # Qwen embedding 模型
   text_type: "document"                         # document 或 query
   batch_size: 10                                # 批处理大小（减小以避免API限流）
-  dimension: 1024                               # 向量维度
+  dimension: 2048                               # 向量维度
 
 # ============ 向量存储配置 ============
 vector_store:
@@ -30,23 +30,23 @@ document_processing:
 # ============ 检索配置 ============
 retrieval:
   similarity_top_k: 20                          # 向量检索召回数量
-  rerank_top_n: 5                               # Reranker 最终返回数量
-  similarity_threshold: 0                       # 相似度阈值（>0 启用，0 禁用）
+  rerank_top_n: 10                               # Reranker 最终返回数量
+  similarity_threshold: 0.8                     # 相似度阈值（>0 启用，0 禁用）
                                                  # 启用后，只返回分数 >= 阈值的结果
                                                  # 推荐值：0.6-0.8（宁缺毋滥）
 
 # ============ Reranker 配置 ============
 reranker:
   provider: "dashscope"                         # 固定值
-  model: "gte-rerank-v2"                           # Qwen reranker 模型
+  model: "qwen3-rerank"                           # Qwen reranker 模型
   enabled: true                                 # 是否启用 reranker
 
 # ============ LLM 配置 ============
 llm:
   provider: "dashscope"                         # 固定值
-  model: "qwen3-235b-a22b-thinking-2507"                             # Qwen3-235B
+  model: "qwen-plus"                             # Qwen3-235B
   temperature: 0.1
-  max_tokens: 2000
+  max_tokens: 3000
 
 # ============ 缓存配置 ============
 cache:

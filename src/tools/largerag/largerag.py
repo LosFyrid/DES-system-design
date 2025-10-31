@@ -38,26 +38,28 @@ class LargeRAG:
         print(answer)
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, collection_name: Optional[str] = None):
         """
         初始化 LargeRAG
 
         Args:
             config_path: 配置文件路径（可选，默认使用 config/settings.yaml）
+            collection_name: 自定义 collection 名称（可选，默认使用配置文件中的值）
         """
         logger.info("Initializing LargeRAG...")
 
         self.doc_processor = DocumentProcessor()
-        self.indexer = LargeRAGIndexer()
+        self.indexer = LargeRAGIndexer(collection_name=collection_name)
         self.query_engine = None
+        self.collection_name = collection_name or SETTINGS.vector_store.collection_name
 
         # 尝试加载已有索引
         index = self.indexer.load_index()
         if index:
             self.query_engine = LargeRAGQueryEngine(index)
-            logger.info("Loaded existing index")
+            logger.info(f"Loaded existing index from collection: {self.collection_name}")
         else:
-            logger.warning("No existing index found. Please run index_from_folders() first.")
+            logger.warning(f"No existing index found for collection: {self.collection_name}. Please run index_from_folders() first.")
 
     def index_from_folders(self, literature_dir: str) -> bool:
         """
