@@ -183,7 +183,6 @@ cython_debug/
 .claude
 AGENTS.md
 CLAUDE.md
-src/tools/largerag/data/literature/
-src/tools/largerag/data/rag_performance_test/
-src/tools/largerag/data/test_5papers/
+src/tools/largerag/data
 src/tools/largerag/examples/performance_test/test_results/
+src/tools/corerag/data

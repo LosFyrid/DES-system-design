@@ -74,8 +74,8 @@ class DocumentProcessor:
 
         documents = []
 
-        # 遍历所有哈希文件夹
-        for folder in literature_path.iterdir():
+        # 遍历所有哈希文件夹（排序确保顺序一致，避免缓存失效）
+        for folder in sorted(literature_path.iterdir()):
             if not folder.is_dir():
                 continue
 

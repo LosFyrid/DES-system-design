@@ -12,7 +12,7 @@ embedding:
 # ============ 向量存储配置 ============
 vector_store:
   type: "chroma"                                # 固定值，不可修改
-  persist_directory: "${PROJECT_ROOT}src/tools/largerag/data/chroma_db"
+  persist_directory: "${PROJECT_ROOT}src/tools/largerag/data/chroma_db_prod"
   collection_name: "des_literature_v1"
   distance_metric: "cosine"                     # cosine, l2, ip
 
@@ -71,13 +71,13 @@ cache:
   type: "local"                                 # local（推荐，无需额外服务） 或 redis
 
   # 本地文件缓存配置（默认）
-  local_cache_dir: "${PROJECT_ROOT}src/tools/largerag/data/cache"
+  local_cache_dir: "${PROJECT_ROOT}src/tools/largerag/data/prod_cache/"
 
   # Redis 缓存配置（可选，需要 redis-server 服务）
   redis_host: "localhost"
   redis_port: 6379
 
-  collection_name: "largerag_embedding_cache"
+  collection_name: "des_prod_v3"
   ttl: 86400                                    # 缓存过期时间（秒，仅Redis使用）
 
 # ============ 日志配置 ============
