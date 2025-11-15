@@ -186,3 +186,11 @@ CLAUDE.md
 src/tools/largerag/data
 src/tools/largerag/examples/performance_test/test_results/
 src/tools/corerag/data
+
+# Docker deployment
+.env.production
+config/production/*.yaml.local
+docker-compose.override.yml
+logs/
+data/recommendations/
+data/memory/

@@ -9,22 +9,22 @@
 llm:
   provider: "dashscope"  # "dashscope" (Aliyun) or "openai" or "custom"
   model: "qwen-plus"  # DashScope: qwen-plus, qwen-turbo, qwen-max | OpenAI: gpt-4o-mini, gpt-4o
-  temperature: 0.7  # For agent reasoning
-  max_tokens: 2000
+  temperature: 0.1  # For agent reasoning
+  max_tokens: 5000
   api_base: null  # Auto-set by provider. Custom: "https://your-endpoint.com/v1"
 
 # Agent LLM (may use different model for main reasoning)
 agent_llm:
   provider: "dashscope"
   model: "qwen-plus"  # Higher capability for formulation design
-  temperature: 0.7
-  max_tokens: 3000
+  temperature: 0.1
+  max_tokens: 5000
 
 # Embedding Configuration
 embedding:
   provider: "dashscope"  # "dashscope" (Aliyun) or "openai"
-  model: "text-embedding-v3"  # DashScope: text-embedding-v3 | OpenAI: text-embedding-3-small
-  dimension: null  # Auto-detected. OpenAI supports custom dimensions (e.g., 512, 1536)
+  model: "text-embedding-v4"  # DashScope: text-embedding-v3 | OpenAI: text-embedding-3-small
+  dimension: 2048  # Auto-detected. OpenAI supports custom dimensions (e.g., 512, 1536)
 
 # Memory Bank Configuration
 memory:
@@ -55,12 +55,12 @@ tools:
   corerag:
     enabled: true
     max_results: 5
-    timeout: 30  # seconds
+    timeout: 1000  # seconds
 
   largerag:
     enabled: true  # Set to false if not ready
     max_results: 10
-    timeout: 30
+    timeout: 300
 
   experimental_data:
     enabled: false  # Not implemented yet
@@ -81,12 +81,12 @@ logging:
 # Agent Behavior (ReAct Loop Configuration)
 agent:
   # ReAct Loop Parameters
-  max_iterations: 8  # Maximum ReAct iterations (Think-Act-Observe cycles)
+  max_iterations: 20  # Maximum ReAct iterations (Think-Act-Observe cycles)
   enable_memory_injection: true  # Inject retrieved memories into prompt
   explain_memory_usage: true  # Agent should explain why it uses each memory
 
   # Stopping Conditions
-  auto_finish_threshold: 0.75  # Auto-finish if formulation confidence >= this value
+  auto_finish_threshold: 0.9  # Auto-finish if formulation confidence >= this value
   allow_early_stopping: true  # Allow LLM to decide "finish" before max_iterations
 
   # Formulation Design

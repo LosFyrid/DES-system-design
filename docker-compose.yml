@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: des-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - PROJECT_ROOT=/app/
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_RELOAD=false
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
+    volumes:
+      # 持久化数据卷
+      - ./data:/app/data
+      - ./src/tools/largerag/data:/app/src/tools/largerag/data
+      - ./logs:/app/logs
+      # 生产配置文件（只读）
+      - ./config/production/largerag_settings.yaml:/app/src/tools/largerag/config/settings.yaml:ro
+      - ./config/production/corerag_settings.yaml:/app/src/tools/corerag/config/settings.yaml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - des-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000}
+    container_name: des-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - des-network
+
+networks:
+  des-network:
+    driver: bridge
