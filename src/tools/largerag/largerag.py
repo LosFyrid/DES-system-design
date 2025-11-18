@@ -15,10 +15,6 @@ from .core.indexer import LargeRAGIndexer
 from .core.query_engine import LargeRAGQueryEngine
 from .config.settings import SETTINGS
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 

@@ -7,6 +7,7 @@ registers API routers, and provides the entry point for the server.
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,14 +15,13 @@ from fastapi.responses import JSONResponse
 
 from config import get_web_config
 from utils.agent_loader import initialize_agent
+from utils.logging_config import setup_logging
 from api import tasks, recommendations, feedback, statistics, memories
 
 # Configure logging
 web_config = get_web_config()
-logging.basicConfig(
-    level=getattr(logging, web_config.log_level),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+log_dir = Path("/app/logs")
+setup_logging(log_dir, level=web_config.log_level)
 logger = logging.getLogger(__name__)
 
 

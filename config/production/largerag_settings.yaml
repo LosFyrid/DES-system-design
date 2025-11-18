@@ -18,7 +18,7 @@ vector_store:
   type: "chroma"
   # Docker 容器内路径（映射到 src/tools/largerag/data/）
   persist_directory: "/app/src/tools/largerag/data/chroma_db_prod"
-  collection_name: "des_literature_production"
+  collection_name: "des_prod_v3"  # 实际数据库中的collection名称
   distance_metric: "cosine"
 
 # ============ 文档处理配置 ============

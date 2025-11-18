@@ -13,7 +13,7 @@ embedding:
 vector_store:
   type: "chroma"                                # 固定值，不可修改
   persist_directory: "${PROJECT_ROOT}src/tools/largerag/data/chroma_db_prod"
-  collection_name: "des_literature_v1"
+  collection_name: "des_prod_v3"                # 实际数据库中的collection名称
   distance_metric: "cosine"                     # cosine, l2, ip
 
 # ============ 文档处理配置 ============
