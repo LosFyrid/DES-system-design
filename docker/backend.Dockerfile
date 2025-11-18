@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     gcc \
     g++ \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -38,6 +39,8 @@ RUN mkdir -p /app/data /app/logs \
 # Include /app/src so that `import agent` etc. works without extra PYTHONPATH tweaks
 ENV PYTHONPATH=/app/src:/app
 ENV PROJECT_ROOT=/app/
+# Set container timezone to Beijing (Asia/Shanghai) so logs use local time
+ENV TZ=Asia/Shanghai
 
 # Expose API port
 EXPOSE 8000

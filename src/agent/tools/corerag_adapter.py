@@ -289,33 +289,19 @@ class CoreRAGAdapter:
             Formatted result dict
         """
         # Extract key information from state
-        answer = state_result.get("answer", "")
-        normalized_query = state_result.get("normalized_query", {})
-        entities = normalized_query.get("entities", [])
-        validation_report = state_result.get("validation_report", {})
-        tried_tool_calls = state_result.get("tried_tool_calls", [])
+        # Prefer the fully formatted result from CoreRAG (FormattedResult schema).
+        formatted_results = state_result.get("formatted_results")
+        if isinstance(formatted_results, dict) and formatted_results:
+            return formatted_results
 
-        # Format entities
-        entity_names = [e.get("name", "") for e in entities if isinstance(e, dict)]
+        # Fallback: if formatter failed or is missing, expose the lower-level
+        # query_results so DESAgent still has some usable information.
+        query_results = state_result.get("query_results")
+        if isinstance(query_results, dict) and query_results:
+            return query_results
 
-        # Count successful tool calls
-        num_results = len(tried_tool_calls)
-
-        # Format the result
-        formatted_text = self._format_theory_knowledge(
-            query_text, answer, entity_names, tried_tool_calls, focus
-        )
-
-        return {
-            "query": query_text,
-            "answer": answer,
-            "entities": entity_names,
-            "tool_calls": tried_tool_calls,
-            "validation_status": validation_report.get("classification", "unknown"),
-            "formatted_text": formatted_text,
-            "num_results": num_results,
-            "raw_state": state_result  # Include raw state for advanced use
-        }
+        # Last-resort fallback: return an empty dict to signal "no theory available".
+        return {}
 
     def _format_theory_knowledge(
         self,
