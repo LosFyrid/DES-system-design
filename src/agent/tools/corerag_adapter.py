@@ -97,6 +97,32 @@ except Exception as e:  # broaden to capture any import-time failure
     QueryManager = None
     ONTOLOGY_SETTINGS = None
 
+# Load tool timeout configuration from ReasoningBank config
+try:
+    from agent.config import get_config
+
+    _tools_cfg = get_config().get_tools_config()
+    _corerag_cfg = _tools_cfg.get("corerag", {})
+    _CORERAG_TIMEOUT_SECONDS = int(_corerag_cfg.get("timeout", 600))
+except Exception as e:
+    logger.warning(
+        "Failed to load CoreRAG timeout from config: %s. Using default 600s.",
+        e,
+    )
+    _CORERAG_TIMEOUT_SECONDS = 600
+
+# Allow environment variable to override config timeout if set
+_timeout_env = os.getenv("CORERAG_TIMEOUT_SECONDS")
+if _timeout_env:
+    try:
+        _CORERAG_TIMEOUT_SECONDS = int(_timeout_env)
+    except ValueError:
+        logger.warning(
+            "Invalid CORERAG_TIMEOUT_SECONDS value '%s', keeping %s seconds.",
+            _timeout_env,
+            _CORERAG_TIMEOUT_SECONDS,
+        )
+
 
 class CoreRAGAdapter:
     """
@@ -230,8 +256,14 @@ class CoreRAGAdapter:
             )
 
             # Wait for result (blocks until complete)
-            logger.info("Waiting for CoreRAG result...")
-            state_result = future.result(timeout=120)  # 2 minute timeout
+            logger.info(
+                "Waiting for CoreRAG result (timeout=%ss)...",
+                _CORERAG_TIMEOUT_SECONDS,
+            )
+            # CoreRAG workflows can legitimately take several minutes
+            # (multi-step tool calls + retries). Use the timeout from
+            # config/tools.corerag.timeout, overridable via env.
+            state_result = future.result(timeout=_CORERAG_TIMEOUT_SECONDS)
 
             logger.info("CoreRAG query completed")
 
