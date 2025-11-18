@@ -35,7 +35,8 @@ RUN mkdir -p /app/data /app/logs \
     /app/src/tools/largerag/data/prod_cache
 
 # Set environment variables
-ENV PYTHONPATH=/app
+# Include /app/src so that `import agent` etc. works without extra PYTHONPATH tweaks
+ENV PYTHONPATH=/app/src:/app
 ENV PROJECT_ROOT=/app/
 
 # Expose API port

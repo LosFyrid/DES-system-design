@@ -46,13 +46,32 @@ if 'OPENAI_API_KEY' not in os.environ:
 
 logger = logging.getLogger(__name__)
 
+# Avoid conflict with web_backend.config (module) which would shadow corerag/config namespace
+existing_config = sys.modules.get("config")
+if existing_config:
+    cfg_file = getattr(existing_config, "__file__", "")
+    if cfg_file and "web_backend/config.py" in cfg_file.replace("\\", "/"):
+        sys.modules.pop("config", None)
+        sys.modules.pop("config.settings", None)
+
 # Import CoreRAG components
 try:
     from autology_constructor.idea.query_team.query_manager import QueryManager
     from config.settings import ONTOLOGY_SETTINGS
     CORERAG_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"CoreRAG dependencies not available: {e}")
+    _IMPORT_ERROR = None
+    logger.info(
+        "CoreRAG import OK | sys.path_head=%s | cwd=%s",
+        list(sys.path)[:5],
+        os.getcwd(),
+    )
+except Exception as e:  # broaden to capture any import-time failure
+    _IMPORT_ERROR = e
+    logger.warning(
+        "CoreRAG dependencies not available: %s | sys.path=%s | cwd=%s",
+        e, list(sys.path), os.getcwd(),
+        exc_info=True
+    )
     CORERAG_AVAILABLE = False
     QueryManager = None
     ONTOLOGY_SETTINGS = None
@@ -93,13 +112,21 @@ class CoreRAGAdapter:
 
         if not CORERAG_AVAILABLE:
             logger.error(
-                "CoreRAG dependencies not available. "
-                "Ensure owlready2 and other dependencies are installed."
+                "CoreRAG dependencies not available. Ensure owlready2 and other dependencies are installed. "
+                "import_error=%s | sys.path_head=%s | cwd=%s",
+                _IMPORT_ERROR,
+                sys.path[:5],
+                os.getcwd(),
+                exc_info=_IMPORT_ERROR
             )
             return
 
         try:
             logger.info("Initializing CoreRAG QueryManager...")
+            logger.info(
+                "CoreRAGAdapter init | cwd=%s | sys.path_head=%s",
+                os.getcwd(), sys.path[:5]
+            )
 
             # Initialize QueryManager with ontology settings
             self.manager = QueryManager(
