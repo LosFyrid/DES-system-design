@@ -239,7 +239,10 @@ class QueryManager:
             # 创建共享World，并确保本体目录可见
             shared_world = World()
             resolved_dir = os.path.abspath(ontology_settings.directory_path)
-            shared_world.onto_path.append(resolved_dir)
+            try:
+                shared_world.onto_path.append(resolved_dir)  # type: ignore[attr-defined]
+            except AttributeError:
+                pass
             if resolved_dir not in onto_path:
                 onto_path.append(resolved_dir)
             

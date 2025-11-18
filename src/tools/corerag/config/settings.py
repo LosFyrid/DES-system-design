@@ -88,7 +88,11 @@ class OntologySettings:
             from owlready2 import World
             self._world = World()
             resolved_dir = str(Path(self.directory_path).resolve())
-            self._world.onto_path.append(resolved_dir)
+            # owlready2 World 版本差异：有的 World 无 onto_path 属性，保持兼容
+            try:
+                self._world.onto_path.append(resolved_dir)  # type: ignore[attr-defined]
+            except AttributeError:
+                pass
             if resolved_dir not in onto_path:
                 onto_path.append(resolved_dir)
             self._ontology = self._world.get_ontology(self.ontology_iri).load(only_local=True)
