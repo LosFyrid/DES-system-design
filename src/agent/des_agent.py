@@ -194,8 +194,8 @@ class DESAgent:
 - **LargeRAG (query_literature)**: Fast vector search (~1-2 seconds) across 10,000+ papers
 - **CoreRAG (query_theory)**: Deep ontology reasoning (~5-10 minutes per query)
 
-**CRITICAL: Memory-First Strategy**:
-1. **ALWAYS retrieve memories FIRST** (in iteration 1) if not yet retrieved - memories contain validated experimental data
+**Note: Use Memory to Guide Theory and Literature Queries**:
+1. **retrieve memories first** (in iteration 1) if not yet retrieved - memories contain validated experimental data
 2. **If retrieve_memories returns 0 results**: This is ACCEPTABLE - no relevant historical data exists. Immediately move on to theory/literature queries without retrying.
 3. Memories from real experiments are the **MOST RELIABLE** knowledge source when available
 4. Only query CoreRAG/LargeRAG if memories are insufficient or missing critical details
@@ -1198,7 +1198,7 @@ Based on the above information, design a **{num_components}-component DES formul
 2. **Molar Ratio**: Ratio between all components (e.g., "1:2:1" for ternary)
 3. **Reasoning**: Explain your design choices, especially why multiple components are beneficial (3-4 sentences)
 4. **Confidence**: 0.0 to 1.0
-5. **Supporting Evidence**: List key facts from memory/theory/literature
+5. **Supporting Evidence**: List key facts from memory/theory/literature. Left empty if none.
 6. **Synergy Explanation**: How do the multiple components work together?
 
 Format your response as JSON:
