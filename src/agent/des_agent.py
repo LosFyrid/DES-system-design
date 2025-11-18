@@ -28,6 +28,12 @@ from .reasoningbank import (
     ExperimentResult
 )
 
+from .prompts import (
+    OBSERVE_PROMPT,
+    format_action_result_for_observe,
+    parse_observe_output
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,8 +177,11 @@ class DESAgent:
 **Recent Observations**:
 {self._format_observations(knowledge_state['observations'][-2:] if len(knowledge_state['observations']) > 0 else [])}
 
+**Latest OBSERVE Analysis** (from previous iteration):
+{self._format_latest_observe_recommendation(knowledge_state['observations'])}
+
 **Available Actions**:
-1. **retrieve_memories** - Get past experiences from ReasoningBank (validated experimental data). NOTE: If returns empty, you may skip and proceed with other tools.
+1. **retrieve_memories** - Get past experiences from ReasoningBank (validated experimental data). NOTE: If returned empty in last iteration, you may skip and proceed with other tools.
 2. **query_theory** - Query CoreRAG ontology for theoretical principles
 3. **query_literature** - Query LargeRAG for literature data
 4. **query_parallel** - Query both CoreRAG and LargeRAG simultaneously
@@ -405,126 +414,156 @@ Output JSON:
                 "summary": f"Unknown action: {action}"
             }
 
-    def _observe(self, action_result: Dict, knowledge_state: Dict) -> Dict:
+    def _observe(self, action_result: Dict, knowledge_state: Dict, task: Dict, iteration: int) -> Dict:
         """
-        OBSERVE phase: Summarize action results and integrate into knowledge state.
+        OBSERVE phase: LLM-based analysis of action results.
 
-        This phase analyzes what was learned from the action and updates the
-        knowledge state accordingly. It also identifies remaining information gaps.
+        NEW: Uses LLM to analyze action results, extract insights, identify gaps,
+        and recommend next actions. Replaces hardcoded logic with intelligent analysis.
 
         Args:
             action_result: Result from _act method
             knowledge_state: Current knowledge state (for context)
+            task: Task specification
+            iteration: Current iteration number
 
         Returns:
             Dict with:
-                - summary: Observation summary
-                - knowledge_updated: What knowledge was updated
-                - information_sufficient: Whether we have enough info to generate formulation
+                - action: Action that was executed
+                - success: Whether action succeeded
+                - summary: LLM-generated observation summary
+                - knowledge_updated: List of updated knowledge domains
+                - key_insights: List of extracted insights (NEW)
+                - information_gaps: List of identified gaps (NEW)
+                - information_sufficient: Whether we have enough info
+                - recommended_next_action: LLM's recommendation (NEW)
+                - recommendation_reasoning: Reasoning for recommendation (NEW)
         """
-        observation = {
-            "action": action_result["action"],
-            "success": action_result["success"],
-            "summary": "",
-            "knowledge_updated": [],
-            "information_sufficient": False
-        }
+        # Calculate progress context
+        max_iterations = self.config.get("agent", {}).get("max_iterations", 8)
+        progress_pct = int((iteration / max_iterations) * 100)
 
-        # Analyze what was gained
-        if action_result["action"] == "retrieve_memories" and action_result["success"]:
-            num_memories = len(action_result["data"])
-            observation["summary"] = f"Gained {num_memories} past experiences. "
-            observation["knowledge_updated"].append("memories")
+        if progress_pct < 40:
+            stage = "Early"
+        elif progress_pct < 75:
+            stage = "Mid"
+        else:
+            stage = "Late"
 
-            if num_memories > 0:
-                observation["summary"] += "These memories provide validated strategies for similar tasks."
-            else:
-                observation["summary"] += "No past experiences found - this is a novel task."
-
-        elif action_result["action"] == "query_parallel":
-            # Special handling for parallel query - check both theory and literature results
-            theory_available = len(knowledge_state["theory_knowledge"]) > 0
-            literature_available = len(knowledge_state["literature_knowledge"]) > 0
-
-            theory_status = f"✓ ({knowledge_state['num_theory_queries']} total)" if theory_available else "✗"
-            lit_status = f"✓ ({knowledge_state['num_literature_queries']} total)" if literature_available else "✗"
-
-            observation["summary"] = f"Parallel query results: CoreRAG {theory_status}, LargeRAG {lit_status}. "
-
-            # Update knowledge_updated based on what we got this time
-            if action_result["data"]["theory"]:
-                observation["knowledge_updated"].append("theory")
-            if action_result["data"]["literature"]:
-                observation["knowledge_updated"].append("literature")
-
-            # Detailed explanation of what we gained
-            if action_result["data"]["theory"] and action_result["data"]["literature"]:
-                observation["summary"] += "Successfully retrieved both theoretical principles and literature precedents. "
-            elif action_result["data"]["literature"]:
-                observation["summary"] += "Successfully retrieved literature precedents from LargeRAG. "
-            elif action_result["data"]["theory"]:
-                observation["summary"] += "Successfully retrieved theoretical knowledge from CoreRAG. "
-            else:
-                observation["summary"] += "Both queries returned no results - will rely on available knowledge."
-
-        elif action_result["action"] == "query_theory":
-            if action_result["data"]:
-                observation["summary"] = f"Gained theoretical knowledge from CoreRAG ontology (query #{knowledge_state['num_theory_queries']}). "
-                observation["knowledge_updated"].append("theory")
-                observation["summary"] += "Understand chemical principles for component selection."
-            else:
-                observation["summary"] = "CoreRAG query returned no results (tool unavailable or query failed). "
-                observation["summary"] += "Will proceed with available knowledge sources."
-
-        elif action_result["action"] == "query_literature":
-            if action_result["data"]:
-                observation["summary"] = f"Gained literature precedents from LargeRAG (query #{knowledge_state['num_literature_queries']}). "
-                observation["knowledge_updated"].append("literature")
-                observation["summary"] += "Have experimental data from published research."
-            else:
-                observation["summary"] = "LargeRAG query returned no results (tool unavailable or query failed). "
-                observation["summary"] += "Proceeding without external knowledge sources."
-
-        elif action_result["action"] in ["generate_formulation", "refine_formulation"]:
-            formulation = action_result["data"]
-            confidence = formulation.get("confidence", 0.0)
-            observation["summary"] = f"Generated formulation with confidence {confidence:.2f}. "
-            observation["knowledge_updated"].append("formulation")
-
-            if confidence >= 0.75:
-                observation["summary"] += "High confidence - formulation is ready."
-                observation["information_sufficient"] = True
-            elif confidence >= 0.5:
-                observation["summary"] += "Moderate confidence - may benefit from more information."
-            else:
-                observation["summary"] += "Low confidence - need more knowledge or different approach."
-
-        # Check overall information sufficiency
-        has_knowledge = (
-            knowledge_state["memories_retrieved"] or
-            len(knowledge_state["theory_knowledge"]) > 0 or
-            len(knowledge_state["literature_knowledge"]) > 0
+        # Format action result details
+        action_result_summary = format_action_result_for_observe(
+            action_result["action"],
+            action_result,
+            knowledge_state
         )
 
-        has_formulation = len(knowledge_state["formulation_candidates"]) > 0
+        # Format recent observations
+        recent_observations = self._format_observations(
+            knowledge_state["observations"][-2:] if len(knowledge_state["observations"]) > 0 else []
+        )
 
-        if has_formulation and knowledge_state["formulation_candidates"][0].get("confidence", 0) >= 0.6:
-            observation["information_sufficient"] = True
+        # Build OBSERVE prompt
+        observe_prompt = OBSERVE_PROMPT.format(
+            task_description=task.get("description", ""),
+            target_material=task.get("target_material", ""),
+            target_temperature=task.get("target_temperature", 25),
+            iteration=iteration,
+            max_iterations=max_iterations,
+            progress_pct=progress_pct,
+            stage=stage,
+            action=action_result["action"],
+            success=action_result["success"],
+            action_result_summary=action_result_summary,
+            has_memories=knowledge_state["memories_retrieved"],
+            num_memories=len(knowledge_state["memories"] or []),
+            num_theory=knowledge_state["num_theory_queries"],
+            failed_theory=knowledge_state["failed_theory_attempts"],
+            num_literature=knowledge_state["num_literature_queries"],
+            failed_literature=knowledge_state["failed_literature_attempts"],
+            num_formulations=len(knowledge_state["formulation_candidates"]),
+            num_observations=len(knowledge_state["observations"]),
+            recent_observations=recent_observations
+        )
+
+        # Call LLM for observation analysis
+        try:
+            llm_output = self.llm_client(observe_prompt)
+            observation = parse_observe_output(llm_output)
+
+            # Add metadata
+            observation["action"] = action_result["action"]
+            observation["success"] = action_result["success"]
+
+            logger.info(f"[OBSERVE] LLM analysis: {observation.get('summary', 'No summary')[:100]}...")
+
+        except Exception as e:
+            logger.error(f"OBSERVE LLM call failed: {e}, using fallback")
+            # Fallback: minimal observation
+            observation = {
+                "action": action_result["action"],
+                "success": action_result["success"],
+                "summary": f"Action {action_result['action']} completed with status: {action_result['success']}",
+                "knowledge_updated": [],
+                "key_insights": [],
+                "information_gaps": ["LLM observation failed"],
+                "information_sufficient": False,
+                "recommended_next_action": "generate_formulation",
+                "recommendation_reasoning": "Fallback due to LLM error"
+            }
 
         return observation
 
     # ===== Helper Methods =====
 
     def _format_observations(self, observations: List[Dict]) -> str:
-        """Format recent observations for display in prompts."""
+        """
+        Format recent observations for display in prompts.
+
+        NEW: Includes key_insights and information_gaps from LLM analysis.
+        """
         if not observations:
             return "(No observations yet)"
 
         formatted = []
         for i, obs in enumerate(observations, 1):
-            formatted.append(f"{i}. {obs.get('summary', 'No summary')}")
+            obs_text = f"{i}. **Summary**: {obs.get('summary', 'No summary')}"
+
+            # Add key insights if available
+            if obs.get("key_insights"):
+                insights = obs["key_insights"][:2]  # Show max 2 insights
+                insights_text = "; ".join(insights)
+                obs_text += f"\n   **Insights**: {insights_text}"
+
+            # Add identified gaps if available
+            if obs.get("information_gaps"):
+                gaps = obs["information_gaps"][:2]  # Show max 2 gaps
+                gaps_text = "; ".join(gaps)
+                obs_text += f"\n   **Gaps**: {gaps_text}"
+
+            formatted.append(obs_text)
 
         return "\n".join(formatted)
+
+    def _format_latest_observe_recommendation(self, observations: List[Dict]) -> str:
+        """
+        Format the latest OBSERVE phase recommendation for THINK prompt.
+
+        NEW: Shows the LLM-generated recommendation from previous iteration.
+        """
+        if not observations or len(observations) == 0:
+            return "(No previous observations - this is iteration 1)"
+
+        latest = observations[-1]
+
+        # Extract recommendation if available
+        recommended_action = latest.get("recommended_next_action", "N/A")
+        recommendation_reasoning = latest.get("recommendation_reasoning", "No reasoning provided")
+
+        formatted = f"- **Recommended Action**: {recommended_action}\n"
+        formatted += f"- **Reasoning**: {recommendation_reasoning}\n"
+        formatted += f"- **Note**: You may follow this recommendation or choose a different action based on the full context."
+
+        return formatted
 
     def _parse_json_response(self, llm_output: str) -> Dict:
         """Parse JSON from LLM response with multiple fallback strategies."""
@@ -572,17 +611,21 @@ Output JSON:
         """Async version of parallel tool query."""
         loop = asyncio.get_event_loop()
 
+        # Helper coroutine to return None when tool is unavailable
+        async def return_none():
+            return None
+
         # Create tasks
         tasks = []
         if self.corerag:
             tasks.append(loop.run_in_executor(None, self._query_corerag, task, knowledge_state))
         else:
-            tasks.append(asyncio.sleep(0, result=None))
+            tasks.append(return_none())
 
         if self.largerag:
             tasks.append(loop.run_in_executor(None, self._query_largerag, task, knowledge_state))
         else:
-            tasks.append(asyncio.sleep(0, result=None))
+            tasks.append(return_none())
 
         # Execute in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -686,15 +729,23 @@ Output JSON:
             })
 
             # OBSERVE: Summarize and integrate new information
-            observation = self._observe(action_result, knowledge_state)
+            observation = self._observe(action_result, knowledge_state, task, iteration)
             logger.info(f"[OBSERVE] {observation['summary']}")
 
             knowledge_state["observations"].append(observation)
+
+            # NEW: Update information_gaps from observation
+            if observation.get("information_gaps"):
+                knowledge_state["information_gaps"] = observation["information_gaps"]
+                logger.debug(f"[OBSERVE] Updated information gaps: {observation['information_gaps']}")
+
             trajectory_steps.append({
                 "iteration": iteration,
                 "phase": "observe",
                 "observation": observation["summary"],
-                "knowledge_updated": observation.get("knowledge_updated", [])
+                "knowledge_updated": observation.get("knowledge_updated", []),
+                "key_insights": observation.get("key_insights", []),
+                "information_gaps": observation.get("information_gaps", [])
             })
 
         # ===== Finalize Formulation =====

@@ -16,6 +16,12 @@ from .judge_prompts import (
     parse_judge_output
 )
 
+from .observe_prompts import (
+    OBSERVE_PROMPT,
+    format_action_result_for_observe,
+    parse_observe_output
+)
+
 __all__ = [
     "SUCCESS_EXTRACTION_PROMPT",
     "FAILURE_EXTRACTION_PROMPT",
@@ -25,4 +31,7 @@ __all__ = [
     "parse_extracted_memories",
     "JUDGE_PROMPT",
     "parse_judge_output",
+    "OBSERVE_PROMPT",
+    "format_action_result_for_observe",
+    "parse_observe_output",
 ]
