@@ -32,6 +32,11 @@ services:
       # 生产配置文件（只读）
       - ./config/production/largerag_settings.yaml:/app/src/tools/largerag/config/settings.yaml:ro
       - ./config/production/corerag_settings.yaml:/app/src/tools/corerag/config/settings.yaml:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -59,6 +64,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - des-network
 

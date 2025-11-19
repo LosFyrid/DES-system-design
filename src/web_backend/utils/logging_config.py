@@ -95,11 +95,13 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
         >>> logger = logging.getLogger("agent.des_agent")
         >>> logger.info("This goes to agent_{timestamp}.log")
     """
-    # Ensure log directory exists
+    # Ensure base log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate timestamp for this session
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Generate date/time components for directory and file naming
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H%M%S")
 
     # Common formatter
     formatter = logging.Formatter(
@@ -123,8 +125,20 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
+    # Helper to build per-category, per-date log paths
+    def _category_file(category: str) -> Path:
+        """
+        Create category/date subdirectory and return log file path.
+
+        Layout:
+            <log_dir>/<category>/<YYYY-MM-DD>/<category>_<HHMMSS>.log
+        """
+        category_dir = log_dir / category / date_str
+        category_dir.mkdir(parents=True, exist_ok=True)
+        return category_dir / f"{category}_{time_str}.log"
+
     # ===== 2. Web Backend Handler =====
-    web_backend_file = log_dir / f"web_backend_{timestamp}.log"
+    web_backend_file = _category_file("web_backend")
     web_backend_handler = logging.handlers.RotatingFileHandler(
         web_backend_file,
         maxBytes=100 * 1024 * 1024,  # 100MB
@@ -140,7 +154,7 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
     root_logger.addHandler(web_backend_handler)
 
     # ===== 3. Agent Handler =====
-    agent_file = log_dir / f"agent_{timestamp}.log"
+    agent_file = _category_file("agent")
     agent_handler = logging.handlers.RotatingFileHandler(
         agent_file,
         maxBytes=100 * 1024 * 1024,
@@ -155,7 +169,7 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
     root_logger.addHandler(agent_handler)
 
     # ===== 4. LargeRAG Handler =====
-    largerag_file = log_dir / f"largerag_{timestamp}.log"
+    largerag_file = _category_file("largerag")
     largerag_handler = logging.handlers.RotatingFileHandler(
         largerag_file,
         maxBytes=100 * 1024 * 1024,
@@ -170,7 +184,7 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
     root_logger.addHandler(largerag_handler)
 
     # ===== 5. CoreRAG Handler =====
-    corerag_file = log_dir / f"corerag_{timestamp}.log"
+    corerag_file = _category_file("corerag")
     corerag_handler = logging.handlers.RotatingFileHandler(
         corerag_file,
         maxBytes=100 * 1024 * 1024,
@@ -186,7 +200,7 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
     root_logger.addHandler(corerag_handler)
 
     # ===== 6. Root Handler (fallback for uncategorized logs) =====
-    root_file = log_dir / f"root_{timestamp}.log"
+    root_file = _category_file("root")
     root_handler = logging.handlers.RotatingFileHandler(
         root_file,
         maxBytes=100 * 1024 * 1024,
@@ -204,12 +218,12 @@ def setup_logging(log_dir: Path, level: str = "INFO") -> None:
 
     # Log configuration success
     logging.info(f"Logging configured: level={level}, log_dir={log_dir}")
-    logging.info(f"Log files created with timestamp: {timestamp}")
-    logging.info(f"  - {web_backend_file.name} (Web Backend)")
-    logging.info(f"  - {agent_file.name} (Agent)")
-    logging.info(f"  - {largerag_file.name} (LargeRAG)")
-    logging.info(f"  - {corerag_file.name} (CoreRAG)")
-    logging.info(f"  - {root_file.name} (Root)")
+    logging.info(f"Log files created under date directory: {date_str}")
+    logging.info(f"  - {web_backend_file} (Web Backend)")
+    logging.info(f"  - {agent_file} (Agent)")
+    logging.info(f"  - {largerag_file} (LargeRAG)")
+    logging.info(f"  - {corerag_file} (CoreRAG)")
+    logging.info(f"  - {root_file} (Root)")
 
 
 # For testing
