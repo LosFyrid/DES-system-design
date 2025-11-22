@@ -72,7 +72,7 @@ Dockerfile.dev
 data/recommendations/*
 data/memory/*
 src/tools/largerag/data/chroma_db_prod/*
-src/tools/largerag/data/prod_cache/*
+src/tools/largerag/data/*
 
 # Scripts
 scripts/

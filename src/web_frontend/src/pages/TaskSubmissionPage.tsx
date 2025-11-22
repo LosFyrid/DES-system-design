@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Form,
@@ -16,6 +16,7 @@ import {
   Row,
   Col,
   Checkbox,
+  Select,
 } from 'antd';
 import { SendOutlined, ReloadOutlined } from '@ant-design/icons';
 import { taskService } from '../services';
@@ -25,6 +26,11 @@ const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 
 function TaskSubmissionPage() {
+  // Local storage key & max history length for task descriptions
+  const DESCRIPTION_HISTORY_KEY = 'des_task_description_history';
+  const CONSTRAINTS_HISTORY_KEY = 'des_task_constraints_history';
+  const MAX_HISTORY_ITEMS = 20;
+
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [submittedTasks, setSubmittedTasks] = useState<Array<{
@@ -34,14 +40,110 @@ function TaskSubmissionPage() {
     error?: string;
   }>>([]);
   const [batchMode, setBatchMode] = useState(false);
+  const [descriptionHistory, setDescriptionHistory] = useState<string[]>([]);
+  const [constraintsHistory, setConstraintsHistory] = useState<string[]>([]);
+
+  // Load description history on mount
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const descRaw = window.localStorage.getItem(DESCRIPTION_HISTORY_KEY);
+      if (descRaw) {
+        const parsed = JSON.parse(descRaw);
+        if (Array.isArray(parsed)) {
+          setDescriptionHistory(parsed.filter((item) => typeof item === 'string' && item.trim().length > 0));
+        }
+      }
+
+      const constraintsRaw = window.localStorage.getItem(CONSTRAINTS_HISTORY_KEY);
+      if (constraintsRaw) {
+        const parsed = JSON.parse(constraintsRaw);
+        if (Array.isArray(parsed)) {
+          setConstraintsHistory(parsed.filter((item) => typeof item === 'string' && item.trim().length > 0));
+        }
+      }
+    } catch {
+      // Ignore storage errors (e.g., JSON parse error, disabled storage)
+    }
+  }, []);
+
+  // Save a description into local history (most recent first, unique, capped length)
+  const saveDescriptionToHistory = (description: string) => {
+    const trimmed = description.trim();
+    if (!trimmed) return;
+
+    if (typeof window === 'undefined' || !window.localStorage) return;
+
+    setDescriptionHistory((prev) => {
+      const withoutDup = prev.filter((d) => d !== trimmed);
+      const next = [trimmed, ...withoutDup].slice(0, MAX_HISTORY_ITEMS);
+      try {
+        window.localStorage.setItem(DESCRIPTION_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
+
+  // Save a constraints string into local history (most recent first, unique, capped length)
+  const saveConstraintsToHistory = (constraintsText: string) => {
+    const trimmed = constraintsText.trim();
+    if (!trimmed) return;
+
+    if (typeof window === 'undefined' || !window.localStorage) return;
+
+    setConstraintsHistory((prev) => {
+      const withoutDup = prev.filter((d) => d !== trimmed);
+      const next = [trimmed, ...withoutDup].slice(0, MAX_HISTORY_ITEMS);
+      try {
+        window.localStorage.setItem(CONSTRAINTS_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
 
   const handleSubmit = async (values: TaskRequest & { batch_count?: number }) => {
+    // Persist current description into history for future selection
+    if (values.description) {
+      saveDescriptionToHistory(values.description);
+    }
+
+    // 解析约束条件：允许用户在文本框中输入 JSON 字符串，提交前转为对象
+    const rawConstraints = (values as any).constraints as unknown;
+    const processedValues: TaskRequest & { batch_count?: number } = { ...values };
+
+    if (typeof rawConstraints === 'string') {
+      const trimmed = rawConstraints.trim();
+      if (!trimmed) {
+        // 空字符串视为无约束，直接删除字段
+        delete (processedValues as any).constraints;
+      } else {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            (processedValues as any).constraints = parsed;
+            // 仅在 JSON 合法且为对象时，将原始文本保存到历史记录
+            saveConstraintsToHistory(trimmed);
+          } else {
+            message.error('约束条件必须是一个 JSON 对象，例如 {"toxicity": "low"}');
+            return;
+          }
+        } catch (e) {
+          message.error('约束条件不是合法的 JSON，请检查引号、逗号等格式。');
+          return;
+        }
+      }
+    }
+
     const batchCount = batchMode ? (values.batch_count || 1) : 1;
 
     // 批量提交任务
     const tasks = Array.from({ length: batchCount }, (_, index) => ({
-      ...values,
-      task_id: `${values.target_material}_${Date.now()}_${index + 1}`,
+      ...processedValues,
+      task_id: `${processedValues.target_material}_${Date.now()}_${index + 1}`,
     }));
 
     // 初始化提交状态
@@ -164,6 +266,30 @@ function TaskSubmissionPage() {
             batch_count: 1,
           }}
         >
+          {descriptionHistory.length > 0 && (
+            <Form.Item
+              label="从历史任务描述中选择填充"
+              style={{ marginBottom: 8 }}
+            >
+              <Select
+                allowClear
+                showSearch
+                placeholder="选择一条历史描述快速填入"
+                optionFilterProp="label"
+                style={{ width: '100%' }}
+                options={descriptionHistory.map((desc, index) => ({
+                  label: desc.length > 80 ? `${desc.slice(0, 80)}...` : desc,
+                  value: desc,
+                  // key is handled by React via value, but keep index for clarity
+                  key: `${index}`,
+                }))}
+                onSelect={(value: string) => {
+                  form.setFieldsValue({ description: value });
+                }}
+              />
+            </Form.Item>
+          )}
+
           <Form.Item
             label="任务描述"
             name="description"
@@ -224,6 +350,29 @@ function TaskSubmissionPage() {
               placeholder="输入组分数量 (2-10)"
             />
           </Form.Item>
+
+          {constraintsHistory.length > 0 && (
+            <Form.Item
+              label="从历史约束条件中选择填充"
+              style={{ marginBottom: 8 }}
+            >
+              <Select
+                allowClear
+                showSearch
+                placeholder="选择一条历史约束快速填入"
+                optionFilterProp="label"
+                style={{ width: '100%' }}
+                options={constraintsHistory.map((text, index) => ({
+                  label: text.length > 80 ? `${text.slice(0, 80)}...` : text,
+                  value: text,
+                  key: `${index}`,
+                }))}
+                onSelect={(value: string) => {
+                  form.setFieldsValue({ constraints: value });
+                }}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item label="约束条件 (可选)" name="constraints">
             <TextArea

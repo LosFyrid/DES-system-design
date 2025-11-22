@@ -37,7 +37,7 @@ COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 RUN sed -i 's/worker_processes.*auto;/worker_processes 4;/' /etc/nginx/nginx.conf
 
 # Expose port
-EXPOSE 80
+EXPOSE 15080
 
 # Health check (use IPv4 address to avoid IPv6 connection issues)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
