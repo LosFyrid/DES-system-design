@@ -5,8 +5,8 @@ Handles listing, viewing, and managing DES formulation recommendations.
 """
 
 import logging
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Path, status
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query, Path, status as http_status
 
 from models.schemas import (
     RecommendationListResponse,
@@ -44,7 +44,7 @@ async def get_statistics(
     Query parameters:
     - material: Optional filter by target material
 
-    Returns counts by status: all, GENERATING, PENDING, COMPLETED, FAILED, CANCELLED
+    Returns counts by status: all, GENERATING, PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
     """
     try:
         # Call service
@@ -60,13 +60,13 @@ async def get_statistics(
     except RuntimeError as e:
         logger.error(f"Failed to get statistics: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=str(e))
         )
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=f"Unexpected error: {str(e)}")
         )
 
@@ -85,7 +85,7 @@ async def get_statistics(
 async def list_recommendations(
     status: Optional[str] = Query(
         None,
-        description="Filter by status (GENERATING, PENDING, COMPLETED, CANCELLED, FAILED)",
+        description="Filter by status. Use comma-separated values for multiple statuses (GENERATING, PENDING, PROCESSING, COMPLETED, CANCELLED, FAILED)",
         example="PENDING"
     ),
     material: Optional[str] = Query(
@@ -120,10 +120,14 @@ async def list_recommendations(
     """
     try:
         # Validate status if provided
-        valid_statuses = ["GENERATING", "PENDING", "COMPLETED", "CANCELLED", "FAILED"]
-        if status and status not in valid_statuses:
+        valid_statuses = ["GENERATING", "PENDING", "PROCESSING", "COMPLETED", "CANCELLED", "FAILED"]
+        status_filters: Optional[List[str]] = None
+        if status:
+            status_filters = [part.strip() for part in status.split(",") if part.strip()]
+
+        if status_filters and any(part not in valid_statuses for part in status_filters):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=error_response(
                     message=f"Invalid status: {status}. Must be one of: {', '.join(valid_statuses)}"
                 )
@@ -132,7 +136,7 @@ async def list_recommendations(
         # Call service
         rec_service = get_recommendation_service()
         list_data = rec_service.list_recommendations(
-            status=status,
+            status=status_filters,
             material=material,
             page=page,
             page_size=page_size
@@ -150,13 +154,13 @@ async def list_recommendations(
     except RuntimeError as e:
         logger.error(f"Failed to list recommendations: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=str(e))
         )
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=f"Unexpected error: {str(e)}")
         )
 
@@ -206,19 +210,19 @@ async def get_recommendation_detail(
         # Recommendation not found
         logger.warning(f"Recommendation not found: {recommendation_id}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=error_response(message=str(e))
         )
     except RuntimeError as e:
         logger.error(f"Failed to get recommendation detail: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=str(e))
         )
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=f"Unexpected error: {str(e)}")
         )
 
@@ -268,24 +272,24 @@ async def cancel_recommendation(
         if "not found" in error_msg.lower():
             logger.warning(f"Recommendation not found: {recommendation_id}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=http_status.HTTP_404_NOT_FOUND,
                 detail=error_response(message=error_msg)
             )
         else:
             logger.warning(f"Cannot cancel recommendation: {error_msg}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=error_response(message=error_msg)
             )
     except RuntimeError as e:
         logger.error(f"Failed to cancel recommendation: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=str(e))
         )
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=f"Unexpected error: {str(e)}")
         )

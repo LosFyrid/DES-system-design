@@ -5,7 +5,7 @@ Business logic for managing DES formulation recommendations.
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 from math import ceil
 
@@ -34,7 +34,7 @@ class RecommendationService:
 
     def list_recommendations(
         self,
-        status: Optional[str] = None,
+        status: Optional[Union[str, List[str]]] = None,
         material: Optional[str] = None,
         page: int = 1,
         page_size: int = 20
@@ -43,7 +43,7 @@ class RecommendationService:
         List recommendations with filtering and pagination (fast - index only).
 
         Args:
-            status: Filter by status (PENDING, COMPLETED, CANCELLED)
+            status: Filter by one status or a list of statuses
             material: Filter by target_material
             page: Page number (1-indexed)
             page_size: Number of items per page

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Form,
@@ -26,6 +26,7 @@ import {
 import { feedbackService, recommendationService } from '../services';
 import type {
   ExperimentResultRequest,
+  DissolutionMeasurement,
   RecommendationDetail,
   FeedbackStatusData
 } from '../types';
@@ -33,6 +34,7 @@ import { getFormulationDisplayString } from '../utils/formulationUtils';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
+const FEEDBACK_POLL_INTERVAL_MS = 2000;
 
 function formatRatioNumber(value: number): string {
   return value.toFixed(4).replace(/\.?0+$/, '');
@@ -75,6 +77,16 @@ function FeedbackPage() {
   // Processing status
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<FeedbackStatusData | null>(null);
+  const [processingPollError, setProcessingPollError] = useState<string | null>(null);
+  const completionMessageShownRef = useRef(false);
+
+  const getFallbackProcessingStatus = useCallback(
+    (): FeedbackStatusData => ({
+      status: 'processing',
+      started_at: detail?.updated_at || detail?.created_at || new Date().toISOString(),
+    }),
+    [detail?.created_at, detail?.updated_at]
+  );
 
   useEffect(() => {
     const solidMass = solidLiquidRatio?.solid_mass_g;
@@ -88,56 +100,181 @@ function FeedbackPage() {
     }
   }, [form, solidLiquidRatio]);
 
-  useEffect(() => {
+  const fetchDetail = useCallback(async (options?: {
+    showLoading?: boolean;
+    showPrefillMessage?: boolean;
+  }) => {
     if (!id) return;
 
-    const fetchDetail = async () => {
+    const shouldShowLoading = options?.showLoading !== false;
+    if (shouldShowLoading) {
       setLoading(true);
-      try {
-        const response = await recommendationService.getRecommendationDetail(id);
-        setDetail(response.data);
+    }
 
-        // If already has experiment result, pre-fill the form
-        if (response.data.experiment_result) {
-          const expResult = response.data.experiment_result;
-          // Prefill conditions and measurements (long-table mode)
-          const expConditions = expResult.conditions || {};
-          const expRatio = expConditions.solid_liquid_ratio || {};
-          const expMeasurements = expResult.measurements || [];
+    try {
+      const response = await recommendationService.getRecommendationDetail(id);
+      const nextDetail = response.data;
+      setDetail(nextDetail);
 
-          form.setFieldsValue({
-            is_liquid_formed: expResult.is_liquid_formed,
-            conditions: {
-              temperature_C: expConditions.temperature_C,
-              solid_liquid_ratio: {
-                solid_mass_g: expRatio.solid_mass_g,
-                liquid_volume_ml: expRatio.liquid_volume_ml,
-                ratio_text: expRatio.ratio_text,
-              },
+      // If already has experiment result, pre-fill the form
+      if (nextDetail.experiment_result) {
+        const expResult = nextDetail.experiment_result;
+        // Prefill conditions and measurements (long-table mode)
+        const expConditions = expResult.conditions || {};
+        const expRatio = expConditions.solid_liquid_ratio || {};
+        const expMeasurements = expResult.measurements || [];
+
+        form.setFieldsValue({
+          is_liquid_formed: expResult.is_liquid_formed,
+          conditions: {
+            temperature_C: expConditions.temperature_C,
+            solid_liquid_ratio: {
+              solid_mass_g: expRatio.solid_mass_g,
+              liquid_volume_ml: expRatio.liquid_volume_ml,
+              ratio_text: expRatio.ratio_text,
             },
-            measurements: expMeasurements.length > 0 ? expMeasurements : undefined,
-            notes: expResult.notes || '',
-            // Convert properties object to text format
-            properties_text: expResult.properties
-              ? Object.entries(expResult.properties)
-                  .map(([key, value]) => `${key}=${value}`)
-                  .join('\n')
-              : '',
-            // Keep raw properties in sync so that updates don't silently wipe old values
-            properties: expResult.properties || undefined,
-          });
-          setIsLiquidFormed(expResult.is_liquid_formed);
+          },
+          measurements: expMeasurements.length > 0 ? expMeasurements : undefined,
+          notes: expResult.notes || '',
+          // Convert properties object to text format
+          properties_text: expResult.properties
+            ? Object.entries(expResult.properties)
+                .map(([key, value]) => `${key}=${value}`)
+                .join('\n')
+            : '',
+          // Keep raw properties in sync so that updates don't silently wipe old values
+          properties: expResult.properties || undefined,
+        });
+        setIsLiquidFormed(expResult.is_liquid_formed);
+        if (options?.showPrefillMessage) {
           message.info('已加载当前反馈数据，您可以修改后重新提交');
         }
-      } catch (error) {
-        console.error('Failed to fetch recommendation detail:', error);
-      } finally {
+      }
+    } catch (error) {
+      console.error('Failed to fetch recommendation detail:', error);
+    } finally {
+      if (shouldShowLoading) {
         setLoading(false);
+      }
+    }
+  }, [form, id]);
+
+  useEffect(() => {
+    fetchDetail({ showLoading: true, showPrefillMessage: true });
+  }, [fetchDetail]);
+
+  useEffect(() => {
+    if (
+      !id ||
+      !detail ||
+      isProcessing ||
+      (detail.status !== 'PROCESSING' && detail.status !== 'COMPLETED')
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const recoverProcessingStatus = async () => {
+      try {
+        const response = await feedbackService.checkStatus(id);
+        if (
+          cancelled ||
+          (detail.status === 'COMPLETED' && response.data.status !== 'processing')
+        ) {
+          return;
+        }
+
+        completionMessageShownRef.current = false;
+        setProcessingPollError(null);
+        setProcessingStatus(response.data);
+        setIsProcessing(true);
+      } catch {
+        if (cancelled || detail.status !== 'PROCESSING') return;
+
+        completionMessageShownRef.current = false;
+        setProcessingPollError('暂时无法读取后台处理详情，页面会继续尝试刷新状态。');
+        setProcessingStatus(getFallbackProcessingStatus());
+        setIsProcessing(true);
       }
     };
 
-    fetchDetail();
-  }, [id, form]);
+    recoverProcessingStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detail, getFallbackProcessingStatus, id, isProcessing]);
+
+  useEffect(() => {
+    if (!id || !isProcessing || processingStatus?.status !== 'processing') return;
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const poll = async () => {
+      try {
+        const response = await feedbackService.checkStatus(id);
+        if (cancelled) return;
+
+        setProcessingPollError(null);
+        setProcessingStatus(response.data);
+
+        if (response.data.status === 'completed') {
+          if (!completionMessageShownRef.current) {
+            completionMessageShownRef.current = true;
+            message.success({
+              content: `反馈处理完成！提取了 ${response.data.result?.num_memories || 0} 条记忆`,
+              duration: 5,
+            });
+          }
+          await fetchDetail({ showLoading: false, showPrefillMessage: false });
+          return;
+        }
+
+        if (response.data.status === 'failed') {
+          return;
+        }
+      } catch (error: unknown) {
+        if (cancelled) return;
+
+        const statusCode =
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          typeof (error as { response?: { status?: unknown } }).response?.status === 'number'
+            ? (error as { response: { status: number } }).response.status
+            : undefined;
+        const errorMessage =
+          error instanceof Error ? error.message : '读取处理状态失败，页面会继续尝试刷新状态。';
+        setProcessingPollError(
+          statusCode === 404
+            ? '后台尚未返回处理详情，页面会继续尝试刷新状态。'
+            : errorMessage
+        );
+        setProcessingStatus((current) => current || getFallbackProcessingStatus());
+      }
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(poll, FEEDBACK_POLL_INTERVAL_MS);
+      }
+    };
+
+    poll();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [
+    fetchDetail,
+    getFallbackProcessingStatus,
+    id,
+    isProcessing,
+    processingStatus?.status,
+  ]);
 
   const handleSubmit = async (values: ExperimentResultRequest) => {
     if (!id) return;
@@ -166,7 +303,7 @@ function FeedbackPage() {
       if (badIndex !== -1) {
         form.setFields([
           {
-            name: ['measurements', badIndex, 'leaching_efficiency'] as any,
+            name: ['measurements', badIndex, 'leaching_efficiency'],
             errors: ['液体未形成时，不应填写浸出效率（请清空或填写 0）'],
           },
         ]);
@@ -187,55 +324,30 @@ function FeedbackPage() {
 
       // Switch to processing mode
       setSubmitting(false);
+      completionMessageShownRef.current = false;
+      setProcessingPollError(null);
       setIsProcessing(true);
       setProcessingStatus({
         status: 'processing',
         started_at: new Date().toISOString(),
       });
 
-      // Start polling
-      try {
-        const finalStatus = await feedbackService.pollStatus(
-          id,
-          (statusResponse) => {
-            // Update status during polling
-            setProcessingStatus(statusResponse.data);
-          },
-          2000, // Poll every 2 seconds
-          300000 // 5 minute timeout
-        );
-
-        // Processing completed
-        setProcessingStatus(finalStatus.data);
-        message.success({
-          content: `反馈处理完成！提取了 ${finalStatus.data.result?.num_memories || 0} 条记忆`,
-          duration: 5,
-        });
-
-      } catch (pollError: any) {
-        console.error('Polling error:', pollError);
-        message.error(pollError.message || '处理超时或失败');
-        setProcessingStatus({
-          status: 'failed',
-          started_at: processingStatus?.started_at || new Date().toISOString(),
-          failed_at: new Date().toISOString(),
-          error: pollError.message || '处理失败',
-        });
-      }
-
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to submit feedback:', error);
-      const data = error?.response?.data;
-      const detail = data?.detail || {};
+      const data =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { data?: { detail?: Record<string, unknown>; message?: string } } }).response?.data
+          : undefined;
+      const errorDetail = data?.detail || {};
       const msg =
-        detail.message ||
+        (typeof errorDetail.message === 'string' ? errorDetail.message : undefined) ||
         data?.message ||
-        error?.message ||
+        (error instanceof Error ? error.message : undefined) ||
         '提交失败';
 
       // Optional: map backend field name to form paths
-      const field = detail.field as string | undefined;
-      const index = typeof detail.index === 'number' ? (detail.index as number) : undefined;
+      const field = typeof errorDetail.field === 'string' ? errorDetail.field : undefined;
+      const index = typeof errorDetail.index === 'number' ? errorDetail.index : undefined;
 
       if (field) {
         let namePath: (string | number)[] | undefined;
@@ -256,7 +368,7 @@ function FeedbackPage() {
         if (namePath) {
           form.setFields([
             {
-              name: namePath as any,
+              name: namePath,
               errors: [msg],
             },
           ]);
@@ -306,7 +418,6 @@ function FeedbackPage() {
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}
-            disabled={processingStatus.status === 'processing'}
           >
             返回详情
           </Button>
@@ -317,10 +428,18 @@ function FeedbackPage() {
             <Result
               icon={<LoadingOutlined style={{ fontSize: 48, color: '#1890ff' }} />}
               title="正在处理反馈..."
-              subTitle="系统正在提取实验记忆并更新知识库，这可能需要几秒钟"
+              subTitle="系统正在提取实验记忆并更新知识库，您可以稍后从推荐列表返回查看进度"
               extra={
                 <div style={{ textAlign: 'center' }}>
                   <Progress percent={100} status="active" showInfo={false} />
+                  {processingPollError && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={processingPollError}
+                      style={{ marginTop: 16, textAlign: 'left' }}
+                    />
+                  )}
                   <Paragraph style={{ marginTop: 16 }}>
                     <Text type="secondary">
                       开始时间: {new Date(processingStatus.started_at).toLocaleString()}
@@ -383,6 +502,7 @@ function FeedbackPage() {
                   key="retry"
                   type="primary"
                   onClick={() => {
+                    setProcessingPollError(null);
                     setIsProcessing(false);
                     setProcessingStatus(null);
                   }}
@@ -587,7 +707,7 @@ function FeedbackPage() {
                 <Button
                   type="dashed"
                   onClick={() => {
-                    const existing: any[] = form.getFieldValue('measurements') || [];
+                    const existing: DissolutionMeasurement[] = form.getFieldValue('measurements') || [];
                     const last = existing[existing.length - 1];
                     const timeSeq = [1, 3, 6, 12, 24];
                     const nextTime =

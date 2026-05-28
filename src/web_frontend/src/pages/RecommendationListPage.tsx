@@ -31,6 +31,7 @@ import type { FormulationData } from '../types/formulation';
 
 const { Title, Paragraph, Text } = Typography;
 const { Search } = Input;
+type RecommendationStatusFilter = 'GENERATING' | 'PENDING' | 'PENDING,PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
 
 function RecommendationListPage() {
   const navigate = useNavigate();
@@ -58,6 +59,26 @@ function RecommendationListPage() {
 
   // Track if there are any generating tasks for polling
   const [hasGeneratingTasks, setHasGeneratingTasks] = useState(false);
+
+  const ensurePolling = useCallback((shouldPoll: boolean) => {
+    if (shouldPoll) {
+      setHasGeneratingTasks(true);
+      if (!pollingIntervalRef.current) {
+        const interval = window.setInterval(() => {
+          fetchRecommendationsRef.current();
+          fetchStatusCountsRef.current();
+        }, 5000);
+        pollingIntervalRef.current = interval;
+      }
+      return;
+    }
+
+    setHasGeneratingTasks(false);
+    if (pollingIntervalRef.current) {
+      window.clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
 
   const buildListSearch = useCallback(
     (overrides?: {
@@ -206,12 +227,14 @@ function RecommendationListPage() {
   const [statusCounts, setStatusCounts] = useState<{
     all: number;
     generating: number;
+    processing: number;
     pending: number;
     completed: number;
     failed: number;
   }>({
     all: 0,
     generating: 0,
+    processing: 0,
     pending: 0,
     completed: 0,
     failed: 0,
@@ -225,7 +248,7 @@ function RecommendationListPage() {
   }, [activeTab, currentPage, materialFilter, pageSize]);
 
   // Fetch counts for all statuses (fast - single API call)
-  const fetchStatusCounts = useCallback(async () => {
+  const fetchStatusCounts = useCallback(async (): Promise<boolean> => {
     try {
       // Use new fast statistics API (single call, index only)
       const statsResp = await recommendationService.getStatistics({
@@ -235,42 +258,31 @@ function RecommendationListPage() {
       setStatusCounts({
         all: statsResp.data.all,
         generating: statsResp.data.GENERATING,
+        processing: statsResp.data.PROCESSING || 0,
         pending: statsResp.data.PENDING,
         completed: statsResp.data.COMPLETED,
         failed: (statsResp.data.FAILED || 0) + (statsResp.data.CANCELLED || 0),
       });
 
-      // Check if need to start/stop polling
-      if (statsResp.data.GENERATING > 0) {
-        setHasGeneratingTasks(true);
-        // Start polling if not already running
-        if (!pollingIntervalRef.current) {
-          const interval = window.setInterval(() => {
-            fetchRecommendationsRef.current();
-            fetchStatusCountsRef.current();
-          }, 5000);
-          pollingIntervalRef.current = interval;
-        }
-      } else {
-        setHasGeneratingTasks(false);
-        // Stop polling if running
-        if (pollingIntervalRef.current) {
-          window.clearInterval(pollingIntervalRef.current);
-          pollingIntervalRef.current = null;
-        }
+      const statusCountsNeedPolling =
+        statsResp.data.GENERATING > 0 || (statsResp.data.PROCESSING || 0) > 0;
+      if (statusCountsNeedPolling) {
+        ensurePolling(true);
       }
+      return statusCountsNeedPolling;
     } catch (error) {
       console.error('Failed to fetch status counts:', error);
+      return false;
     }
-  }, []);
+  }, [ensurePolling]);
 
   // Determine status filter based on active tab
-  const getStatusFilter = useCallback(() => {
+  const getStatusFilter = useCallback((): RecommendationStatusFilter | undefined => {
     switch (activeTabRef.current) {
       case 'generating':
         return 'GENERATING';
       case 'pending':
-        return 'PENDING';
+        return 'PENDING,PROCESSING';
       case 'completed':
         return 'COMPLETED';
       case 'failed':
@@ -286,7 +298,7 @@ function RecommendationListPage() {
     try {
       const statusFilter = getStatusFilter();
       const response = await recommendationService.listRecommendations({
-        status: statusFilter as any,
+        status: statusFilter,
         material: materialFilterRef.current,
         page: currentPageRef.current,
         page_size: pageSizeRef.current,
@@ -294,15 +306,20 @@ function RecommendationListPage() {
       setRecommendations(response.data.items);
       setTotal(response.data.pagination.total);
 
+      const visibleItemsNeedPolling = response.data.items.some(
+        (item) => item.status === 'GENERATING' || item.status === 'PROCESSING'
+      );
+
       // Fetch status counts for tab badges
-      await fetchStatusCounts();
+      const statusCountsNeedPolling = await fetchStatusCounts();
+      ensurePolling(visibleItemsNeedPolling || statusCountsNeedPolling);
     } catch (error) {
       console.error('Failed to fetch recommendations:', error);
       message.error('获取推荐列表失败');
     } finally {
       setLoading(false);
     }
-  }, [getStatusFilter, fetchStatusCounts]);
+  }, [getStatusFilter, fetchStatusCounts, ensurePolling]);
 
   useEffect(() => {
     fetchRecommendationsRef.current = fetchRecommendations;
@@ -315,7 +332,7 @@ function RecommendationListPage() {
   // Initial fetch and when dependencies change. Polling reads the same refs, so
   // in-progress generation updates keep the visible page/filter stable.
   useEffect(() => {
-    fetchRecommendations();
+    fetchRecommendationsRef.current();
   }, [currentPage, pageSize, activeTab, materialFilter]);
 
   useEffect(() => {
@@ -487,9 +504,20 @@ function RecommendationListPage() {
             </Text>
           )}
           {record.status === 'PROCESSING' && (
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              <LoadingOutlined spin /> 处理中...
-            </Text>
+            <Button
+              type="link"
+              icon={<LoadingOutlined spin />}
+              onClick={() =>
+                navigate(`/feedback/${record.recommendation_id}`, {
+                  state: {
+                    from: buildListSearch(),
+                    detailFrom: `/recommendations/${record.recommendation_id}`,
+                  },
+                })
+              }
+            >
+              进度
+            </Button>
           )}
         </Space>
       ),
@@ -515,7 +543,7 @@ function RecommendationListPage() {
       key: 'pending',
       label: (
         <span>
-          <ClockCircleOutlined /> 待实验 ({statusCounts.pending})
+          <ClockCircleOutlined /> 待实验 ({statusCounts.pending + statusCounts.processing})
         </span>
       ),
     },

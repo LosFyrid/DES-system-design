@@ -10,7 +10,7 @@ import type {
 } from '../types';
 
 export interface RecommendationListParams {
-  status?: 'GENERATING' | 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
+  status?: 'GENERATING' | 'PENDING' | 'PENDING,PROCESSING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'FAILED';
   material?: string;
   page?: number;
   page_size?: number;
@@ -20,6 +20,7 @@ export interface RecommendationStatistics {
   all: number;
   GENERATING: number;
   PENDING: number;
+  PROCESSING?: number;
   COMPLETED: number;
   FAILED: number;
   CANCELLED: number;

@@ -9,7 +9,7 @@ This module implements the feedback loop for real experimental validation:
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Optional, List, Dict, Any, Callable
+from typing import Optional, List, Dict, Any, Callable, Union
 from pathlib import Path
 from datetime import datetime
 import json
@@ -493,6 +493,7 @@ class RecommendationManager:
             "all": 0,
             "GENERATING": 0,
             "PENDING": 0,
+            "PROCESSING": 0,
             "COMPLETED": 0,
             "FAILED": 0,
             "CANCELLED": 0
@@ -514,7 +515,7 @@ class RecommendationManager:
 
     def list_recommendations_fast(
         self,
-        status: Optional[str] = None,
+        status: Optional[Union[str, List[str]]] = None,
         target_material: Optional[str] = None,
         page: int = 1,
         page_size: int = 20
@@ -523,7 +524,7 @@ class RecommendationManager:
         Fast list recommendations using index only (no file I/O).
 
         Args:
-            status: Filter by status
+            status: Filter by one status or a list of statuses
             target_material: Filter by material
             page: Page number (1-indexed)
             page_size: Items per page
@@ -533,9 +534,10 @@ class RecommendationManager:
         """
         # Filter from index
         filtered = []
+        status_set = {status} if isinstance(status, str) else set(status or [])
         with self._lock:
             for rec_id, meta in self.index.items():
-                if status and meta["status"] != status:
+                if status_set and meta["status"] not in status_set:
                     continue
                 if target_material and meta.get("target_material") != target_material:
                     continue
