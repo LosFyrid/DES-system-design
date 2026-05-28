@@ -16,6 +16,7 @@ from models.schemas import (
     PerformanceTrendPoint,
     TopFormulation,
     TargetMaterialStats,
+    LeachingEfficiencyByElementStats,
 )
 from utils.agent_loader import get_rec_manager
 
@@ -64,6 +65,11 @@ class StatisticsService:
             # Calculate target-material stats
             target_material_stats = self._calculate_target_material_stats(all_recs)
 
+            # Calculate leaching stats for each measured element/material
+            leaching_efficiency_by_element = self._calculate_leaching_efficiency_by_element(
+                all_recs
+            )
+
             # Build statistics data
             stats_data = StatisticsData(
                 summary=summary,
@@ -72,6 +78,7 @@ class StatisticsService:
                 performance_trend=performance_trend,
                 top_formulations=top_formulations,
                 target_material_stats=target_material_stats,
+                leaching_efficiency_by_element=leaching_efficiency_by_element,
             )
 
             logger.info(
@@ -311,6 +318,82 @@ class StatisticsService:
         stats_list.sort(key=lambda s: (s.max_leaching_efficiency_mean is not None, s.max_leaching_efficiency_mean or -1, s.experiments_total), reverse=True)
         return stats_list
 
+    def _calculate_leaching_efficiency_by_element(
+        self, all_recs: List[Any]
+    ) -> List[LeachingEfficiencyByElementStats]:
+        """Grouped leaching statistics by measured target material / element."""
+        grouped: Dict[str, Dict[str, Any]] = defaultdict(
+            lambda: {
+                "measurement_values": [],
+                "max_values_by_experiment": defaultdict(list),
+                "latest_rows_by_experiment": {},
+            }
+        )
+
+        for rec in all_recs:
+            if rec.status != "COMPLETED" or not rec.experiment_result:
+                continue
+
+            measurements = getattr(rec.experiment_result, "measurements", []) or []
+            for measurement in measurements:
+                value = measurement.get("leaching_efficiency")
+                if value is None:
+                    continue
+
+                element = (
+                    measurement.get("target_material")
+                    or rec.task.get("target_material")
+                    or "unknown"
+                )
+                element = str(element).strip() or "unknown"
+                time_h = measurement.get("time_h")
+
+                data = grouped[element]
+                data["measurement_values"].append(value)
+                data["max_values_by_experiment"][rec.recommendation_id].append(value)
+
+                latest_row = data["latest_rows_by_experiment"].get(rec.recommendation_id)
+                if latest_row is None or self._measurement_time_sort_key(time_h) >= self._measurement_time_sort_key(latest_row["time_h"]):
+                    data["latest_rows_by_experiment"][rec.recommendation_id] = {
+                        "time_h": time_h,
+                        "value": value,
+                    }
+
+        stats_list: List[LeachingEfficiencyByElementStats] = []
+        for element, data in grouped.items():
+            max_values = [
+                max(values)
+                for values in data["max_values_by_experiment"].values()
+                if values
+            ]
+            latest_values = [
+                row["value"]
+                for row in data["latest_rows_by_experiment"].values()
+                if row.get("value") is not None
+            ]
+
+            stats_list.append(
+                LeachingEfficiencyByElementStats(
+                    element=element,
+                    measurement_count=len(data["measurement_values"]),
+                    experiment_count=len(max_values),
+                    max_leaching_efficiency_mean=statistics.mean(max_values) if max_values else None,
+                    max_leaching_efficiency_median=statistics.median(max_values) if max_values else None,
+                    max_leaching_efficiency_p90=self._p90(max_values),
+                    latest_leaching_efficiency_mean=statistics.mean(latest_values) if latest_values else None,
+                )
+            )
+
+        stats_list.sort(
+            key=lambda s: (
+                s.max_leaching_efficiency_mean is not None,
+                s.max_leaching_efficiency_mean or -1,
+                s.experiment_count,
+            ),
+            reverse=True,
+        )
+        return stats_list
+
     @staticmethod
     def _get_max_eff(measurements: List[Dict[str, Any]]) -> Optional[float]:
         vals = [
@@ -319,6 +402,23 @@ class StatisticsService:
             if m.get("leaching_efficiency") is not None
         ]
         return max(vals) if vals else None
+
+    @staticmethod
+    def _p90(values: List[float]) -> Optional[float]:
+        if not values:
+            return None
+        if len(values) >= 10:
+            return statistics.quantiles(values, n=10)[8]
+        return max(values)
+
+    @staticmethod
+    def _measurement_time_sort_key(time_h: Any) -> float:
+        if time_h is None:
+            return float("-inf")
+        try:
+            return float(time_h)
+        except (TypeError, ValueError):
+            return float("-inf")
 
 
 # Singleton instance

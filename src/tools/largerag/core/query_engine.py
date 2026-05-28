@@ -21,6 +21,12 @@ from ..config.settings import SETTINGS, DASHSCOPE_API_KEY
 
 logger = logging.getLogger(__name__)
 
+try:
+    from agent.utils.llm_retry import call_with_retry, coerce_retry_policy
+except Exception:  # pragma: no cover - keeps standalone LargeRAG usage working
+    call_with_retry = None  # type: ignore[assignment]
+    coerce_retry_policy = None  # type: ignore[assignment]
+
 
 try:
     # We keep OpenAI optional: LargeRAG retrieval (get_similar_documents) does not require it.
@@ -85,6 +91,7 @@ class LargeRAGQueryEngine:
         # LLM used only for `query()` (agent path uses retrieval only).
         self.llm = None
         self.openai_client = None
+        self.retry_policy = coerce_retry_policy() if coerce_retry_policy else None
 
         if self.llm_provider == "dashscope":
             # 初始化 LLM（使用配置文件中的模型）
@@ -109,7 +116,13 @@ class LargeRAGQueryEngine:
                 else:
                     # Optional override for OpenAI-compatible gateways.
                     base_url = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
-                    self.openai_client = OpenAI(api_key=openai_api_key, base_url=base_url)
+                    client_kwargs = {
+                        "api_key": openai_api_key,
+                        "base_url": base_url,
+                    }
+                    if self.retry_policy is not None:
+                        client_kwargs.update(self.retry_policy.openai_client_kwargs())
+                    self.openai_client = OpenAI(**client_kwargs)
         else:
             raise ValueError(
                 f"Unsupported LLM provider: {self.settings.llm.provider!r}. "
@@ -206,7 +219,15 @@ class LargeRAGQueryEngine:
         if self.llm_provider == "dashscope":
             if self.query_engine is None:
                 raise RuntimeError("Query engine not initialized (DashScope LLM unavailable).")
-            response = self.query_engine.query(query_text)
+            if call_with_retry and self.retry_policy is not None:
+                response = call_with_retry(
+                    lambda: self.query_engine.query(query_text),
+                    policy=self.retry_policy,
+                    operation_name=f"LargeRAG DashScope synthesis model={self.settings.llm.model}",
+                    logger=logger,
+                )
+            else:
+                response = self.query_engine.query(query_text)
             return str(response)
 
         if self.llm_provider == "openai":
@@ -228,17 +249,28 @@ class LargeRAGQueryEngine:
                 "Write a concise, factual answer. Include any key experimental conditions if present."
             )
 
-            # GPT-5.*: keep reasoning off here (LargeRAG is used for factual grounding, not deep planning).
-            resp = self.openai_client.chat.completions.create(
-                model=self.settings.llm.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=self.settings.llm.temperature,
-                max_completion_tokens=self.settings.llm.max_tokens,
-                reasoning_effort="none",
-            )
+            def _create_completion():
+                # GPT-5.*: keep reasoning off here (LargeRAG is used for factual grounding, not deep planning).
+                return self.openai_client.chat.completions.create(
+                    model=self.settings.llm.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=self.settings.llm.temperature,
+                    max_completion_tokens=self.settings.llm.max_tokens,
+                    reasoning_effort="none",
+                )
+
+            if call_with_retry and self.retry_policy is not None:
+                resp = call_with_retry(
+                    _create_completion,
+                    policy=self.retry_policy,
+                    operation_name=f"LargeRAG OpenAI synthesis model={self.settings.llm.model}",
+                    logger=logger,
+                )
+            else:
+                resp = _create_completion()
             return (resp.choices[0].message.content or "").strip()
 
         raise RuntimeError(f"Unsupported llm_provider={self.llm_provider!r}")

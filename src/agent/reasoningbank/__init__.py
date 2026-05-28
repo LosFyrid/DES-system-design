@@ -22,6 +22,7 @@ from .memory import MemoryItem, MemoryQuery, Trajectory
 from .memory_manager import ReasoningBank
 from .retriever import MemoryRetriever, format_memories_for_prompt
 from .extractor import MemoryExtractor
+from .experience_history_tools import ExperienceHistoryTools
 from .judge import LLMJudge
 from .feedback import (
     ExperimentResult,
@@ -40,6 +41,7 @@ __all__ = [
     "ReasoningBank",
     "MemoryRetriever",
     "MemoryExtractor",
+    "ExperienceHistoryTools",
     "LLMJudge",
     "format_memories_for_prompt",
     # NEW: Async feedback components

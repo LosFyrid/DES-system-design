@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Form,
   Input,
@@ -29,6 +29,7 @@ import type {
   RecommendationDetail,
   FeedbackStatusData
 } from '../types';
+import { getFormulationDisplayString } from '../utils/formulationUtils';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -58,6 +59,12 @@ function buildSolidLiquidRatioText(
 function FeedbackPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationState = location.state as
+    | { from?: string; detailFrom?: string }
+    | null;
+  const listReturnPath = navigationState?.from || '/recommendations';
+  const detailReturnPath = navigationState?.detailFrom || `/recommendations/${id}`;
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -298,7 +305,7 @@ function FeedbackPage() {
         <Space style={{ marginBottom: 16 }}>
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(`/recommendations/${id}`)}
+            onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}
             disabled={processingStatus.status === 'processing'}
           >
             返回详情
@@ -354,11 +361,11 @@ function FeedbackPage() {
                 <Button
                   key="confirm"
                   type="primary"
-                  onClick={() => navigate(`/recommendations/${id}`)}
+                  onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}
                 >
                   确定
                 </Button>,
-                <Button key="list" onClick={() => navigate('/recommendations')}>
+                <Button key="list" onClick={() => navigate(listReturnPath)}>
                   返回列表
                 </Button>,
               ]}
@@ -382,7 +389,7 @@ function FeedbackPage() {
                 >
                   重新提交
                 </Button>,
-                <Button key="back" onClick={() => navigate(`/recommendations/${id}`)}>
+                <Button key="back" onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}>
                   返回详情
                 </Button>,
               ]}
@@ -398,7 +405,7 @@ function FeedbackPage() {
       <Space style={{ marginBottom: 16 }}>
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(`/recommendations/${id}`)}
+          onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}
         >
           返回详情
         </Button>
@@ -435,7 +442,7 @@ function FeedbackPage() {
 
       <Card title="推荐配方信息" style={{ marginBottom: 24 }}>
         <Paragraph>
-          <Text strong>配方:</Text> {detail.formulation.HBD} : {detail.formulation.HBA} ({detail.formulation.molar_ratio})
+          <Text strong>配方:</Text> {getFormulationDisplayString(detail.formulation)}
         </Paragraph>
         <Paragraph>
           <Text strong>目标材料:</Text> {detail.task.target_material}
@@ -659,7 +666,7 @@ stability=good"
                 {detail.status === 'COMPLETED' ? '更新反馈' : '提交反馈'}
               </Button>
               <Button
-                onClick={() => navigate(`/recommendations/${id}`)}
+                onClick={() => navigate(detailReturnPath, { state: { from: listReturnPath } })}
                 size="large"
               >
                 取消

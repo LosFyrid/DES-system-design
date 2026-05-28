@@ -62,26 +62,27 @@ export const memoryService = {
 
   /**
    * Update an existing memory
-   * PUT /api/v1/memories/{title}
+   * POST /api/v1/memories/update-by-title
    */
   updateMemory: async (
     title: string,
     updateData: MemoryItemUpdate
   ): Promise<MemoryUpdateResponse> => {
-    const response = await api.put<MemoryUpdateResponse>(
-      `/api/v1/memories/${encodeURIComponent(title)}`,
-      updateData
+    const response = await api.post<MemoryUpdateResponse>(
+      '/api/v1/memories/update-by-title',
+      { title, data: updateData }
     );
     return response.data;
   },
 
   /**
    * Delete a memory by title
-   * DELETE /api/v1/memories/{title}
+   * POST /api/v1/memories/delete-by-title
    */
   deleteMemory: async (title: string): Promise<MemoryDeleteResponse> => {
-    const response = await api.delete<MemoryDeleteResponse>(
-      `/api/v1/memories/${encodeURIComponent(title)}`
+    const response = await api.post<MemoryDeleteResponse>(
+      '/api/v1/memories/delete-by-title',
+      { title }
     );
     return response.data;
   },

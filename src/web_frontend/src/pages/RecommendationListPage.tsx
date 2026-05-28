@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Table,
   Typography,
@@ -34,19 +34,84 @@ const { Search } = Input;
 
 function RecommendationListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPage = Number(searchParams.get('page')) || 1;
+  const initialPageSize = Number(searchParams.get('page_size')) || 10;
+  const initialTab = searchParams.get('tab') || 'all';
+  const initialMaterial = searchParams.get('material') || undefined;
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendationSummary[]>([]);
   const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [materialFilter, setMaterialFilter] = useState<string | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [materialFilter, setMaterialFilter] = useState<string | undefined>(initialMaterial);
+  const currentPageRef = useRef(currentPage);
+  const pageSizeRef = useRef(pageSize);
+  const activeTabRef = useRef(activeTab);
+  const materialFilterRef = useRef(materialFilter);
+  const fetchRecommendationsRef = useRef<() => void>(() => undefined);
+  const fetchStatusCountsRef = useRef<() => void>(() => undefined);
 
   // Use ref instead of state to avoid closure issues
   const pollingIntervalRef = useRef<number | null>(null);
 
   // Track if there are any generating tasks for polling
   const [hasGeneratingTasks, setHasGeneratingTasks] = useState(false);
+
+  const buildListSearch = useCallback(
+    (overrides?: {
+      page?: number;
+      pageSize?: number;
+      tab?: string;
+      material?: string | null;
+    }) => {
+      const nextPage = overrides?.page ?? currentPage;
+      const nextPageSize = overrides?.pageSize ?? pageSize;
+      const nextTab = overrides?.tab ?? activeTab;
+      const hasMaterialOverride = Object.prototype.hasOwnProperty.call(
+        overrides ?? {},
+        'material'
+      );
+      const nextMaterial = hasMaterialOverride
+        ? overrides?.material || undefined
+        : materialFilter;
+      const params = new URLSearchParams();
+
+      if (nextPage > 1) {
+        params.set('page', String(nextPage));
+      }
+      if (nextPageSize !== 10) {
+        params.set('page_size', String(nextPageSize));
+      }
+      if (nextTab !== 'all') {
+        params.set('tab', nextTab);
+      }
+      if (nextMaterial) {
+        params.set('material', nextMaterial);
+      }
+
+      const query = params.toString();
+      return query ? `/recommendations?${query}` : '/recommendations';
+    },
+    [activeTab, currentPage, materialFilter, pageSize]
+  );
+
+  const navigateToListState = useCallback(
+    (overrides?: {
+      page?: number;
+      pageSize?: number;
+      tab?: string;
+      material?: string | null;
+    }) => {
+      const path = buildListSearch(overrides);
+      const paramsText = path.includes('?') ? path.slice(path.indexOf('?') + 1) : '';
+      setSearchParams(paramsText ? new URLSearchParams(paramsText) : new URLSearchParams(), {
+        replace: true,
+      });
+    },
+    [buildListSearch, setSearchParams]
+  );
 
   const renderMolarRatio = (molarRatio: string) => {
     const ratioParts = molarRatio.split(/\s*:\s*/).filter(Boolean);
@@ -122,7 +187,7 @@ function RecommendationListPage() {
       return (
         <>
           {formulation.components.map((component, index) => (
-            <span key={`${component.name}-${index}`}>
+            <span key={`${component.name}-${component.role}-${index}`}>
               {index > 0 && (
                 <span style={{ margin: '0 6px', color: 'rgba(0, 0, 0, 0.45)' }}>+</span>
               )}
@@ -152,12 +217,19 @@ function RecommendationListPage() {
     failed: 0,
   });
 
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+    pageSizeRef.current = pageSize;
+    activeTabRef.current = activeTab;
+    materialFilterRef.current = materialFilter;
+  }, [activeTab, currentPage, materialFilter, pageSize]);
+
   // Fetch counts for all statuses (fast - single API call)
   const fetchStatusCounts = useCallback(async () => {
     try {
       // Use new fast statistics API (single call, index only)
       const statsResp = await recommendationService.getStatistics({
-        material: materialFilter,
+        material: materialFilterRef.current,
       });
 
       setStatusCounts({
@@ -165,7 +237,7 @@ function RecommendationListPage() {
         generating: statsResp.data.GENERATING,
         pending: statsResp.data.PENDING,
         completed: statsResp.data.COMPLETED,
-        failed: statsResp.data.FAILED,
+        failed: (statsResp.data.FAILED || 0) + (statsResp.data.CANCELLED || 0),
       });
 
       // Check if need to start/stop polling
@@ -174,8 +246,8 @@ function RecommendationListPage() {
         // Start polling if not already running
         if (!pollingIntervalRef.current) {
           const interval = window.setInterval(() => {
-            fetchRecommendations();
-            fetchStatusCounts();
+            fetchRecommendationsRef.current();
+            fetchStatusCountsRef.current();
           }, 5000);
           pollingIntervalRef.current = interval;
         }
@@ -190,11 +262,11 @@ function RecommendationListPage() {
     } catch (error) {
       console.error('Failed to fetch status counts:', error);
     }
-  }, [materialFilter]);
+  }, []);
 
   // Determine status filter based on active tab
   const getStatusFilter = useCallback(() => {
-    switch (activeTab) {
+    switch (activeTabRef.current) {
       case 'generating':
         return 'GENERATING';
       case 'pending':
@@ -207,7 +279,7 @@ function RecommendationListPage() {
       default:
         return undefined;
     }
-  }, [activeTab]);
+  }, []);
 
   const fetchRecommendations = useCallback(async () => {
     setLoading(true);
@@ -215,9 +287,9 @@ function RecommendationListPage() {
       const statusFilter = getStatusFilter();
       const response = await recommendationService.listRecommendations({
         status: statusFilter as any,
-        material: materialFilter,
-        page: currentPage,
-        page_size: pageSize,
+        material: materialFilterRef.current,
+        page: currentPageRef.current,
+        page_size: pageSizeRef.current,
       });
       setRecommendations(response.data.items);
       setTotal(response.data.pagination.total);
@@ -230,12 +302,37 @@ function RecommendationListPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, materialFilter, getStatusFilter, fetchStatusCounts]);
+  }, [getStatusFilter, fetchStatusCounts]);
 
-  // Initial fetch and when dependencies change
+  useEffect(() => {
+    fetchRecommendationsRef.current = fetchRecommendations;
+  }, [fetchRecommendations]);
+
+  useEffect(() => {
+    fetchStatusCountsRef.current = fetchStatusCounts;
+  }, [fetchStatusCounts]);
+
+  // Initial fetch and when dependencies change. Polling reads the same refs, so
+  // in-progress generation updates keep the visible page/filter stable.
   useEffect(() => {
     fetchRecommendations();
   }, [currentPage, pageSize, activeTab, materialFilter]);
+
+  useEffect(() => {
+    const pageFromUrl = Number(searchParams.get('page')) || 1;
+    const pageSizeFromUrl = Number(searchParams.get('page_size')) || 10;
+    const tabFromUrl = searchParams.get('tab') || 'all';
+    const materialFromUrl = searchParams.get('material') || undefined;
+
+    setCurrentPage((prev) => (prev === pageFromUrl ? prev : pageFromUrl));
+    currentPageRef.current = pageFromUrl;
+    setPageSize((prev) => (prev === pageSizeFromUrl ? prev : pageSizeFromUrl));
+    pageSizeRef.current = pageSizeFromUrl;
+    setActiveTab((prev) => (prev === tabFromUrl ? prev : tabFromUrl));
+    activeTabRef.current = tabFromUrl;
+    setMaterialFilter((prev) => (prev === materialFromUrl ? prev : materialFromUrl));
+    materialFilterRef.current = materialFromUrl;
+  }, [searchParams]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -341,7 +438,13 @@ function RecommendationListPage() {
           <Button
             type="link"
             icon={<EyeOutlined />}
-            onClick={() => navigate(`/recommendations/${record.recommendation_id}`)}
+            onClick={() =>
+              navigate(`/recommendations/${record.recommendation_id}`, {
+                state: {
+                  from: buildListSearch(),
+                },
+              })
+            }
             disabled={record.status === 'GENERATING' || record.status === 'PROCESSING'}
           >
             详情
@@ -350,7 +453,14 @@ function RecommendationListPage() {
             <Button
               type="link"
               icon={<ExperimentOutlined />}
-              onClick={() => navigate(`/feedback/${record.recommendation_id}`)}
+              onClick={() =>
+                navigate(`/feedback/${record.recommendation_id}`, {
+                  state: {
+                    from: buildListSearch(),
+                    detailFrom: `/recommendations/${record.recommendation_id}`,
+                  },
+                })
+              }
             >
               反馈
             </Button>
@@ -359,7 +469,14 @@ function RecommendationListPage() {
             <Button
               type="link"
               icon={<ExperimentOutlined />}
-              onClick={() => navigate(`/feedback/${record.recommendation_id}`)}
+              onClick={() =>
+                navigate(`/feedback/${record.recommendation_id}`, {
+                  state: {
+                    from: buildListSearch(),
+                    detailFrom: `/recommendations/${record.recommendation_id}`,
+                  },
+                })
+              }
             >
               更新
             </Button>
@@ -453,12 +570,19 @@ function RecommendationListPage() {
               const value = e.target.value;
               if (!value) {
                 setMaterialFilter(undefined);
+                materialFilterRef.current = undefined;
                 setCurrentPage(1);
+                currentPageRef.current = 1;
+                navigateToListState({ page: 1, material: null });
               }
             }}
             onSearch={(value) => {
-              setMaterialFilter(value || undefined);
+              const nextMaterial = value || undefined;
+              setMaterialFilter(nextMaterial);
+              materialFilterRef.current = nextMaterial;
               setCurrentPage(1);
+              currentPageRef.current = 1;
+              navigateToListState({ page: 1, material: nextMaterial });
             }}
           />
 
@@ -466,7 +590,10 @@ function RecommendationListPage() {
             icon={<ReloadOutlined />}
             onClick={() => {
               setMaterialFilter(undefined);
+              materialFilterRef.current = undefined;
               setCurrentPage(1);
+              currentPageRef.current = 1;
+              navigateToListState({ page: 1, material: null });
               fetchRecommendations();
             }}
           >
@@ -496,7 +623,10 @@ function RecommendationListPage() {
           activeKey={activeTab}
           onChange={(key) => {
             setActiveTab(key);
+            activeTabRef.current = key;
             setCurrentPage(1);
+            currentPageRef.current = 1;
+            navigateToListState({ page: 1, tab: key });
           }}
           items={tabItems}
           style={{ marginBottom: 16 }}
@@ -516,7 +646,10 @@ function RecommendationListPage() {
             showTotal: (total) => `共 ${total} 条`,
             onChange: (page, size) => {
               setCurrentPage(page);
+              currentPageRef.current = page;
               setPageSize(size);
+              pageSizeRef.current = size;
+              navigateToListState({ page, pageSize: size });
             },
           }}
           locale={{

@@ -19,6 +19,7 @@ import threading
 
 from .memory import Trajectory, MemoryItem
 from .extractor import format_experiment_for_llm
+from .experience_history_tools import ExperienceHistoryTools
 from ..utils.serialization import to_jsonable
 
 logger = logging.getLogger(__name__)
@@ -637,14 +638,23 @@ class FeedbackProcessor:
 
         # 4. Extract experiment-based memories
         logger.info(f"Extracting experiment-based memories (is_update={is_update})")
-        new_memories = self.agent.extractor.extract_from_experiment(
-            rec.trajectory, exp_result
+        history_tools = ExperienceHistoryTools(
+            memory_bank=getattr(self.agent, "memory", None),
+            retriever=getattr(self.agent, "retriever", None),
+            rec_manager=self.rec_manager,
+            config=getattr(self.agent, "config", {}) or {},
         )
+        new_memories = self.agent.extractor.extract_from_experiment(
+            rec.trajectory, exp_result, history_tools=history_tools
+        )
+        extraction_audit = getattr(self.agent.extractor, "last_extraction_audit", {}) or {}
+        rec.trajectory.metadata["feedback_extraction_audit"] = extraction_audit
 
         # Tag memories as experiment-validated
         for memory in new_memories:
             memory.metadata["source"] = "experiment_validated"
             memory.metadata["recommendation_id"] = rec_id
+            memory.is_from_success = exp_result.is_liquid_formed
             # Key experimental parameters (use raw metrics, not performance_score)
             memory.metadata["is_liquid_formed"] = exp_result.is_liquid_formed
             memory.metadata["measurements"] = exp_result.measurements

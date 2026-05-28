@@ -50,6 +50,8 @@ from .utils.formulation_signature import (
     normalize_temperature_C,
 )
 from .utils.candidate_acceptance import evaluate_candidate_acceptance
+from .reasoningbank.experience_analysis import summarize_measurements
+from .reasoningbank.experience_history_tools import ExperienceHistoryTools
 
 logger = logging.getLogger(__name__)
 
@@ -1182,6 +1184,282 @@ Output JSON:
                 break
 
         return uniq
+
+    def _collect_component_experience_constraints(
+        self,
+        task: Dict[str, Any],
+        *,
+        expected_num_components: int,
+        limit: int = 20,
+    ) -> Dict[str, Any]:
+        """Collect actionable component guidance from experiment-derived memories."""
+        if not getattr(self, "memory", None):
+            return {"items": [], "by_component": {}}
+
+        extractor_cfg = (self.config.get("extractor", {}) or {})
+        low_threshold = float(extractor_cfg.get("low_performance_percent", 20.0))
+        target_material_norm = normalize_material_name(task.get("target_material"))
+
+        items: List[Dict[str, Any]] = []
+        by_component: Dict[str, List[Dict[str, Any]]] = {}
+
+        try:
+            memories = self.memory.get_all_memories()
+        except Exception:
+            memories = []
+
+        for memory in memories:
+            meta = getattr(memory, "metadata", None)
+            if not isinstance(meta, dict) or meta.get("source") != "experiment_validated":
+                continue
+
+            mem_material_norm = normalize_material_name(meta.get("target_material"))
+            if (
+                target_material_norm
+                and mem_material_norm
+                and target_material_norm != mem_material_norm
+            ):
+                continue
+
+            profile = meta.get("extractor_profile")
+            if not isinstance(profile, dict):
+                continue
+
+            perf = profile.get("performance_profile")
+            if not isinstance(perf, dict):
+                continue
+            band = str(meta.get("performance_band") or perf.get("performance_band") or "").strip()
+            relative = str(
+                meta.get("relative_interpretation")
+                or perf.get("relative_interpretation")
+                or ""
+            ).strip()
+
+            implications = profile.get("recommendation_implications")
+            if not isinstance(implications, dict):
+                implications = {}
+            required_change = [
+                normalize_component_name(x)
+                for x in (implications.get("requires_mechanistic_change_before_reuse") or [])
+            ]
+            required_change = [x for x in required_change if x]
+
+            component_implications = meta.get("component_implications")
+            if not isinstance(component_implications, list):
+                component_implications = []
+
+            measurement_stats = perf.get("measurement_stats")
+            if not isinstance(measurement_stats, dict):
+                measurement_stats = summarize_measurements(meta.get("measurements") or [])
+            max_value = measurement_stats.get("max_value")
+            unit = measurement_stats.get("unit") or "%"
+
+            component_names = set(required_change)
+            for imp in component_implications:
+                if not isinstance(imp, dict):
+                    continue
+                comp_norm = normalize_component_name(imp.get("component"))
+                if comp_norm:
+                    component_names.add(comp_norm)
+
+            for comp_norm in profile.get("formulation_components_norm") or []:
+                comp_norm = normalize_component_name(comp_norm)
+                if comp_norm and band in {"low", "moderate"}:
+                    component_names.add(comp_norm)
+
+            for comp_norm in component_names:
+                if not comp_norm:
+                    continue
+
+                level = "use_with_rationale"
+                for imp in component_implications:
+                    if not isinstance(imp, dict):
+                        continue
+                    if normalize_component_name(imp.get("component")) != comp_norm:
+                        continue
+                    action = str(imp.get("action") or "").strip()
+                    if action in {
+                        "use_with_rationale",
+                        "avoid_unless_changed",
+                        "insufficient_evidence",
+                        "promote",
+                    }:
+                        level = action
+                        break
+                if comp_norm in required_change and level == "use_with_rationale":
+                    level = "avoid_unless_changed" if band == "low" else "use_with_rationale"
+
+                row = {
+                    "component_norm": comp_norm,
+                    "level": level,
+                    "performance_band": band,
+                    "relative_interpretation": relative,
+                    "max_value": max_value,
+                    "unit": unit,
+                    "memory_title": memory.title,
+                    "recommendation_id": meta.get("recommendation_id"),
+                    "source_task_id": memory.source_task_id,
+                    "low_threshold": low_threshold,
+                }
+                by_component.setdefault(comp_norm, []).append(row)
+                items.append(row)
+
+        priority = {
+            "avoid_unless_changed": 0,
+            "use_with_rationale": 1,
+            "insufficient_evidence": 2,
+            "promote": 3,
+        }
+        items.sort(
+            key=lambda x: (
+                priority.get(str(x.get("level")), 9),
+                str(x.get("memory_title") or ""),
+            )
+        )
+        return {"items": items[:limit], "by_component": by_component}
+
+    def _build_component_experience_block_for_prompt(
+        self,
+        *,
+        task: Dict[str, Any],
+        expected_num_components: int,
+    ) -> str:
+        constraints = self._collect_component_experience_constraints(
+            task,
+            expected_num_components=expected_num_components,
+            limit=int(
+                (self.config.get("agent", {}) or {}).get(
+                    "component_experience_prompt_limit", 12
+                )
+            ),
+        )
+        items = constraints.get("items") or []
+        if not items:
+            return ""
+
+        lines = [
+            "## Experiment-Derived Component Constraints",
+            "",
+            "These signals come from structured feedback extraction over historical experiments.",
+            "They are not blanket blacklists: weak or low-performance components may still be used, but only with a clear mechanistic/compositional change and a concrete reason why the new context should differ.",
+            "",
+        ]
+        for item in items[:12]:
+            value = item.get("max_value")
+            unit = item.get("unit") or "%"
+            rec_id = item.get("recommendation_id") or item.get("source_task_id") or "unknown"
+            lines.append(
+                "- component={component} | action={level} | band={band} | max≈{value}{unit} | relative={relative} | source={rec_id}".format(
+                    component=item.get("component_norm"),
+                    level=item.get("level"),
+                    band=item.get("performance_band"),
+                    value=value,
+                    unit=unit,
+                    relative=item.get("relative_interpretation"),
+                    rec_id=rec_id,
+                )
+            )
+        lines.append("")
+        lines.append(
+            "If you reuse any component marked `avoid_unless_changed` or `use_with_rationale`, your `delta_to_baseline`/reasoning must explicitly explain the new mechanism or composition change. Do not reuse it merely to satisfy novelty."
+        )
+        lines.append("")
+        return "\n".join(lines)
+
+    def _component_experience_gate_check(
+        self,
+        candidate_formulation: Any,
+        *,
+        task: Dict[str, Any],
+        expected_num_components: int,
+        candidate: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        cfg = (self.config.get("agent", {}) or {}).get("component_experience_gate", {}) or {}
+        if not bool(cfg.get("enabled", True)):
+            return {"passed": True, "reasons": [], "conflicts": []}
+
+        try:
+            f_norm = normalize_formulation(candidate_formulation, expected_num_components)
+        except Exception:
+            f_norm = candidate_formulation
+        cand_components = set(self._extract_components_norm(f_norm, expected_num_components))
+        if not cand_components:
+            return {"passed": True, "reasons": [], "conflicts": []}
+
+        constraints = self._collect_component_experience_constraints(
+            task,
+            expected_num_components=expected_num_components,
+            limit=int(cfg.get("history_check_limit", 200)),
+        )
+        by_component = constraints.get("by_component") or {}
+
+        conflicts: List[Dict[str, Any]] = []
+        for comp in sorted(cand_components):
+            rows = by_component.get(comp) or []
+            actionable = [
+                r
+                for r in rows
+                if r.get("level") in {"avoid_unless_changed", "use_with_rationale"}
+            ]
+            if not actionable:
+                continue
+            worst = actionable[0]
+            conflicts.append(
+                {
+                    "component": comp,
+                    "level": worst.get("level"),
+                    "performance_band": worst.get("performance_band"),
+                    "relative_interpretation": worst.get("relative_interpretation"),
+                    "max_value": worst.get("max_value"),
+                    "unit": worst.get("unit"),
+                    "source": worst.get("recommendation_id") or worst.get("source_task_id"),
+                    "memory_title": worst.get("memory_title"),
+                }
+            )
+
+        if not conflicts:
+            return {"passed": True, "reasons": [], "conflicts": []}
+
+        reasoning_text = ""
+        if isinstance(candidate, dict):
+            reasoning_text = " ".join(
+                [
+                    str(candidate.get("reasoning") or ""),
+                    str(candidate.get("synergy_explanation") or ""),
+                    json.dumps(candidate.get("delta_to_baseline") or [], ensure_ascii=False),
+                ]
+            ).lower()
+
+        required_terms = [
+            "mechanism",
+            "mechanistic",
+            "delta",
+            "change",
+            "different",
+            "because",
+            "complexation",
+            "lewis",
+            "chloride",
+            "coordination",
+            "synergy",
+            "avoid",
+            "mitigate",
+        ]
+        has_rationale = any(t in reasoning_text for t in required_terms)
+        if has_rationale and not bool(cfg.get("always_reject_reuse", False)):
+            return {
+                "passed": True,
+                "reasons": [],
+                "conflicts": conflicts[:5],
+                "rationale_detected": True,
+            }
+
+        return {
+            "passed": False,
+            "reasons": ["component_experience_requires_rationale"],
+            "conflicts": conflicts[:5],
+            "rationale_detected": False,
+        }
 
     @staticmethod
     def _normalize_ratio_bucket(molar_ratio: Any, expected_num_components: int) -> str:
@@ -3320,7 +3598,7 @@ Output ONLY the query text (no JSON, no explanation):"""
                     "- Do NOT output JSON.\n"
                     "- Keep it compact, but research-grade.\n"
                     "- Include exactly the fields listed below.\n"
-                    "- The candidate MUST comply with the Non-Duplication & Diversity Constraints (avoid repeats and overly similar formulations; diversify components + molar ratio).\n\n"
+                    "- The candidate MUST comply with the Non-Duplication & Diversity Constraints and any Experiment-Derived Component Constraints.\n\n"
                     "Required fields:\n"
                     "- HBD: component name\n"
                     "- HBA: component name\n"
@@ -3352,7 +3630,7 @@ Output ONLY the query text (no JSON, no explanation):"""
                     "- Do NOT output JSON.\n"
                     "- Keep it compact, but research-grade.\n"
                     "- Include exactly the fields listed below.\n"
-                    "- The candidate MUST comply with the Non-Duplication & Diversity Constraints (avoid repeats and overly similar formulations; diversify components + molar ratio).\n\n"
+                    "- The candidate MUST comply with the Non-Duplication & Diversity Constraints and any Experiment-Derived Component Constraints.\n\n"
                     "Required fields:\n"
                     f"- components: exactly {expected_num_components} items; each item has name / role / function\n"
                     "- molar_ratio: use ':' separators and match the component order\n"
@@ -3608,6 +3886,57 @@ Output ONLY the query text (no JSON, no explanation):"""
         except Exception as e:
             logger.warning(
                 "[SimilarityGate] Failed to evaluate similarity gate: %s", str(e)
+            )
+
+        # P2.4: Component experience gate (uses structured feedback-extraction metadata).
+        try:
+            component_gate = self._component_experience_gate_check(
+                (cand or {}).get("formulation") if isinstance(cand, dict) else None,
+                task=task,
+                expected_num_components=expected_num_components,
+                candidate=cand if isinstance(cand, dict) else None,
+            )
+            cand["_component_experience_gate"] = component_gate
+
+            if not bool(component_gate.get("passed")):
+                accd = cand.get("_acceptance")
+                if not isinstance(accd, dict):
+                    accd = {
+                        "accepted": True,
+                        "recommendation_class": "RECOMMENDATION",
+                        "baseline_reference": str(
+                            cand.get("baseline_reference") or "none"
+                        ),
+                        "delta_to_baseline": cand.get("delta_to_baseline")
+                        if isinstance(cand.get("delta_to_baseline"), list)
+                        else [],
+                        "reasons": [],
+                        "candidate_signature": compute_formulation_signature(
+                            cand.get("formulation"), expected_num_components
+                        ),
+                        "matched_baseline_id": None,
+                    }
+                    cand["_acceptance"] = accd
+
+                reasons = (
+                    accd.get("reasons") if isinstance(accd.get("reasons"), list) else []
+                )
+                merged: List[str] = [str(r) for r in (reasons or []) if r is not None]
+                for r in component_gate.get("reasons") or []:
+                    r = str(r)
+                    if r and r not in merged:
+                        merged.append(r)
+                accd["reasons"] = merged
+                accd["accepted"] = False
+                accd["component_experience_gate"] = {
+                    "passed": False,
+                    "reasons": component_gate.get("reasons") or [],
+                    "conflicts": component_gate.get("conflicts") or [],
+                }
+        except Exception as e:
+            logger.warning(
+                "[ComponentExperienceGate] Failed to evaluate component gate: %s",
+                str(e),
             )
 
         return cand
@@ -3981,6 +4310,13 @@ Your previous output:
             prompt += format_memories_for_prompt(memories)
             prompt += "\n"
 
+        component_experience = self._build_component_experience_block_for_prompt(
+            task=task,
+            expected_num_components=int(task.get("num_components") or 2),
+        )
+        if component_experience:
+            prompt += component_experience
+
         # Add all accumulated theory knowledge
         if theory_list:
             prompt += f"## Theoretical Knowledge (from CoreRAG - {len(theory_list)} queries)\n\n"
@@ -4279,6 +4615,38 @@ Format your response as JSON:
             lines.append(
                 "- Your reasoning MUST explain: (1) the hypothesized mechanism, (2) why this candidate is not just a local tweak of the rejected family, and (3) what new information the experiment would teach us even if the result is negative."
             )
+
+        if "component_experience_requires_rationale" in reason_set:
+            lines.append(
+                "- Component-experience gate rejected reuse of a historically weak/conditional component without enough rationale. "
+                "Either replace that component, or explicitly explain the mechanistic/compositional change that makes reuse informative."
+            )
+            for x in list(rejected)[-3:][::-1]:
+                acc = (
+                    (prior_candidates[int(x.get("index", 1)) - 1] or {}).get("_acceptance")
+                    if isinstance(x.get("index"), int)
+                    and 0 < int(x.get("index")) <= len(prior_candidates)
+                    else None
+                )
+                gate = acc.get("component_experience_gate") if isinstance(acc, dict) else None
+                conflicts = gate.get("conflicts") if isinstance(gate, dict) else []
+                if not conflicts:
+                    continue
+                lines.append("- Historical component conflicts:")
+                for c in conflicts[:3]:
+                    if not isinstance(c, dict):
+                        continue
+                    lines.append(
+                        "  - {component}: source={source}, band={band}, max≈{value}{unit}, action={level}".format(
+                            component=c.get("component"),
+                            source=c.get("source"),
+                            band=c.get("performance_band"),
+                            value=c.get("max_value"),
+                            unit=c.get("unit") or "%",
+                            level=c.get("level"),
+                        )
+                    )
+                break
 
         lines.append("")  # trailing newline
         return "\n".join(lines)
@@ -4604,8 +4972,16 @@ Format your response as JSON:
                                 f"Reprocessing {rec.recommendation_id} with current logic"
                             )
 
+                            history_tools = ExperienceHistoryTools(
+                                memory_bank=getattr(self, "memory", None),
+                                retriever=getattr(self, "retriever", None),
+                                rec_manager=getattr(self, "rec_manager", None),
+                                config=getattr(self, "config", {}) or {},
+                            )
                             new_memories = self.extractor.extract_from_experiment(
-                                rec.trajectory, rec.experiment_result
+                                rec.trajectory,
+                                rec.experiment_result,
+                                history_tools=history_tools,
                             )
 
                             if new_memories:

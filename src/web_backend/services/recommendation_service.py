@@ -353,7 +353,9 @@ class RecommendationService:
                                 title=memory.title,
                                 description=memory.description,
                                 content=memory.content,
-                                is_from_success=memory.is_from_success
+                                is_from_success=memory.is_from_success,
+                                source_task_id=memory.source_task_id,
+                                metadata=memory.metadata
                             ))
                         else:
                             logger.warning(f"Memory with title '{title}' not found in ReasoningBank")

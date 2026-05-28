@@ -15,6 +15,8 @@ from models.schemas import (
     MemoryDeleteResponse,
     MemoryItemCreate,
     MemoryItemUpdate,
+    MemoryUpdateByTitleRequest,
+    MemoryDeleteByTitleRequest,
     ErrorResponse
 )
 from services.memory_service import get_memory_service
@@ -306,6 +308,94 @@ async def update_memory(title: str, update_data: MemoryItemUpdate):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error_response(message=f"Failed to update memory: {str(e)}")
+        )
+
+
+@router.post(
+    "/update-by-title",
+    response_model=MemoryUpdateResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update a memory by title in request body",
+    description="Update an existing memory item without putting the title in the URL path",
+    responses={
+        200: {"description": "Memory updated successfully", "model": MemoryUpdateResponse},
+        404: {"description": "Memory not found", "model": ErrorResponse},
+        500: {"description": "Internal server error", "model": ErrorResponse}
+    }
+)
+async def update_memory_by_title(request: MemoryUpdateByTitleRequest):
+    """
+    Update a memory by exact title supplied in the JSON body.
+
+    This endpoint avoids path parsing issues for titles that contain slashes
+    (for example, "Ni/Co/Mn" or "S/L=1:10").
+    """
+    try:
+        memory_service = get_memory_service()
+        updated_memory = memory_service.update_memory(request.title, request.data)
+
+        return MemoryUpdateResponse(
+            status="success",
+            message=f"Memory '{updated_memory.title}' updated successfully",
+            data=updated_memory
+        )
+
+    except ValueError as e:
+        logger.warning(f"Failed to update memory: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=error_response(message=str(e))
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to update memory: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_response(message=f"Failed to update memory: {str(e)}")
+        )
+
+
+@router.post(
+    "/delete-by-title",
+    response_model=MemoryDeleteResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Delete a memory by title in request body",
+    description="Delete an existing memory item without putting the title in the URL path",
+    responses={
+        200: {"description": "Memory deleted successfully", "model": MemoryDeleteResponse},
+        404: {"description": "Memory not found", "model": ErrorResponse},
+        500: {"description": "Internal server error", "model": ErrorResponse}
+    }
+)
+async def delete_memory_by_title(request: MemoryDeleteByTitleRequest):
+    """
+    Delete a memory by exact title supplied in the JSON body.
+
+    This endpoint avoids path parsing issues for titles that contain slashes
+    (for example, "Ni/Co/Mn" or "S/L=1:10").
+    """
+    try:
+        memory_service = get_memory_service()
+        result = memory_service.delete_memory(request.title)
+
+        return MemoryDeleteResponse(
+            status="success",
+            message=f"Memory '{request.title}' deleted successfully",
+            data=result
+        )
+
+    except ValueError as e:
+        logger.warning(f"Failed to delete memory: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=error_response(message=str(e))
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to delete memory: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_response(message=f"Failed to delete memory: {str(e)}")
         )
 
 

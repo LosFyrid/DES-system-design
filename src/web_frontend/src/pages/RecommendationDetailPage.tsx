@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
   Descriptions,
@@ -32,6 +32,12 @@ const { Title, Paragraph, Text } = Typography;
 function RecommendationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationState = location.state as
+    | { from?: string; memoryFrom?: string; detailFrom?: string }
+    | null;
+  const listReturnPath = navigationState?.from || '/recommendations';
+  const detailReturnPath = `${location.pathname}${location.search}`;
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<RecommendationDetail | null>(null);
   const [pollingInterval, setPollingInterval] = useState<number | null>(null);
@@ -132,15 +138,22 @@ function RecommendationDetailPage() {
       <Space style={{ marginBottom: 16 }}>
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/recommendations')}
+          onClick={() => navigate(listReturnPath)}
         >
-          返回列表
+          {navigationState?.memoryFrom ? '返回经验页' : '返回列表'}
         </Button>
         {detail.status === 'PENDING' && (
           <Button
             type="primary"
             icon={<ExperimentOutlined />}
-            onClick={() => navigate(`/feedback/${detail.recommendation_id}`)}
+            onClick={() =>
+              navigate(`/feedback/${detail.recommendation_id}`, {
+                state: {
+                  from: listReturnPath,
+                  detailFrom: detailReturnPath,
+                },
+              })
+            }
           >
             提交实验反馈
           </Button>
@@ -285,7 +298,7 @@ function RecommendationDetailPage() {
             <Divider orientation="left">使用的记忆</Divider>
             <Alert
               message="Agent从记忆库中检索到以下相关经验"
-              description="这些记忆来自历史实验的成功/失败经验，帮助Agent做出更准确的推荐"
+              description="这些记忆来自历史实验的成液/未成液经验，帮助Agent做出更准确的推荐"
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -304,7 +317,7 @@ function RecommendationDetailPage() {
                           color={memory.is_from_success ? 'success' : 'error'}
                           icon={memory.is_from_success ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
                         >
-                          {memory.is_from_success ? '成功经验' : '失败教训'}
+                          {memory.is_from_success ? '成液经验' : '未成液经验'}
                         </Tag>
                       </Space>
                     }

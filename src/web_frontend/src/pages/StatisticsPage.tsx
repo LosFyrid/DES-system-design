@@ -22,7 +22,11 @@ import {
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { statisticsService } from '../services';
-import type { StatisticsData, PerformanceTrendPoint } from '../types';
+import type {
+  LeachingEfficiencyByElementStats,
+  StatisticsData,
+  PerformanceTrendPoint,
+} from '../types';
 
 const { Title, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -145,9 +149,65 @@ function StatisticsPage() {
         val !== undefined && val !== null ? <Tag color="blue">{val.toFixed(2)}%</Tag> : <Tag>--</Tag>,
     },
     {
-      title: 'Success Count',
+      title: 'Experiment Count',
       dataIndex: 'success_count',
       key: 'success_count',
+    },
+  ];
+
+  const leachingByElementColumns = [
+    {
+      title: 'Element / Material',
+      dataIndex: 'element',
+      key: 'element',
+      render: (text: string) => <Tag color="cyan">{text}</Tag>,
+    },
+    {
+      title: 'Measurements',
+      dataIndex: 'measurement_count',
+      key: 'measurement_count',
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        a.measurement_count - b.measurement_count,
+    },
+    {
+      title: 'Experiments',
+      dataIndex: 'experiment_count',
+      key: 'experiment_count',
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        a.experiment_count - b.experiment_count,
+    },
+    {
+      title: 'Mean Max (%)',
+      dataIndex: 'max_leaching_efficiency_mean',
+      key: 'max_leaching_efficiency_mean',
+      render: (v?: number) =>
+        v != null ? <Tag color="blue">{v.toFixed(2)}%</Tag> : <Tag>--</Tag>,
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        (a.max_leaching_efficiency_mean || 0) - (b.max_leaching_efficiency_mean || 0),
+    },
+    {
+      title: 'Median Max (%)',
+      dataIndex: 'max_leaching_efficiency_median',
+      key: 'max_leaching_efficiency_median',
+      render: (v?: number) => (v != null ? `${v.toFixed(2)}%` : '--'),
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        (a.max_leaching_efficiency_median || 0) - (b.max_leaching_efficiency_median || 0),
+    },
+    {
+      title: 'P90 Max (%)',
+      dataIndex: 'max_leaching_efficiency_p90',
+      key: 'max_leaching_efficiency_p90',
+      render: (v?: number) => (v != null ? `${v.toFixed(2)}%` : '--'),
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        (a.max_leaching_efficiency_p90 || 0) - (b.max_leaching_efficiency_p90 || 0),
+    },
+    {
+      title: 'Mean Latest (%)',
+      dataIndex: 'latest_leaching_efficiency_mean',
+      key: 'latest_leaching_efficiency_mean',
+      render: (v?: number) => (v != null ? `${v.toFixed(2)}%` : '--'),
+      sorter: (a: LeachingEfficiencyByElementStats, b: LeachingEfficiencyByElementStats) =>
+        (a.latest_leaching_efficiency_mean || 0) - (b.latest_leaching_efficiency_mean || 0),
     },
   ];
 
@@ -324,6 +384,18 @@ function StatisticsPage() {
       </Row>
 
       {/* Target material stats */}
+      <Card
+        title="Leaching Efficiency By Element / Material"
+        style={{ marginBottom: 24 }}
+      >
+        <Table
+          columns={leachingByElementColumns}
+          dataSource={statistics.leaching_efficiency_by_element || []}
+          rowKey="element"
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
+
       <Card
         title="By Target Material"
         style={{ marginBottom: 24 }}

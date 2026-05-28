@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Table,
   Typography,
@@ -34,15 +35,28 @@ const { TextArea } = Input;
 const { Search } = Input;
 
 function MemoriesPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPage = Number(searchParams.get('page')) || 1;
+  const initialPageSize = Number(searchParams.get('page_size')) || 20;
+  const initialSource = searchParams.get('source');
+  const initialSourceFilter =
+    initialSource === 'formed'
+      ? true
+      : initialSource === 'not_formed'
+      ? false
+      : undefined;
+  const initialTaskFilter = searchParams.get('task') || undefined;
   const [loading, setLoading] = useState(false);
   const [memories, setMemories] = useState<MemoryItemDetail[]>([]);
   const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [pageSize, setPageSize] = useState(initialPageSize);
 
   // Filters
-  const [isFromSuccessFilter, setIsFromSuccessFilter] = useState<boolean | undefined>(undefined);
-  const [sourceTaskIdFilter, setSourceTaskIdFilter] = useState<string | undefined>(undefined);
+  const [isFromSuccessFilter, setIsFromSuccessFilter] = useState<boolean | undefined>(initialSourceFilter);
+  const [sourceTaskIdFilter, setSourceTaskIdFilter] = useState<string | undefined>(initialTaskFilter);
 
   // Modals
   const [viewModalVisible, setViewModalVisible] = useState(false);
@@ -53,6 +67,78 @@ function MemoriesPage() {
   // Forms
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
+
+  const buildMemoryReturnPath = useCallback(
+    (overrides?: {
+      page?: number;
+      pageSize?: number;
+      isFromSuccess?: boolean | null;
+      taskId?: string | null;
+    }) => {
+      const nextPage = overrides?.page ?? currentPage;
+      const nextPageSize = overrides?.pageSize ?? pageSize;
+      const hasSourceOverride = Object.prototype.hasOwnProperty.call(
+        overrides ?? {},
+        'isFromSuccess'
+      );
+      const nextSource = hasSourceOverride
+        ? overrides?.isFromSuccess
+        : isFromSuccessFilter;
+      const hasTaskOverride = Object.prototype.hasOwnProperty.call(
+        overrides ?? {},
+        'taskId'
+      );
+      const nextTaskId = hasTaskOverride
+        ? overrides?.taskId || undefined
+        : sourceTaskIdFilter;
+      const params = new URLSearchParams();
+
+      if (nextPage > 1) {
+        params.set('page', String(nextPage));
+      }
+      if (nextPageSize !== 20) {
+        params.set('page_size', String(nextPageSize));
+      }
+      if (nextSource === true) {
+        params.set('source', 'formed');
+      } else if (nextSource === false) {
+        params.set('source', 'not_formed');
+      }
+      if (nextTaskId) {
+        params.set('task', nextTaskId);
+      }
+
+      const query = params.toString();
+      return query ? `${location.pathname}?${query}` : location.pathname;
+    },
+    [
+      currentPage,
+      isFromSuccessFilter,
+      location.pathname,
+      pageSize,
+      sourceTaskIdFilter,
+    ]
+  );
+
+  const updateMemorySearch = useCallback(
+    (overrides?: {
+      page?: number;
+      pageSize?: number;
+      isFromSuccess?: boolean | null;
+      taskId?: string | null;
+    }) => {
+      const path = buildMemoryReturnPath(overrides);
+      const paramsText = path.includes('?') ? path.slice(path.indexOf('?') + 1) : '';
+      setSearchParams(paramsText ? new URLSearchParams(paramsText) : new URLSearchParams(), {
+        replace: true,
+      });
+    },
+    [buildMemoryReturnPath, setSearchParams]
+  );
+
+  const getLinkedRecommendationId = (memory: MemoryItemDetail) => {
+    return memory.metadata?.recommendation_id || memory.source_task_id;
+  };
 
   const fetchMemories = useCallback(async () => {
     setLoading(true);
@@ -76,6 +162,24 @@ function MemoriesPage() {
   useEffect(() => {
     fetchMemories();
   }, [fetchMemories]);
+
+  useEffect(() => {
+    const pageFromUrl = Number(searchParams.get('page')) || 1;
+    const pageSizeFromUrl = Number(searchParams.get('page_size')) || 20;
+    const sourceFromUrl = searchParams.get('source');
+    const sourceFilter =
+      sourceFromUrl === 'formed'
+        ? true
+        : sourceFromUrl === 'not_formed'
+        ? false
+        : undefined;
+    const taskFromUrl = searchParams.get('task') || undefined;
+
+    setCurrentPage((prev) => (prev === pageFromUrl ? prev : pageFromUrl));
+    setPageSize((prev) => (prev === pageSizeFromUrl ? prev : pageSizeFromUrl));
+    setIsFromSuccessFilter((prev) => (prev === sourceFilter ? prev : sourceFilter));
+    setSourceTaskIdFilter((prev) => (prev === taskFromUrl ? prev : taskFromUrl));
+  }, [searchParams]);
 
   const handleViewMemory = (memory: MemoryItemDetail) => {
     setSelectedMemory(memory);
@@ -159,7 +263,7 @@ function MemoriesPage() {
           color={isFromSuccess ? 'success' : 'error'}
           icon={isFromSuccess ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
         >
-          {isFromSuccess ? '成功' : '失败'}
+          {isFromSuccess ? '成液' : '未成液'}
         </Tag>
       ),
     },
@@ -169,9 +273,31 @@ function MemoriesPage() {
       key: 'source_task_id',
       width: 150,
       ellipsis: true,
-      render: (taskId?: string) => (
-        taskId ? <Typography.Text code>{taskId}</Typography.Text> : <Text type="secondary">-</Text>
-      ),
+      render: (taskId?: string, record?: MemoryItemDetail) => {
+        const recommendationId = record ? getLinkedRecommendationId(record) : undefined;
+        const displayId = taskId || recommendationId;
+        return displayId && recommendationId ? (
+          <Button
+            type="link"
+            size="small"
+            style={{ padding: 0, height: 'auto' }}
+            onClick={() =>
+              navigate(`/recommendations/${getLinkedRecommendationId(record!)}`, {
+                state: {
+                  from: buildMemoryReturnPath(),
+                  memoryFrom: buildMemoryReturnPath(),
+                },
+              })
+            }
+          >
+            <Typography.Text code>{displayId}</Typography.Text>
+          </Button>
+        ) : displayId ? (
+          <Typography.Text code>{displayId}</Typography.Text>
+        ) : (
+          <Text type="secondary">-</Text>
+        );
+      },
     },
     {
       title: '创建时间',
@@ -234,7 +360,7 @@ function MemoriesPage() {
 
       <Alert
         message="About Reasoning Bank"
-        description="The Reasoning Bank stores the reasoning strategies extracted from successful/failure experiments. The agent retrieves relevant memories when generating new recommendations to guide its decision-making."
+        description="The Reasoning Bank stores reasoning strategies extracted from experiments where DES liquid formation succeeded or failed. The agent retrieves relevant memories when generating new recommendations."
         type="info"
         showIcon
         closable
@@ -253,11 +379,12 @@ function MemoriesPage() {
             onChange={(value) => {
               setIsFromSuccessFilter(value);
               setCurrentPage(1);
+              updateMemorySearch({ page: 1, isFromSuccess: value ?? null });
             }}
             options={[
               { label: 'All', value: undefined },
-              { label: 'Successful experiment', value: true },
-              { label: 'Failure experiment', value: false },
+              { label: 'Liquid formed', value: true },
+              { label: 'Liquid not formed', value: false },
             ]}
           />
 
@@ -272,11 +399,14 @@ function MemoriesPage() {
               if (!value) {
                 setSourceTaskIdFilter(undefined);
                 setCurrentPage(1);
+                updateMemorySearch({ page: 1, taskId: null });
               }
             }}
             onSearch={(value) => {
-              setSourceTaskIdFilter(value || undefined);
+              const nextTaskId = value || undefined;
+              setSourceTaskIdFilter(nextTaskId);
               setCurrentPage(1);
+              updateMemorySearch({ page: 1, taskId: nextTaskId });
             }}
           />
 
@@ -286,7 +416,7 @@ function MemoriesPage() {
               setIsFromSuccessFilter(undefined);
               setSourceTaskIdFilter(undefined);
               setCurrentPage(1);
-              fetchMemories();
+              updateMemorySearch({ page: 1, isFromSuccess: null, taskId: null });
             }}
           >
             RESET
@@ -331,6 +461,7 @@ function MemoriesPage() {
             onChange: (page, size) => {
               setCurrentPage(page);
               setPageSize(size);
+              updateMemorySearch({ page, pageSize: size });
             },
           }}
           locale={{
@@ -385,11 +516,31 @@ function MemoriesPage() {
                 color={selectedMemory.is_from_success ? 'success' : 'error'}
                 icon={selectedMemory.is_from_success ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
               >
-                {selectedMemory.is_from_success ? '成功实验' : '失败实验'}
+                {selectedMemory.is_from_success ? '成液实验' : '未成液实验'}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="关联任务">
-              {selectedMemory.source_task_id || '-'}
+              {getLinkedRecommendationId(selectedMemory) ? (
+                <Button
+                  type="link"
+                  style={{ padding: 0, height: 'auto' }}
+                  onClick={() => {
+                    setViewModalVisible(false);
+                    navigate(`/recommendations/${getLinkedRecommendationId(selectedMemory)}`, {
+                      state: {
+                        from: buildMemoryReturnPath(),
+                        memoryFrom: buildMemoryReturnPath(),
+                      },
+                    });
+                  }}
+                >
+                  <Typography.Text code>
+                    {selectedMemory.source_task_id || getLinkedRecommendationId(selectedMemory)}
+                  </Typography.Text>
+                </Button>
+              ) : (
+                '-'
+              )}
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">
               {dayjs(selectedMemory.created_at).format('YYYY-MM-DD HH:mm:ss')}
@@ -461,13 +612,13 @@ function MemoriesPage() {
 
           <Form.Item
             name="is_from_success"
-            label="来源��型"
+            label="来源类型"
             valuePropName="checked"
             initialValue={true}
           >
             <Switch
-              checkedChildren="成功实验"
-              unCheckedChildren="失败实验"
+              checkedChildren="成液"
+              unCheckedChildren="未成液"
             />
           </Form.Item>
 
@@ -537,8 +688,8 @@ function MemoriesPage() {
             valuePropName="checked"
           >
             <Switch
-              checkedChildren="成功实验"
-              unCheckedChildren="失败实验"
+              checkedChildren="成液"
+              unCheckedChildren="未成液"
             />
           </Form.Item>
         </Form>

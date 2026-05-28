@@ -320,6 +320,8 @@ class MemoryItemSummary(BaseModel):
     description: str = Field(..., description="One-sentence description")
     content: str = Field(..., description="Detailed content")
     is_from_success: bool = Field(..., description="Whether from successful experiment")
+    source_task_id: Optional[str] = Field(None, description="Source task/recommendation ID")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class RecommendationDetail(BaseModel):
@@ -489,6 +491,17 @@ class TargetMaterialStats(BaseModel):
     measurement_rows_mean: Optional[float] = Field(None, ge=0.0)
 
 
+class LeachingEfficiencyByElementStats(BaseModel):
+    """Leaching efficiency statistics grouped by measured element/material"""
+    element: str
+    measurement_count: int = Field(..., ge=0)
+    experiment_count: int = Field(..., ge=0)
+    max_leaching_efficiency_mean: Optional[float] = Field(None, ge=0.0)
+    max_leaching_efficiency_median: Optional[float] = Field(None, ge=0.0)
+    max_leaching_efficiency_p90: Optional[float] = Field(None, ge=0.0)
+    latest_leaching_efficiency_mean: Optional[float] = Field(None, ge=0.0)
+
+
 class StatisticsData(BaseModel):
     """Statistics data"""
     summary: SummaryStatistics
@@ -497,6 +510,10 @@ class StatisticsData(BaseModel):
     performance_trend: List[PerformanceTrendPoint]
     top_formulations: List[TopFormulation]
     target_material_stats: List[TargetMaterialStats]
+    leaching_efficiency_by_element: List[LeachingEfficiencyByElementStats] = Field(
+        default_factory=list,
+        description="Leaching efficiency statistics grouped by measured element/material",
+    )
 
 
 class StatisticsResponse(BaseResponse):
@@ -568,6 +585,17 @@ class MemoryItemUpdate(BaseModel):
     content: Optional[str] = Field(None, min_length=1, max_length=2000, description="Detailed content")
     is_from_success: Optional[bool] = Field(None, description="Whether from successful experiment")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata to merge")
+
+
+class MemoryUpdateByTitleRequest(BaseModel):
+    """Request model for updating a memory identified by title in the body."""
+    title: str = Field(..., min_length=1, max_length=200, description="Memory title (exact match)")
+    data: MemoryItemUpdate = Field(..., description="Memory fields to update")
+
+
+class MemoryDeleteByTitleRequest(BaseModel):
+    """Request model for deleting a memory identified by title in the body."""
+    title: str = Field(..., min_length=1, max_length=200, description="Memory title (exact match)")
 
 
 class MemoryListData(BaseModel):

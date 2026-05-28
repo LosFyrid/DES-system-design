@@ -73,6 +73,8 @@ export interface MemoryItemSummary {
   description: string;
   content: string;
   is_from_success: boolean;
+  source_task_id?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TrajectoryStep {
@@ -276,6 +278,16 @@ export interface TargetMaterialStats {
   measurement_rows_mean?: number;
 }
 
+export interface LeachingEfficiencyByElementStats {
+  element: string;
+  measurement_count: number;
+  experiment_count: number;
+  max_leaching_efficiency_mean?: number;
+  max_leaching_efficiency_median?: number;
+  max_leaching_efficiency_p90?: number;
+  latest_leaching_efficiency_mean?: number;
+}
+
 export interface StatisticsData {
   summary: SummaryStatistics;
   by_material: Record<string, number>;
@@ -283,6 +295,7 @@ export interface StatisticsData {
   performance_trend: PerformanceTrendPoint[];
   top_formulations: TopFormulation[];
   target_material_stats: TargetMaterialStats[];
+  leaching_efficiency_by_element: LeachingEfficiencyByElementStats[];
 }
 
 export interface StatisticsResponse {

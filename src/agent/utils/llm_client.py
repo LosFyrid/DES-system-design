@@ -15,6 +15,7 @@ from importlib import import_module
 from typing import Optional, Dict, Any, Iterable, Type
 
 from .serialization import to_jsonable
+from .llm_retry import LLMRetryPolicy, call_with_retry, coerce_retry_policy
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,8 @@ class LLMClient:
         reasoning_effort: Optional[str] = None,
         verbosity: Optional[str] = None,
         api_key: Optional[str] = None,
-        base_url: Optional[str] = None
+        base_url: Optional[str] = None,
+        retry_config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize LLM client.
@@ -97,6 +99,7 @@ class LLMClient:
         self.reasoning_effort = reasoning_effort
         # OpenAI-only verbosity control (low/medium/high). Safe to omit.
         self.verbosity = verbosity
+        self.retry_policy: LLMRetryPolicy = coerce_retry_policy(retry_config)
         self.langfuse_enabled = False
 
         # Determine API key and base URL
@@ -134,7 +137,9 @@ class LLMClient:
         logger.info(
             f"Initialized LLM client: provider={provider}, model={model}, "
             f"temperature={temperature}, base_url={self.base_url}, "
-            f"langfuse_enabled={self.langfuse_enabled}"
+            f"langfuse_enabled={self.langfuse_enabled}, "
+            f"llm_retry_enabled={self.retry_policy.enabled}, "
+            f"llm_retry_window={self.retry_policy.max_elapsed_seconds}s"
         )
 
     @staticmethod
@@ -155,6 +160,7 @@ class LLMClient:
         client_kwargs = {
             "api_key": self.api_key,
             "base_url": self.base_url,
+            **self.retry_policy.openai_client_kwargs(),
         }
 
         langfuse_requested = _env_flag("LANGFUSE_ENABLED", default=False)
@@ -345,88 +351,97 @@ class LLMClient:
         # Merge remaining kwargs last (advanced usage)
         params.update(kwargs)
 
-        # Make API call
-        request_params: Dict[str, Any] = dict(params)
-        for attempt in range(3):
-            try:
-                response = self.client.chat.completions.create(**request_params)
-                message = response.choices[0].message
-                content = message.content or ""
+        def _create_once_with_param_compatibility() -> Any:
+            request_params: Dict[str, Any] = dict(params)
+            for _attempt in range(3):
+                try:
+                    response = self.client.chat.completions.create(**request_params)
+                    message = response.choices[0].message
+                    content = message.content or ""
 
-                logger.debug(f"LLM response: {content[:100]}...")
-                if not return_tool_calls:
-                    return content
+                    logger.debug(f"LLM response: {content[:100]}...")
+                    if not return_tool_calls:
+                        return content
 
-                # Tool calls may be OpenAI SDK objects; convert to JSON-safe structures.
-                tool_calls = getattr(message, "tool_calls", None)
-                return {
-                    "content": content,
-                    "tool_calls": to_jsonable(tool_calls),
-                    "raw_response": None,  # keep interface stable; don't persist SDK objects
-                }
+                    # Tool calls may be OpenAI SDK objects; convert to JSON-safe structures.
+                    tool_calls = getattr(message, "tool_calls", None)
+                    return {
+                        "content": content,
+                        "tool_calls": to_jsonable(tool_calls),
+                        "raw_response": None,  # keep interface stable; don't persist SDK objects
+                    }
 
-            except TypeError as e:
-                # Compatibility layer for older OpenAI SDK versions that don't
-                # accept certain kwargs (e.g., 'verbosity').
-                bad = self._parse_unexpected_kwarg(e)
-                if bad and bad in request_params:
-                    self._mark_chat_param_unsupported(bad)
-                    request_params.pop(bad, None)
-                    logger.warning(
-                        "OpenAI SDK does not support chat.completions param '%s' "
-                        "(provider=%s, model=%s). Retrying without it. "
-                        "Fix options: upgrade openai SDK in the image, or set the param to null in config.",
-                        bad,
-                        self.provider,
-                        self.model,
-                    )
-                    continue
-                raise
+                except TypeError as e:
+                    # Compatibility layer for older OpenAI SDK versions that don't
+                    # accept certain kwargs (e.g., 'verbosity').
+                    bad = self._parse_unexpected_kwarg(e)
+                    if bad and bad in request_params:
+                        self._mark_chat_param_unsupported(bad)
+                        request_params.pop(bad, None)
+                        params.pop(bad, None)
+                        logger.warning(
+                            "OpenAI SDK does not support chat.completions param '%s' "
+                            "(provider=%s, model=%s). Retrying without it. "
+                            "Fix options: upgrade openai SDK in the image, or set the param to null in config.",
+                            bad,
+                            self.provider,
+                            self.model,
+                        )
+                        continue
+                    raise
 
-            except Exception as e:
-                # Some SDK versions / proxies reject newer parameters via HTTP 400
-                # (instead of a Python TypeError). Retry once by removing the
-                # offending param so production doesn't hard-fail.
-                msg = str(e)
-                if (
-                    self.provider == "openai"
-                    and "response_format" in request_params
-                    and ("response_format" in msg or "json_schema" in msg or "json_object" in msg)
-                ):
-                    self._mark_chat_param_unsupported("response_format")
-                    request_params.pop("response_format", None)
-                    logger.warning(
-                        "OpenAI API rejected response_format (provider=%s, model=%s). "
-                        "Retrying without it. Error: %s",
-                        self.provider,
-                        self.model,
-                        msg[:300],
-                    )
-                    continue
+                except Exception as e:
+                    # Some SDK versions / proxies reject newer parameters via HTTP 400
+                    # (instead of a Python TypeError). Retry once by removing the
+                    # offending param so production doesn't hard-fail.
+                    msg = str(e)
+                    if (
+                        self.provider == "openai"
+                        and "response_format" in request_params
+                        and ("response_format" in msg or "json_schema" in msg or "json_object" in msg)
+                    ):
+                        self._mark_chat_param_unsupported("response_format")
+                        request_params.pop("response_format", None)
+                        params.pop("response_format", None)
+                        logger.warning(
+                            "OpenAI API rejected response_format (provider=%s, model=%s). "
+                            "Retrying without it. Error: %s",
+                            self.provider,
+                            self.model,
+                            msg[:300],
+                        )
+                        continue
 
-                if (
-                    self.provider == "openai"
-                    and ("tools" in request_params or "tool_choice" in request_params)
-                    and ("tools" in msg or "tool_choice" in msg or "parallel_tool_calls" in msg)
-                ):
-                    # Some proxies/SDK versions reject tools via HTTP 400.
-                    for k in ("tools", "tool_choice", "parallel_tool_calls"):
-                        if k in request_params:
-                            self._mark_chat_param_unsupported(k)
-                            request_params.pop(k, None)
-                    logger.warning(
-                        "OpenAI API rejected tools/tool_choice (provider=%s, model=%s). "
-                        "Retrying without tool calling. Error: %s",
-                        self.provider,
-                        self.model,
-                        msg[:300],
-                    )
-                    continue
+                    if (
+                        self.provider == "openai"
+                        and ("tools" in request_params or "tool_choice" in request_params)
+                        and ("tools" in msg or "tool_choice" in msg or "parallel_tool_calls" in msg)
+                    ):
+                        # Some proxies/SDK versions reject tools via HTTP 400.
+                        for k in ("tools", "tool_choice", "parallel_tool_calls"):
+                            if k in request_params:
+                                self._mark_chat_param_unsupported(k)
+                                request_params.pop(k, None)
+                                params.pop(k, None)
+                        logger.warning(
+                            "OpenAI API rejected tools/tool_choice (provider=%s, model=%s). "
+                            "Retrying without tool calling. Error: %s",
+                            self.provider,
+                            self.model,
+                            msg[:300],
+                        )
+                        continue
 
-                logger.error(f"LLM API call failed: {e}")
-                raise
+                    raise
 
-        raise RuntimeError("LLM call failed after removing unsupported parameters")
+            raise RuntimeError("LLM call failed after removing unsupported parameters")
+
+        return call_with_retry(
+            _create_once_with_param_compatibility,
+            policy=self.retry_policy,
+            operation_name=f"LLM chat completion provider={self.provider} model={self.model}",
+            logger=logger,
+        )
 
     def __call__(self, prompt: str, **kwargs) -> str:
         """
@@ -466,7 +481,8 @@ def create_llm_client_from_config(config: Dict[str, Any]) -> LLMClient:
         reasoning_effort=config.get("reasoning_effort"),
         verbosity=config.get("verbosity"),
         api_key=config.get("api_key"),
-        base_url=config.get("base_url")
+        base_url=config.get("base_url"),
+        retry_config=config.get("retry") or config.get("retry_config"),
     )
 
 

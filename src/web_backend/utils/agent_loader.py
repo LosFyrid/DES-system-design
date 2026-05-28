@@ -22,6 +22,7 @@ from agent.reasoningbank import (
 )
 from agent.des_agent import DESAgent
 from agent.utils.llm_client import LLMClient
+from agent.utils.llm_retry import publish_retry_config_to_env
 from agent.utils.embedding_client import EmbeddingClient
 from agent.config import get_config
 from agent.tools.largerag_adapter import create_largerag_adapter
@@ -72,6 +73,8 @@ class AgentLoader:
             # Create LLM clients from agent config
             llm_config = agent_config.get_llm_config("llm")
             agent_llm_config = agent_config.get_llm_config("agent_llm")
+            llm_retry_config = agent_config.get_section("llm_retry")
+            publish_retry_config_to_env(llm_retry_config)
 
             llm_client = LLMClient(
                 provider=llm_config["provider"],
@@ -80,7 +83,8 @@ class AgentLoader:
                 max_tokens=llm_config["max_tokens"],
                 reasoning_effort=llm_config.get("reasoning_effort"),
                 verbosity=llm_config.get("verbosity"),
-                base_url=llm_config.get("api_base")
+                base_url=llm_config.get("api_base"),
+                retry_config=llm_retry_config,
             )
 
             agent_llm_client = LLMClient(
@@ -90,7 +94,8 @@ class AgentLoader:
                 max_tokens=agent_llm_config["max_tokens"],
                 reasoning_effort=agent_llm_config.get("reasoning_effort"),
                 verbosity=agent_llm_config.get("verbosity"),
-                base_url=agent_llm_config.get("api_base")
+                base_url=agent_llm_config.get("api_base"),
+                retry_config=llm_retry_config,
             )
 
             logger.info(f"LLM initialized: {llm_config['provider']}/{llm_config['model']}")
@@ -133,7 +138,14 @@ class AgentLoader:
                 bank=memory_bank,
                 embedding_func=embedding_client.embed  # Use embedding client's embed method
             )
-            extractor = MemoryExtractor(llm_client, temperature=extractor_temp)
+            extractor = MemoryExtractor(
+                llm_client,
+                temperature=extractor_temp,
+                max_items_per_trajectory=memory_config.get(
+                    "extraction_max_per_trajectory", 3
+                ),
+                config=agent_config.config,
+            )
             judge = LLMJudge(llm_client)  # Not used in v1, but required
 
             # Initialize RecommendationManager

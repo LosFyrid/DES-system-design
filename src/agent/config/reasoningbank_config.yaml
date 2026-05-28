@@ -27,6 +27,21 @@ agent_llm:
   reasoning_effort: "xhigh"
   api_base: null  # Optional override; OPENAI_API_BASE / OPENAI_BASE_URL env vars take precedence.
 
+# LLM Retry Configuration
+# Project-level retry wraps OpenAI-compatible calls with exponential backoff.
+# Keep the SDK retry window disabled so this 600s policy is the source of truth.
+llm_retry:
+  enabled: true
+  max_elapsed_seconds: 600
+  max_attempts: 12
+  initial_delay_seconds: 2.0
+  max_delay_seconds: 120.0
+  exponential_base: 2.0
+  jitter: 0.25
+  respect_retry_after: true
+  retryable_status_codes: [408, 409, 429, 500, 502, 503, 504]
+  sdk_max_retries: 0
+
 # Embedding Configuration
 embedding:
   provider: "dashscope"  # "dashscope" (Aliyun) or "openai"
@@ -58,6 +73,20 @@ judge:
 extractor:
   temperature: 1.0  # Higher temperature for diverse memory generation
   use_parallel_extraction: false  # Enable MaTTS parallel extraction
+  # Feedback extraction runs as a ReAct loop with read-only access to
+  # historical memories and recommendations before producing structured memories.
+  react_enabled: true
+  require_history_tools: true
+  react_max_steps: 20
+  history_context_limit: 80
+  low_performance_percent: 20.0
+  high_performance_percent: 60.0
+  # Do not set structured_temperature here; several reasoning models reject
+  # explicit temperature overrides.
+  structured_reasoning_effort: "xhigh"
+  structured_max_tokens: 16000
+  react_action_max_tokens: 16000
+  final_max_tokens: 16000
 
 # Tool Integration
 tools:
@@ -113,7 +142,6 @@ agent:
   # Two-stage generation: (1) reasoning draft, (2) strict schema output with reasoning_effort=none.
   draft_max_tokens: 1400
   structured_reasoning_effort: "none"
-  structured_temperature: 0.0
   structured_max_tokens: 1800
 
   # Candidate acceptance (P0/P2)
@@ -124,6 +152,15 @@ agent:
     baseline_min_percent: 80.0
     temperature_tolerance_C: 0.5
     require_delta_when_baseline_exists: true
+
+  # Use structured experiment feedback metadata as an actual acceptance signal.
+  # Reusing historically weak/conditional components is allowed only when the
+  # candidate explains why the new mechanism/composition should change outcomes.
+  component_experience_prompt_limit: 12
+  component_experience_gate:
+    enabled: true
+    history_check_limit: 200
+    always_reject_reuse: false
 
   # Deprecated (use max_iterations instead)
   # max_steps: 10

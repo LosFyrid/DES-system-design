@@ -74,6 +74,21 @@ class TestMemoryItem:
         assert reconstructed.title == memory.title
         assert reconstructed.is_from_success == memory.is_from_success
 
+    def test_memory_deserialization_uses_liquid_formation_metadata(self):
+        """Experiment memories derive success/failure from DES liquid formation."""
+        data = {
+            "title": "No Liquid Formed",
+            "description": "Description",
+            "content": "Content",
+            "source_task_id": "REC_001",
+            "is_from_success": True,
+            "metadata": {"is_liquid_formed": False},
+        }
+
+        reconstructed = MemoryItem.from_dict(data)
+
+        assert reconstructed.is_from_success is False
+
     def test_prompt_formatting(self):
         """Test prompt string generation"""
         memory = MemoryItem(

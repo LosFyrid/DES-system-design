@@ -13,6 +13,21 @@ import json
 from ..utils.serialization import to_jsonable
 
 
+def _coerce_optional_bool(value) -> Optional[bool]:
+    """Coerce persisted metadata flags without treating "false" as truthy."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y"}:
+            return True
+        if normalized in {"false", "0", "no", "n"}:
+            return False
+    return bool(value)
+
+
 @dataclass
 class MemoryItem:
     """
@@ -67,15 +82,25 @@ class MemoryItem:
     @classmethod
     def from_dict(cls, data: dict) -> "MemoryItem":
         """Create memory item from dictionary"""
+        metadata = data.get("metadata", {}) or {}
+        liquid_formed = _coerce_optional_bool(metadata.get("is_liquid_formed"))
+        is_from_success_value = (
+            liquid_formed
+            if liquid_formed is not None
+            else data.get("is_from_success", True)
+        )
+        is_from_success = _coerce_optional_bool(is_from_success_value)
+        if is_from_success is None:
+            is_from_success = True
         return cls(
             title=data["title"],
             description=data["description"],
             content=data["content"],
             source_task_id=data.get("source_task_id"),
-            is_from_success=data.get("is_from_success", True),
+            is_from_success=is_from_success,
             created_at=data.get("created_at", datetime.now().isoformat()),
             embedding=data.get("embedding"),
-            metadata=data.get("metadata", {}),
+            metadata=metadata,
         )
 
     def to_prompt_string(self) -> str:
