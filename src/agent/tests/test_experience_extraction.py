@@ -13,6 +13,8 @@ from types import SimpleNamespace
 
 import sys
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from agent.des_agent import DESAgent
@@ -135,7 +137,7 @@ def test_experience_profile_calibrates_low_but_better_than_worse_history():
     assert levulinic["level"] in {"mixed_or_promising", "exploratory_partial_positive"}
 
 
-def test_extractor_falls_back_to_deterministic_memory_when_llm_returns_empty():
+def test_extractor_raises_when_react_returns_no_memories():
     extractor = MemoryExtractor(
         lambda prompt, **kwargs: "",
         config={
@@ -147,16 +149,14 @@ def test_extractor_falls_back_to_deterministic_memory_when_llm_returns_empty():
         },
     )
 
-    memories = extractor.extract_from_experiment(
-        _traj(),
-        _exp([33.0, 31.0, 30.0, 32.0]),
-        history_tools=None,
-    )
+    with pytest.raises(RuntimeError, match="produced 0 memories"):
+        extractor.extract_from_experiment(
+            _traj(),
+            _exp([33.0, 31.0, 30.0, 32.0]),
+            history_tools=None,
+        )
 
-    assert len(memories) == 1
-    assert memories[0].metadata["extraction_type"] == "experiment_feedback_deterministic_fallback"
-    assert memories[0].metadata["avoid_absolute_language"] is True
-    assert "extractor_profile" in memories[0].metadata
+    assert extractor.last_extraction_audit["error"] == "react_extractor_returned_no_memories"
 
 
 def test_history_tools_support_semantic_and_structured_memory_queries():

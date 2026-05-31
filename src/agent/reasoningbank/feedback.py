@@ -619,13 +619,7 @@ class FeedbackProcessor:
 
         logger.info(f"Processing feedback for {rec_id} (is_update={is_update})")
 
-        # 2. If updating, delete old memories first
-        deleted_count = 0
-        if is_update:
-            deleted_count = self.agent.memory.delete_by_recommendation_id(rec_id)
-            logger.info(f"Deleted {deleted_count} old memories before re-extraction")
-
-        # 3. Update Trajectory (no binary outcome, unified as "experiment_completed")
+        # 2. Update Trajectory (no binary outcome, unified as "experiment_completed")
         exp_result = rec.experiment_result
         rec.trajectory.outcome = "experiment_completed"
 
@@ -638,7 +632,8 @@ class FeedbackProcessor:
         if is_update:
             rec.trajectory.metadata["feedback_updated_at"] = datetime.now().isoformat()
 
-        # 4. Extract experiment-based memories
+        # 3. Extract experiment-based memories before deleting old memories. If
+        # extraction fails, keep the existing memory bank intact and surface the error.
         logger.info(f"Extracting experiment-based memories (is_update={is_update})")
         history_tools = ExperienceHistoryTools(
             memory_bank=getattr(self.agent, "memory", None),
@@ -651,6 +646,16 @@ class FeedbackProcessor:
         )
         extraction_audit = getattr(self.agent.extractor, "last_extraction_audit", {}) or {}
         rec.trajectory.metadata["feedback_extraction_audit"] = extraction_audit
+        if not new_memories:
+            raise RuntimeError(
+                f"Experiment feedback extraction produced 0 memories for {rec_id}"
+            )
+
+        # 4. If updating, replace old memories only after new extraction succeeded.
+        deleted_count = 0
+        if is_update:
+            deleted_count = self.agent.memory.delete_by_recommendation_id(rec_id)
+            logger.info(f"Deleted {deleted_count} old memories after successful re-extraction")
 
         # Tag memories as experiment-validated
         for memory in new_memories:

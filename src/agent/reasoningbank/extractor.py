@@ -442,21 +442,14 @@ class MemoryExtractor:
                 )
                 return memories
 
-            logger.warning(
-                "ReAct experiment extractor produced 0 memories; falling back to deterministic summary."
-            )
-            fallback_memories = self._build_deterministic_experiment_memories(
-                trajectory=trajectory,
-                experiment_result=experiment_result,
-                profile=profile or {},
-                audit=audit,
-            )
             self.last_extraction_audit = {
                 **audit,
-                "fallback_used": True,
-                "fallback_count": len(fallback_memories),
+                "error": "react_extractor_returned_no_memories",
             }
-            return fallback_memories
+            raise RuntimeError(
+                "ReAct experiment extractor produced 0 memories; refusing to create "
+                "a deterministic fallback memory."
+            )
 
         # Build experiment extraction prompt (legacy path)
         prompt = self._build_experiment_extraction_prompt(trajectory, experiment_result)
@@ -925,7 +918,7 @@ Return ONLY JSON matching:
         }
 
         # Keep deterministic profiling out of the ReAct evidence stream. It remains
-        # available for metadata/fallback, but extraction conclusions should come
+        # available for metadata/audit, but extraction conclusions should come
         # from raw experiment text plus explicit history queries.
         audit["profile"] = compact_profile_for_metadata(profile)
 
@@ -1136,97 +1129,6 @@ Return ONLY JSON matching:
                 logger.warning("Failed to create memory item: %s", e)
 
         return memories
-
-    def _build_deterministic_experiment_memories(
-        self,
-        *,
-        trajectory: Trajectory,
-        experiment_result: Any,
-        profile: Dict[str, Any],
-        audit: Dict[str, Any],
-    ) -> List[MemoryItem]:
-        perf = profile.get("performance_profile") if isinstance(profile, dict) else {}
-        perf = perf if isinstance(perf, dict) else {}
-        stats = perf.get("measurement_stats") if isinstance(perf.get("measurement_stats"), dict) else {}
-        implications = (
-            profile.get("recommendation_implications")
-            if isinstance(profile.get("recommendation_implications"), dict)
-            else {}
-        )
-        band = str(perf.get("performance_band") or "formation_only")
-        relative = str(perf.get("relative_interpretation") or "no_history")
-        max_val = stats.get("max_value")
-        avg_val = stats.get("avg_value")
-        unit = stats.get("unit") or "%"
-        formulation_summary = str(profile.get("formulation_summary") or "Tested DES formulation")
-        low_info = implications.get("low_information_fields") or []
-        require_change = implications.get("requires_mechanistic_change_before_reuse") or []
-
-        if relative == "partial_positive":
-            qualifier = "has relative merit versus weaker history"
-        elif relative == "best_so_far":
-            qualifier = "is the best comparable result available in history"
-        elif band == "low":
-            qualifier = "is a low-performance result and should not be reused blindly"
-        elif band == "moderate":
-            qualifier = "is a moderate result that may guide refinement"
-        elif band == "high":
-            qualifier = "is a strong positive experimental signal"
-        else:
-            qualifier = "mainly records formation and boundary-condition evidence"
-
-        condition_note = ""
-        if low_info:
-            condition_note = (
-                " Conditions such as "
-                + ", ".join(str(x) for x in low_info)
-                + " appear low-information across comparable history and should not be the main lesson."
-            )
-
-        reuse_note = ""
-        if require_change:
-            reuse_note = (
-                " Reusing "
-                + ", ".join(str(x) for x in require_change[:5])
-                + " should require a mechanistic or compositional change."
-            )
-
-        data = {
-            "memories": [
-                {
-                    "title": f"{formulation_summary} gives max {max_val} {unit} ({band})",
-                    "description": (
-                        f"This experiment {qualifier} with max leaching efficiency {max_val} {unit} "
-                        f"and average {avg_val} {unit}."
-                    ),
-                    "content": (
-                        f"Under the submitted conditions, {formulation_summary} formed a liquid={experiment_result.is_liquid_formed} "
-                        f"and reached max leaching efficiency {max_val} {unit} (average {avg_val} {unit}). "
-                        f"The calibrated interpretation is `{band}` with relative context `{relative}`, so future agents should preserve "
-                        f"the quantitative evidence while avoiding a blanket good/bad label.{condition_note}{reuse_note}"
-                    ),
-                    "memory_kind": "performance_mapping",
-                    "evidence_strength": "moderate",
-                    "performance_band": band,
-                    "component_implications": [],
-                    "source_evidence": [
-                        f"max_leaching_efficiency={max_val}{unit}",
-                        f"relative_interpretation={relative}",
-                    ],
-                    "avoid_absolute_language": True,
-                }
-            ],
-            "audit": {"parser": "deterministic_fallback"},
-        }
-        fallback_audit = {**audit, "mode": "deterministic_fallback", "history_used": audit.get("history_used", False)}
-        return self._memory_items_from_payload(
-            payload=data,
-            trajectory=trajectory,
-            experiment_result=experiment_result,
-            profile=profile,
-            audit=fallback_audit,
-            extraction_type="experiment_feedback_deterministic_fallback",
-        )
 
     def _build_experiment_extraction_prompt(
         self, trajectory: Trajectory, experiment_result
