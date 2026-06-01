@@ -112,7 +112,8 @@ data:
       provider: "openai"  # "dashscope" (Aliyun) or "openai" or "custom"
       model: "gpt-5.2"  # Aux LLM for extractor/judge (keep reasoning off so temperature works)
       temperature: 0.1
-      max_tokens: 5000
+      max_tokens: 200000
+      max_completion_tokens: 80000
       # OpenAI-only knobs (safe to keep for other providers; they will be ignored)
       # reasoning_effort: "none" | "minimal" | "low" | "medium" | "high" | "xhigh"
       reasoning_effort: "xhigh"
@@ -123,7 +124,8 @@ data:
       provider: "openai"
       model: "gpt-5.2"  # Higher capability for formulation design
       temperature: 0.1
-      max_tokens: 5000
+      max_tokens: 200000
+      max_completion_tokens: 80000
       # Enable GPT-5.2 reasoning. When reasoning_effort != "none", the client will
       # automatically omit incompatible sampling params (temperature/top_p/logprobs).
       reasoning_effort: "xhigh"

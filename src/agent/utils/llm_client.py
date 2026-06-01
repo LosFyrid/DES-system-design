@@ -73,6 +73,7 @@ class LLMClient:
         model: str = "qwen-plus",
         temperature: float = 0.7,
         max_tokens: int = 2000,
+        max_completion_tokens: Optional[int] = None,
         reasoning_effort: Optional[str] = None,
         verbosity: Optional[str] = None,
         api_key: Optional[str] = None,
@@ -94,6 +95,7 @@ class LLMClient:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.max_completion_tokens = max_completion_tokens
         # OpenAI-only (gpt-5.* etc.). If set to non-"none", some sampling params
         # (temperature/top_p/logprobs) become invalid and must be omitted.
         self.reasoning_effort = reasoning_effort
@@ -327,10 +329,19 @@ class LLMClient:
                 if not self._is_chat_param_unsupported("parallel_tool_calls"):
                     params["parallel_tool_calls"] = bool(parallel_tool_calls)
 
-        # Token limit mapping (OpenAI: max_completion_tokens; others: max_tokens)
+        # Token limit mapping.
+        #
+        # Keep max_tokens as the generic provider cap, while allowing OpenAI
+        # callers to set max_completion_tokens independently. Per-call
+        # max_tokens overrides both defaults for backwards compatibility.
         effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
         if self.provider == "openai":
-            params["max_completion_tokens"] = effective_max_tokens
+            effective_max_completion_tokens = (
+                self.max_completion_tokens
+                if max_tokens is None and self.max_completion_tokens is not None
+                else effective_max_tokens
+            )
+            params["max_completion_tokens"] = effective_max_completion_tokens
         else:
             params["max_tokens"] = effective_max_tokens
 
@@ -478,6 +489,7 @@ def create_llm_client_from_config(config: Dict[str, Any]) -> LLMClient:
         model=config.get("model", "qwen-plus"),
         temperature=config.get("temperature", 0.7),
         max_tokens=config.get("max_tokens", 2000),
+        max_completion_tokens=config.get("max_completion_tokens"),
         reasoning_effort=config.get("reasoning_effort"),
         verbosity=config.get("verbosity"),
         api_key=config.get("api_key"),

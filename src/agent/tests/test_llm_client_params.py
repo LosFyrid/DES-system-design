@@ -202,6 +202,28 @@ def test_openai_reasoning_none_keeps_temperature():
     assert params["max_completion_tokens"] == 200
 
 
+def test_openai_can_override_max_completion_tokens_independently():
+    from agent.utils.llm_client import LLMClient
+
+    llm = LLMClient(
+        provider="openai",
+        model="gpt-5.2",
+        api_key="sk-test",
+        base_url="https://api.openai.com/v1",
+        max_tokens=200000,
+        max_completion_tokens=80000,
+        reasoning_effort="medium",
+    )
+    dummy = _DummyOpenAI()
+    llm.client = dummy  # type: ignore[assignment]
+
+    _ = llm.chat("hi")
+    params = dummy.chat.completions.last_params
+    assert params is not None
+    assert params["max_completion_tokens"] == 80000
+    assert "max_tokens" not in params
+
+
 def test_dashscope_uses_max_tokens_and_temperature():
     from agent.utils.llm_client import LLMClient
 
