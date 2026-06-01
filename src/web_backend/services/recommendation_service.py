@@ -32,6 +32,26 @@ class RecommendationService:
         """Initialize recommendation service"""
         pass
 
+    def _status_for_response(
+        self,
+        status: str,
+        *,
+        has_experiment_result: bool = False,
+        performance_score: Optional[float] = None,
+    ) -> str:
+        """
+        Normalize historical feedback-processing failures for API responses.
+
+        Recommendation status describes formula generation. If a persisted
+        record has experiment data, a `FAILED` status came from feedback
+        processing and should not be shown as formula generation failure.
+        """
+        if status == "FAILED" and (
+            has_experiment_result or performance_score is not None
+        ):
+            return "COMPLETED"
+        return status
+
     def list_recommendations(
         self,
         status: Optional[Union[str, List[str]]] = None,
@@ -102,7 +122,11 @@ class RecommendationService:
                     target_temperature=meta.get("target_temperature", 25.0),
                     formulation=formulation,
                     confidence=meta.get("confidence", 0.0),
-                    status=meta["status"],
+                    status=self._status_for_response(
+                        meta["status"],
+                        has_experiment_result=bool(meta.get("has_experiment_result")),
+                        performance_score=meta.get("performance_score"),
+                    ),
                     created_at=meta["created_at"],
                     updated_at=meta["updated_at"],
                     performance_score=meta.get("performance_score")
@@ -194,7 +218,11 @@ class RecommendationService:
                     target_temperature=rec.task.get("target_temperature", 25.0),
                     formulation=formulation,
                     confidence=rec.confidence,
-                    status=rec.status,
+                    status=self._status_for_response(
+                        rec.status,
+                        has_experiment_result=rec.experiment_result is not None,
+                        performance_score=performance_score,
+                    ),
                     created_at=rec.created_at,
                     updated_at=rec.updated_at,
                     performance_score=performance_score
@@ -371,7 +399,15 @@ class RecommendationService:
                 confidence=rec.confidence,
                 supporting_evidence=rec.trajectory.final_result.get("supporting_evidence", []),
                 memories_used=memories_used,
-                status=rec.status,
+                status=self._status_for_response(
+                    rec.status,
+                    has_experiment_result=rec.experiment_result is not None,
+                    performance_score=(
+                        rec.experiment_result.get_performance_score()
+                        if rec.experiment_result
+                        else None
+                    ),
+                ),
                 trajectory=trajectory,
                 experiment_result=experiment_result,
                 created_at=rec.created_at,

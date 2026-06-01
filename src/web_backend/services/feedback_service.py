@@ -181,6 +181,8 @@ class FeedbackService:
         """Asynchronous feedback processing (returns immediately)"""
         # Update recommendation status to PROCESSING
         rec_manager = get_rec_manager()
+        rec = rec_manager.get_recommendation(recommendation_id)
+        previous_status = rec.status if rec else None
         rec_manager.update_status(recommendation_id, "PROCESSING")
 
         # Initialize processing status
@@ -188,6 +190,7 @@ class FeedbackService:
             self.processing_status[recommendation_id] = {
                 "status": "processing",
                 "started_at": datetime.now().isoformat(),
+                "previous_recommendation_status": previous_status,
                 "result": None,
                 "error": None
             }
@@ -244,19 +247,69 @@ class FeedbackService:
         except Exception as e:
             logger.error(f"[Background] Failed to process feedback for {recommendation_id}: {e}", exc_info=True)
 
-            # Update recommendation status to FAILED
-            rec_manager = get_rec_manager()
-            rec_manager.update_status(recommendation_id, "FAILED")
-
             # Update processing status
+            failed_at = datetime.now().isoformat()
             with self.status_lock:
+                started_at = self.processing_status.get(recommendation_id, {}).get("started_at")
+                previous_status = self.processing_status.get(recommendation_id, {}).get(
+                    "previous_recommendation_status"
+                )
                 self.processing_status[recommendation_id] = {
                     "status": "failed",
-                    "started_at": self.processing_status[recommendation_id]["started_at"],
-                    "failed_at": datetime.now().isoformat(),
+                    "started_at": started_at,
+                    "failed_at": failed_at,
                     "result": None,
                     "error": str(e)
                 }
+
+            self._record_feedback_failure(
+                recommendation_id=recommendation_id,
+                error=str(e),
+                failed_at=failed_at,
+                previous_status=previous_status,
+            )
+
+    def _record_feedback_failure(
+        self,
+        recommendation_id: str,
+        error: str,
+        failed_at: str,
+        previous_status: Optional[str],
+    ) -> None:
+        """
+        Persist feedback-processing failure metadata without marking the
+        recommendation itself as generation-failed.
+
+        Recommendation status describes formula generation. Feedback extraction
+        failures are tracked separately so users can retry or update feedback.
+        """
+        try:
+            rec_manager = get_rec_manager()
+            rec = rec_manager.get_recommendation(recommendation_id)
+            if not rec:
+                logger.warning(
+                    "Cannot record feedback failure metadata; recommendation not found: %s",
+                    recommendation_id,
+                )
+                return
+
+            rec.trajectory.metadata["feedback_processing_status"] = "failed"
+            rec.trajectory.metadata["feedback_processing_error"] = error
+            rec.trajectory.metadata["feedback_processing_failed_at"] = failed_at
+
+            if rec.experiment_result is not None:
+                rec.status = "COMPLETED"
+            elif rec.status == "PROCESSING" and previous_status:
+                rec.status = previous_status
+
+            rec.updated_at = failed_at
+            rec_manager.save_recommendation(rec)
+        except Exception:
+            logger.error(
+                "Failed to persist feedback failure metadata for %s",
+                recommendation_id,
+                exc_info=True,
+            )
 
     def check_processing_status(self, recommendation_id: str) -> Optional[Dict[str, Any]]:
         """

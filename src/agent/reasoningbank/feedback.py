@@ -306,6 +306,23 @@ class RecommendationManager:
             molar_ratio = formulation.get("molar_ratio", "?")
             return f"{hbd} : {hba} ({molar_ratio})"
 
+    def _status_for_feedback_capable_record(self, meta: Dict[str, Any]) -> str:
+        """
+        Return the user-facing recommendation status for index-only views.
+
+        `FAILED` means formula generation failed. Some older async feedback
+        failures incorrectly overwrote recommendations with experimental
+        results to `FAILED`; those should still behave as completed
+        recommendations so users can update feedback.
+        """
+        status = meta.get("status")
+        has_experiment_result = bool(meta.get("has_experiment_result")) or (
+            meta.get("performance_score") is not None
+        )
+        if status == "FAILED" and has_experiment_result:
+            return "COMPLETED"
+        return status
+
     def save_recommendation(self, rec: Recommendation) -> str:
         """
         Save recommendation to disk.
@@ -338,6 +355,7 @@ class RecommendationManager:
                 "formulation": rec.formulation,  # Store full formulation dict
                 "confidence": rec.confidence,
                 "performance_score": rec.experiment_result.get_performance_score() if rec.experiment_result else None,
+                "has_experiment_result": rec.experiment_result is not None,
                 "file": str(rec_file),
             }
             self._save_index()
@@ -396,7 +414,8 @@ class RecommendationManager:
 
         for rec_id, meta in index_items:
             # Apply filters
-            if status and meta["status"] != status:
+            item_status = self._status_for_feedback_capable_record(meta)
+            if status and item_status != status:
                 continue
             if target_material and meta.get("target_material") != target_material:
                 continue
@@ -506,7 +525,7 @@ class RecommendationManager:
                     continue
 
                 stats["all"] += 1
-                status = meta["status"]
+                status = self._status_for_feedback_capable_record(meta)
                 if status in stats:
                     stats[status] += 1
 
@@ -537,13 +556,14 @@ class RecommendationManager:
         status_set = {status} if isinstance(status, str) else set(status or [])
         with self._lock:
             for rec_id, meta in self.index.items():
-                if status_set and meta["status"] not in status_set:
+                item_status = self._status_for_feedback_capable_record(meta)
+                if status_set and item_status not in status_set:
                     continue
                 if target_material and meta.get("target_material") != target_material:
                     continue
 
                 # Add rec_id to meta for response
-                filtered.append({**meta, "recommendation_id": rec_id})
+                filtered.append({**meta, "status": item_status, "recommendation_id": rec_id})
 
         # Sort by created_at (descending)
         filtered.sort(key=lambda x: x["created_at"], reverse=True)
@@ -683,9 +703,6 @@ class FeedbackProcessor:
                 self.agent.memory.save(save_path)
                 logger.info(f"Auto-saved memory bank to {save_path}")
 
-        # 6. Save updated recommendation
-        self.rec_manager.save_recommendation(rec)
-
         result = {
             "recommendation_id": rec_id,
             "is_liquid_formed": exp_result.is_liquid_formed,
@@ -698,6 +715,14 @@ class FeedbackProcessor:
         if is_update:
             result["deleted_memories"] = deleted_count
             result["is_update"] = True
+
+        rec.trajectory.metadata["feedback_processing_status"] = "completed"
+        rec.trajectory.metadata["feedback_processing_completed_at"] = datetime.now().isoformat()
+        rec.trajectory.metadata.pop("feedback_processing_error", None)
+        rec.trajectory.metadata.pop("feedback_processing_failed_at", None)
+
+        # 6. Save updated recommendation
+        self.rec_manager.save_recommendation(rec)
 
         return result
 

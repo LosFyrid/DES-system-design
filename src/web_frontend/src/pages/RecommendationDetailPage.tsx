@@ -132,6 +132,9 @@ function RecommendationDetailPage() {
     CANCELLED: '已取消',
     FAILED: '生成失败',
   };
+  const canSubmitFeedback = detail.status === 'PENDING';
+  const canUpdateFeedback = detail.status === 'COMPLETED' || !!detail.experiment_result;
+  const canOpenFeedback = canSubmitFeedback || canUpdateFeedback;
 
   return (
     <div>
@@ -142,7 +145,7 @@ function RecommendationDetailPage() {
         >
           {navigationState?.memoryFrom ? '返回经验页' : '返回列表'}
         </Button>
-        {detail.status === 'PENDING' && (
+        {canOpenFeedback && (
           <Button
             type="primary"
             icon={<ExperimentOutlined />}
@@ -155,7 +158,7 @@ function RecommendationDetailPage() {
               })
             }
           >
-            提交实验反馈
+            {canUpdateFeedback ? '更新实验反馈' : '提交实验反馈'}
           </Button>
         )}
         {pollingInterval && (

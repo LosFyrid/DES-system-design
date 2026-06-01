@@ -450,77 +450,68 @@ function RecommendationListPage() {
       key: 'action',
       fixed: 'right' as const,
       width: 180,
-      render: (_: unknown, record: RecommendationSummary) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() =>
-              navigate(`/recommendations/${record.recommendation_id}`, {
-                state: {
-                  from: buildListSearch(),
-                },
-              })
-            }
-            disabled={record.status === 'GENERATING' || record.status === 'PROCESSING'}
-          >
-            详情
-          </Button>
-          {record.status === 'PENDING' && (
+      render: (_: unknown, record: RecommendationSummary) => {
+        const hasExperimentResult = record.performance_score !== null && record.performance_score !== undefined;
+        const canSubmitFeedback = record.status === 'PENDING';
+        const canUpdateFeedback = record.status === 'COMPLETED' || hasExperimentResult;
+        const canOpenFeedback = canSubmitFeedback || canUpdateFeedback;
+
+        return (
+          <Space size="small">
             <Button
               type="link"
-              icon={<ExperimentOutlined />}
+              icon={<EyeOutlined />}
               onClick={() =>
-                navigate(`/feedback/${record.recommendation_id}`, {
+                navigate(`/recommendations/${record.recommendation_id}`, {
                   state: {
                     from: buildListSearch(),
-                    detailFrom: `/recommendations/${record.recommendation_id}`,
                   },
                 })
               }
+              disabled={record.status === 'GENERATING' || record.status === 'PROCESSING'}
             >
-              反馈
+              详情
             </Button>
-          )}
-          {record.status === 'COMPLETED' && (
-            <Button
-              type="link"
-              icon={<ExperimentOutlined />}
-              onClick={() =>
-                navigate(`/feedback/${record.recommendation_id}`, {
-                  state: {
-                    from: buildListSearch(),
-                    detailFrom: `/recommendations/${record.recommendation_id}`,
-                  },
-                })
-              }
-            >
-              更新
-            </Button>
-          )}
-          {record.status === 'GENERATING' && (
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              生成中...
-            </Text>
-          )}
-          {record.status === 'PROCESSING' && (
-            <Button
-              type="link"
-              icon={<LoadingOutlined spin />}
-              onClick={() =>
-                navigate(`/feedback/${record.recommendation_id}`, {
-                  state: {
-                    from: buildListSearch(),
-                    detailFrom: `/recommendations/${record.recommendation_id}`,
-                  },
-                })
-              }
-            >
-              进度
-            </Button>
-          )}
-        </Space>
-      ),
+            {canOpenFeedback && (
+              <Button
+                type="link"
+                icon={<ExperimentOutlined />}
+                onClick={() =>
+                  navigate(`/feedback/${record.recommendation_id}`, {
+                    state: {
+                      from: buildListSearch(),
+                      detailFrom: `/recommendations/${record.recommendation_id}`,
+                    },
+                  })
+                }
+              >
+                {canUpdateFeedback ? '更新' : '反馈'}
+              </Button>
+            )}
+            {record.status === 'GENERATING' && (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                生成中...
+              </Text>
+            )}
+            {record.status === 'PROCESSING' && (
+              <Button
+                type="link"
+                icon={<LoadingOutlined spin />}
+                onClick={() =>
+                  navigate(`/feedback/${record.recommendation_id}`, {
+                    state: {
+                      from: buildListSearch(),
+                      detailFrom: `/recommendations/${record.recommendation_id}`,
+                    },
+                  })
+                }
+              >
+                进度
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
