@@ -209,8 +209,13 @@ def test_history_tools_support_semantic_and_structured_memory_queries():
 
     structured = tools.search_memories(where="metadata.performance_band = 'moderate'")
     assert structured["ok"] is True
+    assert structured["result_set_id"] == "rs_1"
     assert structured["total_matches"] == 1
     assert structured["items"][0]["title"] == "Moderate benchmark memory"
+    assert structured["items"][0]["item_number"] == 1
+    assert structured["items"][0]["kind"] == "memory"
+    assert "content" not in structured["items"][0]
+    assert structured["items"][0]["content_excerpt"].startswith("Preserve relative merit")
 
     values = tools.list_memory_field_values(field="metadata.performance_band")
     assert {item["value"] for item in values["values"]} == {"moderate", "low"}
@@ -221,6 +226,17 @@ def test_history_tools_support_semantic_and_structured_memory_queries():
     )
     assert semantic["ok"] is True
     assert semantic["items"][0]["title"] == "Moderate benchmark memory"
+
+    added = tools.notebook_add_items(
+        result_set_id=semantic["result_set_id"],
+        item_numbers=[1],
+        note="Relevant calibrated partial-positive memory.",
+    )
+    assert added["ok"] is True
+    assert tools.notebook_payload()["evidence_count"] == 1
+    assert tools.notebook_payload()["entries"][0]["evidence"]["content"].startswith(
+        "Preserve relative merit"
+    )
 
 
 def test_history_tools_support_recommendation_filters_and_field_values():
@@ -279,7 +295,27 @@ def test_history_tools_support_recommendation_filters_and_field_values():
         limit=5,
     )
     assert filtered["ok"] is True
+    assert filtered["result_set_id"] == "rs_1"
     assert [item["recommendation_id"] for item in filtered["items"]] == ["REC_1"]
+    assert filtered["items"][0]["item_number"] == 1
+    assert "formulation" not in filtered["items"][0]
+    assert filtered["items"][0]["formulation_summary"]
+
+    inspected = tools.inspect_item(filtered["items"][0]["item_ref"])
+    assert inspected["ok"] is True
+    assert inspected["result_set_id"] == "rs_2"
+    assert inspected["raw_item"]["recommendation_id"] == "REC_1"
+    assert "formulation_json" in inspected["raw_item"]
+
+    added = tools.notebook_add_items(
+        result_set_id=filtered["result_set_id"],
+        item_numbers=[1],
+        note="Comparable moderate urea baseline.",
+    )
+    assert added["ok"] is True
+    notebook = tools.notebook_payload()
+    assert notebook["evidence_count"] == 1
+    assert notebook["entries"][0]["evidence"]["recommendation_id"] == "REC_1"
 
     values = tools.list_recommendation_field_values(
         trajectory=current,
@@ -288,6 +324,54 @@ def test_history_tools_support_recommendation_filters_and_field_values():
     )
     assert values["ok"] is True
     assert {item["value"] for item in values["values"]} == {"moderate", "low"}
+
+
+def test_final_extraction_prompt_uses_notebook_not_raw_tool_results():
+    extractor = MemoryExtractor(lambda prompt, **kwargs: "", config={"extractor": {}})
+    tool_results = [
+        {
+            "tool": "search_memories",
+            "result": {
+                "items": [
+                    {
+                        "item_number": 1,
+                        "title": "Should not appear",
+                        "content": "UNWRITTEN_TOOL_RESULT_SHOULD_NOT_APPEAR",
+                    }
+                ]
+            },
+        }
+    ]
+    notebook = {
+        "evidence_count": 1,
+        "note_count": 1,
+        "entries": [
+            {
+                "entry_type": "evidence_item",
+                "kind": "memory",
+                "evidence": {"content": "NOTEBOOK_EVIDENCE_SHOULD_APPEAR"},
+            },
+            {"entry_type": "note", "note": "NOTEBOOK_NOTE_SHOULD_APPEAR"},
+        ],
+    }
+    profile = build_experience_profile(
+        trajectory=_traj(),
+        experiment_result=_exp([33.0, 31.0, 30.0, 32.0]),
+        history_recommendations=[],
+        config={},
+    )
+
+    prompt = extractor._build_final_extraction_prompt(
+        trajectory=_traj(),
+        experiment_result=_exp([33.0, 31.0, 30.0, 32.0]),
+        profile=profile,
+        notebook=notebook,
+    )
+
+    assert "NOTEBOOK_EVIDENCE_SHOULD_APPEAR" in prompt
+    assert "NOTEBOOK_NOTE_SHOULD_APPEAR" in prompt
+    assert "UNWRITTEN_TOOL_RESULT_SHOULD_NOT_APPEAR" not in prompt
+    assert tool_results[0]["result"]["items"][0]["title"] not in prompt
 
 
 def test_component_experience_gate_rejects_unexplained_reuse():

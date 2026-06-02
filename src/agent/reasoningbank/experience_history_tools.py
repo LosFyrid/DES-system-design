@@ -1,16 +1,17 @@
 """
-Read-only tools used by the feedback experience extractor.
+History inspection and notebook tools used by the feedback experience extractor.
 
 These tools are deliberately plain Python callables. They make the extractor
-agentic without coupling it to a specific LLM tool-calling API: an LLM can choose
-actions in a ReAct loop, while local code executes only these bounded reads.
+agentic without coupling it to a specific LLM tool-calling API: an LLM can
+choose actions in a ReAct loop, while local code executes bounded history reads
+and in-session notebook writes.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .experience_analysis import (
@@ -24,6 +25,7 @@ from ..utils.formulation_signature import (
     normalize_temperature_C,
 )
 from ..utils.formulation_validation import summarize_formulation
+from ..utils.serialization import to_jsonable
 
 
 def _safe_float(value: Any) -> Optional[float]:
@@ -59,6 +61,71 @@ def _as_dict(obj: Any) -> Dict[str, Any]:
         return {}
 
 
+def _clip_text(value: Any, max_chars: int = 800) -> str:
+    text = "" if value is None else str(value)
+    max_chars = max(20, int(max_chars or 800))
+    if len(text) <= max_chars:
+        return text
+    suffix = f"... <truncated {len(text) - max_chars} chars>"
+    return text[: max(0, max_chars - len(suffix))] + suffix
+
+
+def _clip_text_with_flag(value: Any, max_chars: int = 800) -> Tuple[str, bool]:
+    text = "" if value is None else str(value)
+    clipped = _clip_text(text, max_chars)
+    return clipped, clipped != text
+
+
+def _compact_value(
+    value: Any,
+    *,
+    max_string: int = 800,
+    max_items: int = 12,
+    max_depth: int = 5,
+    _depth: int = 0,
+) -> Any:
+    """Bound nested values before JSON serialization so prompts stay valid."""
+    value = to_jsonable(value)
+    if _depth >= max_depth:
+        if isinstance(value, (dict, list)):
+            return _clip_text(json.dumps(value, ensure_ascii=False, sort_keys=True), max_string)
+        if isinstance(value, str):
+            return _clip_text(value, max_string)
+        return value
+
+    if isinstance(value, str):
+        return _clip_text(value, max_string)
+    if isinstance(value, list):
+        limited = [
+            _compact_value(
+                item,
+                max_string=max_string,
+                max_items=max_items,
+                max_depth=max_depth,
+                _depth=_depth + 1,
+            )
+            for item in value[:max_items]
+        ]
+        if len(value) > max_items:
+            limited.append({"truncated_items": len(value) - max_items})
+        return limited
+    if isinstance(value, dict):
+        out: Dict[str, Any] = {}
+        for index, (key, item) in enumerate(value.items()):
+            if index >= max_items:
+                out["truncated_keys"] = len(value) - max_items
+                break
+            out[str(key)] = _compact_value(
+                item,
+                max_string=max_string,
+                max_items=max_items,
+                max_depth=max_depth,
+                _depth=_depth + 1,
+            )
+        return out
+    return value
+
+
 def _memory_to_tool_row(memory: MemoryItem, *, score: Optional[float] = None) -> Dict[str, Any]:
     row = {
         "title": memory.title,
@@ -67,11 +134,75 @@ def _memory_to_tool_row(memory: MemoryItem, *, score: Optional[float] = None) ->
         "source_task_id": memory.source_task_id,
         "created_at": memory.created_at,
         "is_from_success": memory.is_from_success,
-        "metadata": memory.metadata,
+        "metadata": to_jsonable(memory.metadata or {}),
     }
     if score is not None:
         row["score"] = round(float(score), 4)
     return row
+
+
+def _item_ref(kind: str, row: Dict[str, Any]) -> str:
+    if kind == "recommendation":
+        return f"recommendation:{row.get('recommendation_id') or ''}"
+    return f"memory:{row.get('source_task_id') or ''}:{row.get('title') or ''}"
+
+
+def _compact_memory_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    metadata = metadata if isinstance(metadata, dict) else {}
+    keep = [
+        "source",
+        "target_material",
+        "recommendation_id",
+        "performance_band",
+        "relative_interpretation",
+        "is_positive_signal",
+        "memory_kind",
+        "evidence_strength",
+        "component_implications",
+        "source_evidence",
+        "avoid_absolute_language",
+    ]
+    out = {
+        key: _compact_value(metadata.get(key), max_string=500, max_items=8, max_depth=4)
+        for key in keep
+        if key in metadata
+    }
+    profile = metadata.get("extractor_profile")
+    if isinstance(profile, dict):
+        profile_keep = [
+            "formulation_components_norm",
+            "performance_profile",
+            "recommendation_implications",
+            "condition_context",
+        ]
+        out["extractor_profile"] = {
+            key: _compact_value(profile.get(key), max_string=500, max_items=8, max_depth=4)
+            for key in profile_keep
+            if key in profile
+        }
+    return out
+
+
+def _memory_to_compact_tool_row(
+    row: Dict[str, Any],
+    *,
+    number: int,
+) -> Dict[str, Any]:
+    item = {
+        "item_number": number,
+        "item_ref": _item_ref("memory", row),
+        "kind": "memory",
+        "title": row.get("title"),
+        "description": _clip_text(row.get("description"), 500),
+        "content_excerpt": _clip_text(row.get("content"), 700),
+        "source_task_id": row.get("source_task_id"),
+        "created_at": row.get("created_at"),
+        "is_from_success": row.get("is_from_success"),
+        "metadata": _compact_memory_metadata(row.get("metadata") or {}),
+    }
+    if row.get("score") is not None:
+        item["score"] = row.get("score")
+    return item
 
 
 def _path_values(obj: Any, field: str) -> List[Any]:
@@ -335,23 +466,189 @@ def _recommendation_to_tool_row(rec: Any, *, include_experiment: bool = True) ->
     return row
 
 
+def _recommendation_performance_band(row: Dict[str, Any], config: Dict[str, Any]) -> str:
+    extractor_cfg = config.get("extractor", {}) if isinstance(config, dict) else {}
+    low = float(extractor_cfg.get("low_performance_percent", 20.0))
+    high = float(extractor_cfg.get("high_performance_percent", 60.0))
+    stats = ((row.get("experiment") or {}).get("measurement_stats") or {})
+    max_value = _safe_float(stats.get("max_value"))
+    is_liquid = bool((row.get("experiment") or {}).get("is_liquid_formed"))
+    if not is_liquid:
+        return "no_liquid"
+    if max_value is None:
+        return "formation_only"
+    if max_value >= high:
+        return "high"
+    if max_value < low:
+        return "low"
+    return "moderate"
+
+
+def _recommendation_to_compact_tool_row(
+    row: Dict[str, Any],
+    *,
+    number: int,
+) -> Dict[str, Any]:
+    experiment = row.get("experiment") if isinstance(row.get("experiment"), dict) else {}
+    return {
+        "item_number": number,
+        "item_ref": _item_ref("recommendation", row),
+        "kind": "recommendation",
+        "recommendation_id": row.get("recommendation_id"),
+        "task_id": row.get("task_id"),
+        "status": row.get("status"),
+        "created_at": row.get("created_at"),
+        "target_material": row.get("target_material"),
+        "target_temperature": row.get("target_temperature"),
+        "formulation_summary": _clip_text(row.get("formulation_summary"), 700),
+        "components": _compact_value(row.get("components") or [], max_string=300, max_items=12, max_depth=3),
+        "confidence": row.get("confidence"),
+        "performance_band": row.get("performance_band"),
+        "experiment": {
+            "is_liquid_formed": experiment.get("is_liquid_formed"),
+            "measurement_stats": _compact_value(
+                experiment.get("measurement_stats") or {},
+                max_string=400,
+                max_items=12,
+                max_depth=3,
+            ),
+            "experiment_date": experiment.get("experiment_date"),
+        } if experiment else None,
+    }
+
+
+def _notebook_entry_from_row(
+    *,
+    kind: str,
+    row: Dict[str, Any],
+    source_tool: str,
+    result_set_id: str,
+    item_number: int,
+    note: str = "",
+) -> Dict[str, Any]:
+    if kind == "recommendation":
+        structured = _recommendation_to_compact_tool_row(row, number=item_number)
+        raw = {
+            "recommendation_id": row.get("recommendation_id"),
+            "task_id": row.get("task_id"),
+            "status": row.get("status"),
+            "created_at": row.get("created_at"),
+            "updated_at": row.get("updated_at"),
+            "target_material": row.get("target_material"),
+            "target_temperature": row.get("target_temperature"),
+            "formulation": _compact_value(row.get("formulation") or {}, max_string=1000, max_items=20, max_depth=6),
+            "formulation_summary": _clip_text(row.get("formulation_summary"), 1200),
+            "components": _compact_value(row.get("components") or [], max_string=600, max_items=20, max_depth=5),
+            "confidence": row.get("confidence"),
+            "performance_band": row.get("performance_band"),
+            "experiment": _compact_value(row.get("experiment") or {}, max_string=1000, max_items=20, max_depth=6),
+        }
+    else:
+        structured = _memory_to_compact_tool_row(row, number=item_number)
+        raw = {
+            "title": row.get("title"),
+            "description": _clip_text(row.get("description"), 1200),
+            "content": _clip_text(row.get("content"), 2000),
+            "source_task_id": row.get("source_task_id"),
+            "created_at": row.get("created_at"),
+            "is_from_success": row.get("is_from_success"),
+            "metadata": _compact_value(row.get("metadata") or {}, max_string=1000, max_items=20, max_depth=6),
+        }
+        if row.get("score") is not None:
+            raw["score"] = row.get("score")
+
+    return {
+        "entry_type": "evidence_item",
+        "kind": kind,
+        "source_tool": source_tool,
+        "result_set_id": result_set_id,
+        "item_number": item_number,
+        "item_ref": _item_ref(kind, row),
+        "model_note": _clip_text(note, 700),
+        "structured_summary": structured,
+        "evidence": raw,
+    }
+
+
+def _memory_raw_view(row: Dict[str, Any]) -> Dict[str, Any]:
+    content, content_truncated = _clip_text_with_flag(row.get("content"), 6000)
+    description, description_truncated = _clip_text_with_flag(row.get("description"), 2000)
+    metadata = row.get("metadata") or {}
+    metadata_text = json.dumps(to_jsonable(metadata), ensure_ascii=False, sort_keys=True, indent=2)
+    metadata_view, metadata_truncated = _clip_text_with_flag(metadata_text, 8000)
+    out = {
+        "kind": "memory",
+        "item_ref": _item_ref("memory", row),
+        "title": row.get("title"),
+        "description": description,
+        "description_truncated": description_truncated,
+        "content": content,
+        "content_truncated": content_truncated,
+        "source_task_id": row.get("source_task_id"),
+        "created_at": row.get("created_at"),
+        "is_from_success": row.get("is_from_success"),
+        "metadata_json": metadata_view,
+        "metadata_truncated": metadata_truncated,
+    }
+    if row.get("score") is not None:
+        out["score"] = row.get("score")
+    return out
+
+
+def _recommendation_raw_view(row: Dict[str, Any]) -> Dict[str, Any]:
+    formulation_text = json.dumps(to_jsonable(row.get("formulation") or {}), ensure_ascii=False, sort_keys=True, indent=2)
+    experiment_text = json.dumps(to_jsonable(row.get("experiment") or {}), ensure_ascii=False, sort_keys=True, indent=2)
+    formulation_view, formulation_truncated = _clip_text_with_flag(formulation_text, 8000)
+    experiment_view, experiment_truncated = _clip_text_with_flag(experiment_text, 8000)
+    summary, summary_truncated = _clip_text_with_flag(row.get("formulation_summary"), 3000)
+    return {
+        "kind": "recommendation",
+        "item_ref": _item_ref("recommendation", row),
+        "recommendation_id": row.get("recommendation_id"),
+        "task_id": row.get("task_id"),
+        "status": row.get("status"),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at"),
+        "target_material": row.get("target_material"),
+        "target_temperature": row.get("target_temperature"),
+        "formulation_summary": summary,
+        "formulation_summary_truncated": summary_truncated,
+        "formulation_json": formulation_view,
+        "formulation_truncated": formulation_truncated,
+        "components": _compact_value(row.get("components") or [], max_string=800, max_items=30, max_depth=5),
+        "confidence": row.get("confidence"),
+        "performance_band": row.get("performance_band"),
+        "experiment_json": experiment_view,
+        "experiment_truncated": experiment_truncated,
+    }
+
+
 @dataclass
 class ExperienceHistoryTools:
     memory_bank: Any
     retriever: Any
     rec_manager: Any
     config: Dict[str, Any]
+    _result_set_counter: int = dataclass_field(default=0, init=False, repr=False)
+    _result_sets: Dict[str, Dict[str, Any]] = dataclass_field(default_factory=dict, init=False, repr=False)
+    _last_result_set_id: str = dataclass_field(default="", init=False, repr=False)
+    _notebook_entries: List[Dict[str, Any]] = dataclass_field(default_factory=list, init=False, repr=False)
+    _notebook_refs: set[str] = dataclass_field(default_factory=set, init=False, repr=False)
 
     def tool_specs_text(self) -> str:
         """Human-readable tool list for the extractor ReAct prompt."""
-        return """Available read-only tools:
-- search_similar_memories: semantic embedding search over existing ReasoningBank memories by natural-language query text.
-- search_memories: structured filter search over memory fields using a SQL-like WHERE string. Supports AND, =, !=, >, >=, <, <=, IN (...), CONTAINS, LIKE, IS NULL, IS NOT NULL, and exists(field). Example fields: title, source_task_id, is_from_success, metadata.performance_band, metadata.relative_interpretation, metadata.extractor_profile.formulation_components_norm.
+        return """Available tools:
+- search_similar_memories: semantic embedding search over existing ReasoningBank memories by natural-language query text. Returns compact numbered items plus result_set_id.
+- search_memories: structured filter search over memory fields using a SQL-like WHERE string. Supports AND, =, !=, >, >=, <, <=, IN (...), CONTAINS, LIKE, IS NULL, IS NOT NULL, and exists(field). Example fields: title, source_task_id, is_from_success, metadata.performance_band, metadata.relative_interpretation, metadata.extractor_profile.formulation_components_norm. Returns compact numbered items plus result_set_id.
 - list_memory_field_values: list distinct values and counts for one memory field so you can choose valid filter values before calling search_memories.
-- search_recommendations: structured search over historical recommendations/experiments. Use scope='comparable' for same material/temperature candidates or scope='all' for global history. Supports component, performance_band, include_pending, and SQL-like WHERE filtering.
+- search_recommendations: structured search over historical recommendations/experiments. Use scope='comparable' for same material/temperature candidates or scope='all' for global history. Supports component, performance_band, include_pending, and SQL-like WHERE filtering. Returns compact numbered items plus result_set_id.
 - list_recommendation_field_values: list distinct values and counts for one recommendation field so you can choose valid filter values before calling search_recommendations.
-- inspect_recommendation: inspect one historical recommendation by recommendation_id.
-- finish: produce the final JSON memory extraction payload.
+- inspect_item: view one raw historical item. Pass item_ref from a numbered result, such as memory:<source_task_id>:<title> or recommendation:<recommendation_id>. Returns one numbered item in a new result_set_id.
+- inspect_recommendation: view one raw historical recommendation by recommendation_id. Prefer inspect_item when you already have item_ref.
+- notebook_add_items: write selected numbered items from a result_set_id into the evidence notebook. You choose item_numbers; program copies the corresponding item evidence.
+- notebook_add_note: append a natural-language note to the evidence notebook.
+- notebook_view: inspect the notebook summary.
+- finish: produce the final JSON memory extraction payload using only the notebook and current experiment.
 """
 
     def run(self, name: str, args: Dict[str, Any], *, trajectory: Trajectory, experiment_result: Any) -> Dict[str, Any]:
@@ -398,7 +695,111 @@ class ExperienceHistoryTools:
             )
         if name == "inspect_recommendation":
             return self.inspect_recommendation(str(args.get("recommendation_id") or ""))
+        if name == "inspect_item":
+            return self.inspect_item(str(args.get("item_ref") or ""))
+        if name == "notebook_add_items":
+            return self.notebook_add_items(
+                result_set_id=str(args.get("result_set_id") or ""),
+                item_numbers=args.get("item_numbers") if isinstance(args.get("item_numbers"), list) else [],
+                note=str(args.get("note") or ""),
+            )
+        if name == "notebook_add_note":
+            return self.notebook_add_note(str(args.get("note") or ""))
+        if name == "notebook_view":
+            return self.notebook_view()
         return {"ok": False, "error": f"unknown tool: {name}"}
+
+    @property
+    def notebook_entries(self) -> List[Dict[str, Any]]:
+        return list(self._notebook_entries)
+
+    def notebook_payload(self) -> Dict[str, Any]:
+        evidence = [
+            entry
+            for entry in self._notebook_entries
+            if entry.get("entry_type") == "evidence_item"
+        ]
+        notes = [
+            entry
+            for entry in self._notebook_entries
+            if entry.get("entry_type") == "note"
+        ]
+        return {
+            "evidence_count": len(evidence),
+            "note_count": len(notes),
+            "entries": _compact_value(self._notebook_entries, max_string=1800, max_items=60, max_depth=8),
+        }
+
+    def _next_result_set_id(self) -> str:
+        self._result_set_counter += 1
+        return f"rs_{self._result_set_counter}"
+
+    def _register_result_set(
+        self,
+        *,
+        tool: str,
+        kind: str,
+        raw_rows: List[Dict[str, Any]],
+        compact_items: List[Dict[str, Any]],
+        query: Dict[str, Any],
+    ) -> str:
+        result_set_id = self._next_result_set_id()
+        raw_by_number = {index + 1: row for index, row in enumerate(raw_rows)}
+        kind_by_number = {index + 1: kind for index in range(len(raw_rows))}
+        self._result_sets[result_set_id] = {
+            "tool": tool,
+            "kind": kind,
+            "query": _compact_value(query, max_string=500, max_items=20, max_depth=4),
+            "raw_by_number": raw_by_number,
+            "kind_by_number": kind_by_number,
+            "items": compact_items,
+        }
+        self._last_result_set_id = result_set_id
+        return result_set_id
+
+    def _register_mixed_result_set(
+        self,
+        *,
+        tool: str,
+        rows: List[Tuple[str, Dict[str, Any]]],
+        compact_items: List[Dict[str, Any]],
+        query: Dict[str, Any],
+    ) -> str:
+        result_set_id = self._next_result_set_id()
+        self._result_sets[result_set_id] = {
+            "tool": tool,
+            "kind": "mixed",
+            "query": _compact_value(query, max_string=500, max_items=20, max_depth=4),
+            "raw_by_number": {index + 1: row for index, (_kind, row) in enumerate(rows)},
+            "kind_by_number": {index + 1: kind for index, (kind, _row) in enumerate(rows)},
+            "items": compact_items,
+        }
+        self._last_result_set_id = result_set_id
+        return result_set_id
+
+    def _result_set_response(
+        self,
+        *,
+        ok: bool,
+        result_set_id: str,
+        items: List[Dict[str, Any]],
+        total_matches: Optional[int] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        response: Dict[str, Any] = {
+            "ok": ok,
+            "result_set_id": result_set_id,
+            "items": items,
+            "notebook_instruction": (
+                "Call notebook_add_items with result_set_id and chosen item_numbers "
+                "to preserve evidence for final extraction."
+            ),
+        }
+        if total_matches is not None:
+            response["total_matches"] = total_matches
+        if extra:
+            response.update(extra)
+        return response
 
     def _comparable_recommendations(
         self,
@@ -501,7 +902,23 @@ class ExperienceHistoryTools:
                 rows = [_memory_to_tool_row(memory) for memory in self.retriever.retrieve(q)]
         except Exception as e:
             return {"ok": False, "error": str(e), "items": []}
-        return {"ok": True, "items": rows}
+        raw_rows = rows[:top_k]
+        compact_items = [
+            _memory_to_compact_tool_row(row, number=index + 1)
+            for index, row in enumerate(raw_rows)
+        ]
+        result_set_id = self._register_result_set(
+            tool="search_similar_memories",
+            kind="memory",
+            raw_rows=raw_rows,
+            compact_items=compact_items,
+            query={"query": query, "top_k": top_k, "where": where},
+        )
+        return self._result_set_response(
+            ok=True,
+            result_set_id=result_set_id,
+            items=compact_items,
+        )
 
     def _memory_rows(self, *, where: str = "", order_by: str = "-created_at") -> List[Dict[str, Any]]:
         rows = [_memory_to_tool_row(memory) for memory in self.memory_bank.get_all_memories()]
@@ -522,7 +939,24 @@ class ExperienceHistoryTools:
             rows = self._memory_rows(where=where, order_by=order_by)
         except Exception as e:
             return {"ok": False, "error": str(e), "items": []}
-        return {"ok": True, "items": rows[:return_limit], "total_matches": len(rows)}
+        raw_rows = rows[:return_limit]
+        compact_items = [
+            _memory_to_compact_tool_row(row, number=index + 1)
+            for index, row in enumerate(raw_rows)
+        ]
+        result_set_id = self._register_result_set(
+            tool="search_memories",
+            kind="memory",
+            raw_rows=raw_rows,
+            compact_items=compact_items,
+            query={"where": where, "limit": return_limit, "order_by": order_by},
+        )
+        return self._result_set_response(
+            ok=True,
+            result_set_id=result_set_id,
+            items=compact_items,
+            total_matches=len(rows),
+        )
 
     def list_memory_field_values(
         self,
@@ -577,27 +1011,10 @@ class ExperienceHistoryTools:
                 include_pending=include_pending,
                 limit=10000,
             )
-        extractor_cfg = self.config.get("extractor", {}) or {}
-        low = float(extractor_cfg.get("low_performance_percent", 20.0))
-        high = float(extractor_cfg.get("high_performance_percent", 60.0))
-
         candidate_rows = []
         for rec in recs:
             row = _recommendation_to_tool_row(rec, include_experiment=True)
-            stats = ((row.get("experiment") or {}).get("measurement_stats") or {})
-            max_value = _safe_float(stats.get("max_value"))
-            is_liquid = bool((row.get("experiment") or {}).get("is_liquid_formed"))
-            if not is_liquid:
-                band = "no_liquid"
-            elif max_value is None:
-                band = "formation_only"
-            elif max_value >= high:
-                band = "high"
-            elif max_value < low:
-                band = "low"
-            else:
-                band = "moderate"
-            row["performance_band"] = band
+            row["performance_band"] = _recommendation_performance_band(row, self.config)
             candidate_rows.append(row)
         candidate_rows = [row for row in candidate_rows if _matches_where(row, where)]
         candidate_rows = _sort_rows(candidate_rows, order_by)
@@ -636,11 +1053,32 @@ class ExperienceHistoryTools:
         except Exception as e:
             return {"ok": False, "error": str(e), "items": []}
 
-        return {
-            "ok": True,
-            "items": candidate_rows[:return_limit],
-            "total_matches": len(candidate_rows),
-        }
+        raw_rows = candidate_rows[:return_limit]
+        compact_items = [
+            _recommendation_to_compact_tool_row(row, number=index + 1)
+            for index, row in enumerate(raw_rows)
+        ]
+        result_set_id = self._register_result_set(
+            tool="search_recommendations",
+            kind="recommendation",
+            raw_rows=raw_rows,
+            compact_items=compact_items,
+            query={
+                "component": component or "",
+                "performance_band": performance_band or "",
+                "include_pending": include_pending,
+                "limit": return_limit,
+                "where": where,
+                "order_by": order_by,
+                "scope": scope,
+            },
+        )
+        return self._result_set_response(
+            ok=True,
+            result_set_id=result_set_id,
+            items=compact_items,
+            total_matches=len(candidate_rows),
+        )
 
     def list_recommendation_field_values(
         self,
@@ -681,7 +1119,198 @@ class ExperienceHistoryTools:
             return {"ok": False, "error": str(e)}
         if rec is None:
             return {"ok": False, "error": f"recommendation not found: {recommendation_id}"}
-        return {"ok": True, "item": _recommendation_to_tool_row(rec, include_experiment=True)}
+        row = _recommendation_to_tool_row(rec, include_experiment=True)
+        row["performance_band"] = _recommendation_performance_band(row, self.config)
+        rows = [("recommendation", row)]
+        compact_items = [_recommendation_to_compact_tool_row(row, number=1)]
+        result_set_id = self._register_mixed_result_set(
+            tool="inspect_recommendation",
+            rows=rows,
+            compact_items=compact_items,
+            query={"recommendation_id": recommendation_id},
+        )
+        return self._result_set_response(
+            ok=True,
+            result_set_id=result_set_id,
+            items=compact_items,
+            extra={"raw_item": _recommendation_raw_view(row)},
+        )
+
+    def _find_memory_by_ref(self, item_ref: str) -> Optional[Dict[str, Any]]:
+        if not self.memory_bank:
+            return None
+        item_ref = str(item_ref or "")
+        prefix = "memory:"
+        if not item_ref.startswith(prefix):
+            return None
+        rest = item_ref[len(prefix):]
+        source_task_id, sep, title = rest.partition(":")
+        for memory in self.memory_bank.get_all_memories():
+            if sep:
+                if str(memory.source_task_id or "") == source_task_id and str(memory.title or "") == title:
+                    return _memory_to_tool_row(memory)
+            elif str(memory.title or "") == rest:
+                return _memory_to_tool_row(memory)
+        return None
+
+    def _find_recommendation_by_ref(self, item_ref: str) -> Optional[Dict[str, Any]]:
+        if not self.rec_manager:
+            return None
+        item_ref = str(item_ref or "")
+        prefix = "recommendation:"
+        if not item_ref.startswith(prefix):
+            return None
+        recommendation_id = item_ref[len(prefix):]
+        if not recommendation_id:
+            return None
+        rec = self.rec_manager.get_recommendation(recommendation_id)
+        if rec is None:
+            return None
+        row = _recommendation_to_tool_row(rec, include_experiment=True)
+        row["performance_band"] = _recommendation_performance_band(row, self.config)
+        return row
+
+    def inspect_item(self, item_ref: str) -> Dict[str, Any]:
+        item_ref = str(item_ref or "").strip()
+        if not item_ref:
+            return {"ok": False, "error": "item_ref is required"}
+
+        if item_ref.startswith("recommendation:"):
+            try:
+                row = self._find_recommendation_by_ref(item_ref)
+            except Exception as e:
+                return {"ok": False, "error": str(e)}
+            if row is None:
+                return {"ok": False, "error": f"item not found: {item_ref}"}
+            compact = _recommendation_to_compact_tool_row(row, number=1)
+            raw_item = _recommendation_raw_view(row)
+            rows = [("recommendation", row)]
+        elif item_ref.startswith("memory:"):
+            row = self._find_memory_by_ref(item_ref)
+            if row is None:
+                return {"ok": False, "error": f"item not found: {item_ref}"}
+            compact = _memory_to_compact_tool_row(row, number=1)
+            raw_item = _memory_raw_view(row)
+            rows = [("memory", row)]
+        else:
+            return {
+                "ok": False,
+                "error": "item_ref must start with memory: or recommendation:",
+            }
+
+        result_set_id = self._register_mixed_result_set(
+            tool="inspect_item",
+            rows=rows,
+            compact_items=[compact],
+            query={"item_ref": item_ref},
+        )
+        return self._result_set_response(
+            ok=True,
+            result_set_id=result_set_id,
+            items=[compact],
+            extra={"raw_item": raw_item},
+        )
+
+    def notebook_add_items(
+        self,
+        *,
+        result_set_id: str,
+        item_numbers: List[Any],
+        note: str = "",
+    ) -> Dict[str, Any]:
+        result_set_id = str(result_set_id or "").strip() or self._last_result_set_id
+        if not result_set_id:
+            return {"ok": False, "error": "result_set_id is required"}
+        result_set = self._result_sets.get(result_set_id)
+        if result_set is None:
+            return {"ok": False, "error": f"unknown result_set_id: {result_set_id}"}
+
+        raw_by_number = result_set.get("raw_by_number") or {}
+        kind_by_number = result_set.get("kind_by_number") or {}
+        added: List[int] = []
+        skipped: List[Dict[str, Any]] = []
+        for raw_number in item_numbers:
+            try:
+                number = int(raw_number)
+            except Exception:
+                skipped.append({"item_number": raw_number, "reason": "not an integer"})
+                continue
+            row = raw_by_number.get(number)
+            kind = kind_by_number.get(number)
+            if row is None or kind is None:
+                skipped.append({"item_number": number, "reason": "not found in result_set"})
+                continue
+            ref = _item_ref(kind, row)
+            if ref in self._notebook_refs:
+                skipped.append({"item_number": number, "item_ref": ref, "reason": "already in notebook"})
+                continue
+            entry = _notebook_entry_from_row(
+                kind=kind,
+                row=row,
+                source_tool=str(result_set.get("tool") or ""),
+                result_set_id=result_set_id,
+                item_number=number,
+                note=note,
+            )
+            self._notebook_entries.append(entry)
+            self._notebook_refs.add(ref)
+            added.append(number)
+
+        return {
+            "ok": bool(added),
+            "result_set_id": result_set_id,
+            "added_item_numbers": added,
+            "skipped": skipped,
+            "notebook": self.notebook_view().get("notebook"),
+        }
+
+    def notebook_add_note(self, note: str) -> Dict[str, Any]:
+        note = str(note or "").strip()
+        if not note:
+            return {"ok": False, "error": "note is required"}
+        self._notebook_entries.append(
+            {
+                "entry_type": "note",
+                "note": _clip_text(note, 2000),
+            }
+        )
+        return {"ok": True, "notebook": self.notebook_view().get("notebook")}
+
+    def notebook_view(self) -> Dict[str, Any]:
+        evidence = [
+            entry
+            for entry in self._notebook_entries
+            if entry.get("entry_type") == "evidence_item"
+        ]
+        notes = [
+            entry
+            for entry in self._notebook_entries
+            if entry.get("entry_type") == "note"
+        ]
+        evidence_summary = []
+        for index, entry in enumerate(evidence, start=1):
+            summary = entry.get("structured_summary") or {}
+            evidence_summary.append(
+                {
+                    "notebook_number": index,
+                    "kind": entry.get("kind"),
+                    "item_ref": entry.get("item_ref"),
+                    "title": summary.get("title"),
+                    "recommendation_id": summary.get("recommendation_id"),
+                    "performance_band": summary.get("performance_band")
+                    or ((summary.get("metadata") or {}).get("performance_band") if isinstance(summary.get("metadata"), dict) else None),
+                    "model_note": entry.get("model_note"),
+                }
+            )
+        return {
+            "ok": True,
+            "notebook": {
+                "evidence_count": len(evidence),
+                "note_count": len(notes),
+                "evidence_summary": evidence_summary,
+                "notes": [_clip_text(entry.get("note"), 700) for entry in notes],
+            },
+        }
 
 
 def dumps_tool_result(result: Dict[str, Any], *, max_chars: int = 6000) -> str:

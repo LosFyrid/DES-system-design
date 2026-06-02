@@ -43,6 +43,82 @@ def _to_dict(obj: Any) -> Dict[str, Any]:
         return {}
 
 
+def _clip_prompt_text(value: Any, max_chars: int = 1200) -> str:
+    text = "" if value is None else str(value)
+    max_chars = max(20, int(max_chars or 1200))
+    if len(text) <= max_chars:
+        return text
+    suffix = f"... <truncated {len(text) - max_chars} chars>"
+    return text[: max(0, max_chars - len(suffix))] + suffix
+
+
+def _compact_prompt_value(
+    value: Any,
+    *,
+    max_string: int = 1200,
+    max_items: int = 20,
+    max_depth: int = 7,
+    _depth: int = 0,
+) -> Any:
+    """Compress nested prompt evidence while preserving valid JSON shape."""
+    if _depth >= max_depth:
+        if isinstance(value, (dict, list)):
+            return _clip_prompt_text(json.dumps(value, ensure_ascii=False, sort_keys=True), max_string)
+        if isinstance(value, str):
+            return _clip_prompt_text(value, max_string)
+        return value
+    if isinstance(value, str):
+        return _clip_prompt_text(value, max_string)
+    if isinstance(value, list):
+        out = [
+            _compact_prompt_value(
+                item,
+                max_string=max_string,
+                max_items=max_items,
+                max_depth=max_depth,
+                _depth=_depth + 1,
+            )
+            for item in value[:max_items]
+        ]
+        if len(value) > max_items:
+            out.append({"truncated_items": len(value) - max_items})
+        return out
+    if isinstance(value, dict):
+        out: Dict[str, Any] = {}
+        for index, (key, item) in enumerate(value.items()):
+            if index >= max_items:
+                out["truncated_keys"] = len(value) - max_items
+                break
+            out[str(key)] = _compact_prompt_value(
+                item,
+                max_string=max_string,
+                max_items=max_items,
+                max_depth=max_depth,
+                _depth=_depth + 1,
+            )
+        return out
+    return value
+
+
+def _json_for_prompt(
+    value: Any,
+    *,
+    max_string: int = 1200,
+    max_items: int = 20,
+    max_depth: int = 7,
+) -> str:
+    return json.dumps(
+        _compact_prompt_value(
+            value,
+            max_string=max_string,
+            max_items=max_items,
+            max_depth=max_depth,
+        ),
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
 def format_experiment_for_llm(experiment_result) -> str:
     """
     Reformat raw experimental feedback into an LLM-friendly textual structure.
@@ -516,9 +592,12 @@ class MemoryExtractor:
         system_prompt: Optional[str] = None,
         response_format: Optional[Dict[str, Any]] = None,
         max_tokens: Optional[int] = None,
+        reasoning_effort: Optional[str] = None,
     ) -> str:
         cfg = self._extractor_config()
-        reasoning_effort = str(cfg.get("structured_reasoning_effort", "xhigh"))
+        effective_reasoning_effort = str(
+            reasoning_effort or cfg.get("structured_reasoning_effort", "xhigh")
+        )
         temperature = cfg.get("structured_temperature")
         if temperature is not None:
             temperature = float(temperature)
@@ -535,7 +614,7 @@ class MemoryExtractor:
                     "prompt": prompt,
                     "system_prompt": system_prompt,
                     "max_tokens": effective_max_tokens,
-                    "reasoning_effort": reasoning_effort,
+                    "reasoning_effort": effective_reasoning_effort,
                     "response_format": response_format,
                 }
                 if temperature is not None:
@@ -572,7 +651,11 @@ class MemoryExtractor:
                         "list_memory_field_values",
                         "search_recommendations",
                         "list_recommendation_field_values",
+                        "inspect_item",
                         "inspect_recommendation",
+                        "notebook_add_items",
+                        "notebook_add_note",
+                        "notebook_view",
                         "finish",
                     ],
                 },
@@ -591,6 +674,13 @@ class MemoryExtractor:
                         "order_by": {"type": "string"},
                         "scope": {"type": "string", "enum": ["comparable", "all"]},
                         "recommendation_id": {"type": "string"},
+                        "item_ref": {"type": "string"},
+                        "result_set_id": {"type": "string"},
+                        "item_numbers": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                        },
+                        "note": {"type": "string"},
                     },
                     "required": [
                         "query",
@@ -604,6 +694,10 @@ class MemoryExtractor:
                         "order_by",
                         "scope",
                         "recommendation_id",
+                        "item_ref",
+                        "result_set_id",
+                        "item_numbers",
+                        "note",
                     ],
                 },
             },
@@ -718,15 +812,33 @@ class MemoryExtractor:
         )
         exp_summary = format_experiment_for_llm(experiment_result)
         tools_text = history_tools.tool_specs_text() if history_tools else "No history tools are available; use finish."
-        results_text = json.dumps(tool_results[-5:], ensure_ascii=False, indent=2)
-        if len(results_text) > 30000:
-            results_text = results_text[-30000:]
-
-        finish_rule = (
-            "You may choose finish now."
-            if can_finish
-            else "Do NOT choose finish yet. You must inspect required memory and recommendation history first."
+        results_text = _json_for_prompt(tool_results[-5:], max_string=1400, max_items=12, max_depth=7)
+        notebook_text = _json_for_prompt(
+            history_tools.notebook_view().get("notebook") if history_tools else {},
+            max_string=1000,
+            max_items=30,
+            max_depth=6,
         )
+
+        if can_finish:
+            finish_rule = "You may choose finish now."
+        elif history_tools and self._tool_results_have_numbered_items(tool_results):
+            finish_rule = (
+                "Do NOT choose finish yet. You have numbered evidence results, "
+                "so you must call notebook_add_items with the relevant result_set_id "
+                "and selected item_numbers before final extraction."
+            )
+        elif history_tools and actions_taken:
+            finish_rule = (
+                "Do NOT choose finish yet. Continue required history inspection. "
+                "If a completed search found no relevant numbered items, call "
+                "notebook_add_note explaining that no usable historical evidence was found."
+            )
+        else:
+            finish_rule = (
+                "Do NOT choose finish yet. You must inspect required memory and "
+                "recommendation history first."
+            )
 
         return f"""You are an agent that extracts durable experimental experience memories for a DES recommendation system.
 
@@ -742,6 +854,11 @@ Critical requirements:
 - Final output must be JSON following the provided schema.
 - Prefer field-value listing tools before structured filtering when you are unsure how a field is represented.
 - Use semantic memory search for fuzzy similarity and structured memory search for exact metadata checks.
+- Search tools return compact numbered items. Use inspect_item when one item needs raw content.
+- After any search or inspection that finds relevant evidence, call notebook_add_items with result_set_id and selected item_numbers.
+- If a required search finds no relevant numbered items, call notebook_add_note explaining the missing history before finishing.
+- The final extraction call can use only the current experiment, the structured profile, and the evidence notebook. It cannot use search results that were not written to notebook.
+- Use notebook_add_note for your own calibrated interpretation notes.
 
 {tools_text}
 
@@ -761,15 +878,21 @@ Agent trajectory:
 Current experiment:
 {exp_summary}
 
+Structured current-experiment profile:
+{_json_for_prompt(compact_profile_for_metadata(profile), max_string=1000, max_items=30, max_depth=6)}
+
 Actions taken so far: {actions_taken}
 
 Recent tool results:
 {results_text}
 
+Evidence notebook:
+{notebook_text}
+
 Return ONLY a JSON object with:
 {{
   "reasoning": "...",
-  "action": "search_similar_memories|search_memories|list_memory_field_values|search_recommendations|list_recommendation_field_values|inspect_recommendation|finish",
+  "action": "search_similar_memories|search_memories|list_memory_field_values|search_recommendations|list_recommendation_field_values|inspect_item|inspect_recommendation|notebook_add_items|notebook_add_note|notebook_view|finish",
   "args": {{
     "query": "",
     "top_k": 5,
@@ -781,7 +904,11 @@ Return ONLY a JSON object with:
     "limit": 8,
     "order_by": "-created_at",
     "scope": "comparable",
-    "recommendation_id": ""
+    "recommendation_id": "",
+    "item_ref": "",
+    "result_set_id": "",
+    "item_numbers": [],
+    "note": ""
   }}
 }}
 """
@@ -792,12 +919,16 @@ Return ONLY a JSON object with:
         trajectory: Trajectory,
         experiment_result: Any,
         profile: Dict[str, Any],
-        tool_results: List[Dict[str, Any]],
+        notebook: Dict[str, Any],
     ) -> str:
         exp_summary = format_experiment_for_llm(experiment_result)
-        results_text = json.dumps(tool_results, ensure_ascii=False, indent=2)
-        if len(results_text) > 48000:
-            results_text = results_text[-48000:]
+        notebook_text = _json_for_prompt(notebook, max_string=1800, max_items=80, max_depth=9)
+        profile_text = _json_for_prompt(
+            compact_profile_for_metadata(profile),
+            max_string=1200,
+            max_items=40,
+            max_depth=7,
+        )
 
         return f"""Extract final DES experimental memories as strict JSON.
 
@@ -805,10 +936,12 @@ Memory quality rules:
 - Produce at most {self.max_items_per_trajectory} memories.
 - Prefer 1-2 discriminative memories over 3 redundant ones.
 - Every memory must include concrete quantitative evidence from the current experiment.
-- Every memory must include how history changes the interpretation when history is available.
+- Every memory must include how notebook evidence changes the interpretation when notebook evidence is available.
 - If performance is low/moderate, state what remains useful and what should require caution.
 - If a field was constant across history, do not make it the central lesson.
 - Do not claim a formulation or component is categorically unsuitable unless the evidence shows that across comparable history.
+- Use only the current experiment, the structured current-experiment profile, and the Evidence notebook below.
+- Do not use raw search/list tool results unless the item was written into the notebook.
 
 Task:
 - description: {trajectory.task_description}
@@ -821,8 +954,11 @@ Proposed formulation:
 Current experiment:
 {exp_summary}
 
-Tool evidence:
-{results_text}
+Structured current-experiment profile:
+{profile_text}
+
+Evidence notebook:
+{notebook_text}
 
 Return ONLY JSON matching:
 {{
@@ -870,7 +1006,26 @@ Return ONLY JSON matching:
             return {"limit": 8, "include_pending": False, "scope": "comparable", "order_by": "-created_at"}
         if action == "list_recommendation_field_values":
             return {"field": "performance_band", "limit": 50, "include_pending": False, "scope": "comparable"}
+        if action == "inspect_item":
+            return {"item_ref": ""}
+        if action == "inspect_recommendation":
+            return {"recommendation_id": ""}
+        if action == "notebook_add_items":
+            return {"result_set_id": "", "item_numbers": [], "note": ""}
+        if action == "notebook_add_note":
+            return {"note": ""}
         return {}
+
+    @staticmethod
+    def _tool_results_have_numbered_items(tool_results: List[Dict[str, Any]]) -> bool:
+        for record in tool_results:
+            result = record.get("result") if isinstance(record, dict) else None
+            if not isinstance(result, dict):
+                continue
+            items = result.get("items")
+            if isinstance(items, list) and items:
+                return True
+        return False
 
     def _parse_react_action(self, output: str) -> Dict[str, Any]:
         data = loads_json_from_text(output)
@@ -924,7 +1079,20 @@ Return ONLY JSON matching:
 
         for _step in range(max_steps):
             missing = [name for name in required if name not in actions_taken]
-            can_finish = not missing
+            notebook_payload = history_tools.notebook_payload() if history_tools else {
+                "evidence_count": 0,
+                "note_count": 0,
+                "entries": [],
+            }
+            notebook_has_evidence = bool(notebook_payload.get("evidence_count"))
+            notebook_has_any = notebook_has_evidence or bool(notebook_payload.get("note_count"))
+            have_numbered_items = self._tool_results_have_numbered_items(tool_results)
+            if not history_tools or not require_history_tools:
+                can_finish = not missing
+            elif have_numbered_items:
+                can_finish = not missing and notebook_has_evidence
+            else:
+                can_finish = not missing and notebook_has_any
             prompt = self._build_experiment_react_prompt(
                 trajectory=trajectory,
                 experiment_result=experiment_result,
@@ -961,11 +1129,19 @@ Return ONLY JSON matching:
                     "list_memory_field_values",
                     "search_recommendations",
                     "list_recommendation_field_values",
+                    "inspect_item",
                     "inspect_recommendation",
+                    "notebook_add_items",
+                    "notebook_add_note",
+                    "notebook_view",
                 }
             ):
                 action = missing[0]
                 args = self._default_tool_args(action, trajectory=trajectory, profile=profile)
+
+            if action == "finish" and not can_finish and history_tools and have_numbered_items and not notebook_has_evidence:
+                action = "notebook_view"
+                args = {}
 
             if action == "finish":
                 break
@@ -1003,8 +1179,30 @@ Return ONLY JSON matching:
                     "args": args,
                     "ok": bool(result.get("ok")) if isinstance(result, dict) else False,
                     "result_size": len(dumps_tool_result(result, max_chars=100000)),
+                    "result_set_id": result.get("result_set_id") if isinstance(result, dict) else None,
+                    "result_item_count": len(result.get("items") or []) if isinstance(result, dict) and isinstance(result.get("items"), list) else 0,
                 }
             )
+
+        notebook_payload = history_tools.notebook_payload() if history_tools else {
+            "evidence_count": 0,
+            "note_count": 0,
+            "entries": [],
+        }
+        audit["notebook"] = {
+            "evidence_count": notebook_payload.get("evidence_count", 0),
+            "note_count": notebook_payload.get("note_count", 0),
+        }
+        if history_tools and require_history_tools:
+            have_numbered_items = self._tool_results_have_numbered_items(tool_results)
+            if have_numbered_items and not notebook_payload.get("evidence_count"):
+                audit["error"] = "react_notebook_missing_evidence"
+                return [], audit
+            if not have_numbered_items and not (
+                notebook_payload.get("evidence_count") or notebook_payload.get("note_count")
+            ):
+                audit["error"] = "react_notebook_empty"
+                return [], audit
 
         try:
             final_output = self._call_extractor_llm(
@@ -1012,7 +1210,7 @@ Return ONLY JSON matching:
                     trajectory=trajectory,
                     experiment_result=experiment_result,
                     profile=profile,
-                    tool_results=tool_results,
+                    notebook=notebook_payload,
                 ),
                 system_prompt="You extract calibrated DES experiment memories. Return strict JSON only.",
                 response_format=self._json_response_format(
@@ -1020,6 +1218,7 @@ Return ONLY JSON matching:
                     self._final_payload_schema(),
                 ),
                 max_tokens=int(cfg.get("final_max_tokens", 16000)),
+                reasoning_effort=str(cfg.get("final_reasoning_effort") or cfg.get("structured_reasoning_effort", "xhigh")),
             )
         except Exception as e:
             logger.error("Experiment extractor final call failed: %s", e)
@@ -1036,7 +1235,11 @@ Return ONLY JSON matching:
                 "list_memory_field_values",
                 "search_recommendations",
                 "list_recommendation_field_values",
+                "inspect_item",
                 "inspect_recommendation",
+                "notebook_add_items",
+                "notebook_add_note",
+                "notebook_view",
             )
         )
 
@@ -1119,6 +1322,7 @@ Return ONLY JSON matching:
                             "mode": audit.get("mode"),
                             "history_used": audit.get("history_used"),
                             "tool_calls": audit.get("tool_calls", []),
+                            "notebook": audit.get("notebook", {}),
                             "fallback_used": audit.get("fallback_used", False),
                         },
                     },
