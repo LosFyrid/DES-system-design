@@ -592,6 +592,7 @@ class MemoryExtractor:
         system_prompt: Optional[str] = None,
         response_format: Optional[Dict[str, Any]] = None,
         max_tokens: Optional[int] = None,
+        omit_token_limit: bool = False,
         reasoning_effort: Optional[str] = None,
     ) -> str:
         cfg = self._extractor_config()
@@ -601,22 +602,27 @@ class MemoryExtractor:
         temperature = cfg.get("structured_temperature")
         if temperature is not None:
             temperature = float(temperature)
-        effective_max_tokens = int(
-            max_tokens
-            or cfg.get("structured_max_tokens")
-            or cfg.get("max_tokens")
-            or 16000
-        )
+        effective_max_tokens = None
+        if not omit_token_limit:
+            effective_max_tokens = int(
+                max_tokens
+                or cfg.get("structured_max_tokens")
+                or cfg.get("max_tokens")
+                or 16000
+            )
 
         if hasattr(self.llm_client, "chat"):
             try:
                 kwargs = {
                     "prompt": prompt,
                     "system_prompt": system_prompt,
-                    "max_tokens": effective_max_tokens,
                     "reasoning_effort": effective_reasoning_effort,
                     "response_format": response_format,
                 }
+                if omit_token_limit:
+                    kwargs["omit_token_limit"] = True
+                else:
+                    kwargs["max_tokens"] = effective_max_tokens
                 if temperature is not None:
                     kwargs["temperature"] = temperature
                 return self.llm_client.chat(**kwargs)
@@ -1103,6 +1109,7 @@ Return ONLY JSON matching:
                 history_tools=history_tools,
             )
             try:
+                react_action_max_tokens = cfg.get("react_action_max_tokens", 16000)
                 action_output = self._call_extractor_llm(
                     prompt,
                     system_prompt="You are a careful ReAct extraction planner. Return strict JSON only.",
@@ -1110,8 +1117,12 @@ Return ONLY JSON matching:
                         "experience_extractor_action_v1",
                         self._react_action_schema(),
                     ),
-                    max_tokens=int(cfg.get("react_action_max_tokens", 16000)),
-                    reasoning_effort=str(cfg.get("react_action_reasoning_effort") or "medium"),
+                    max_tokens=(
+                        int(react_action_max_tokens)
+                        if react_action_max_tokens is not None
+                        else None
+                    ),
+                    omit_token_limit=react_action_max_tokens is None,
                 )
             except Exception as e:
                 logger.warning("Experiment extractor ReAct action call failed: %s", e)
@@ -1205,6 +1216,7 @@ Return ONLY JSON matching:
                 return [], audit
 
         try:
+            final_max_tokens = cfg.get("final_max_tokens", 16000)
             final_output = self._call_extractor_llm(
                 self._build_final_extraction_prompt(
                     trajectory=trajectory,
@@ -1217,7 +1229,12 @@ Return ONLY JSON matching:
                     "experience_extractor_final_v1",
                     self._final_payload_schema(),
                 ),
-                max_tokens=int(cfg.get("final_max_tokens", 16000)),
+                max_tokens=(
+                    int(final_max_tokens)
+                    if final_max_tokens is not None
+                    else None
+                ),
+                omit_token_limit=final_max_tokens is None,
                 reasoning_effort=str(cfg.get("final_reasoning_effort") or cfg.get("structured_reasoning_effort", "xhigh")),
             )
         except Exception as e:

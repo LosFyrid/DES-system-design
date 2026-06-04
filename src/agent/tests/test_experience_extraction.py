@@ -226,7 +226,7 @@ def test_react_allows_repeated_notebook_writes_while_required_search_is_missing(
 
     class FakeLLM:
         def __init__(self):
-            self.action_reasoning_efforts = []
+            self.action_omit_token_limits = []
             self.actions = [
                 {"reasoning": "find recommendation history", "action": "search_recommendations", "args": {"scope": "all", "limit": 2}},
                 {"reasoning": "save first result", "action": "notebook_add_items", "args": {"result_set_id": "rs_1", "item_numbers": [1]}},
@@ -263,7 +263,7 @@ def test_react_allows_repeated_notebook_writes_while_required_search_is_missing(
                         "audit": {"history_used": True, "notes": "ok"},
                     }
                 )
-            self.action_reasoning_efforts.append(kwargs.get("reasoning_effort"))
+            self.action_omit_token_limits.append(kwargs.get("omit_token_limit"))
             return json.dumps(self.actions.pop(0))
 
     history_tools = FakeHistoryTools()
@@ -275,6 +275,7 @@ def test_react_allows_repeated_notebook_writes_while_required_search_is_missing(
                 "react_enabled": True,
                 "require_history_tools": True,
                 "react_max_steps": 8,
+                "react_action_max_tokens": None,
             }
         },
     )
@@ -295,7 +296,60 @@ def test_react_allows_repeated_notebook_writes_while_required_search_is_missing(
     assert history_tools.evidence_count == 2
     assert len(memories) == 1
     assert extractor.last_extraction_audit["notebook"]["evidence_count"] == 2
-    assert set(llm.action_reasoning_efforts) == {"medium"}
+    assert set(llm.action_omit_token_limits) == {True}
+
+
+def test_extractor_null_final_token_limit_omits_client_token_cap():
+    class FakeLLM:
+        def __init__(self):
+            self.calls = []
+
+        def chat(self, **kwargs):
+            self.calls.append(dict(kwargs))
+            return json.dumps(
+                {
+                    "memories": [
+                        {
+                            "title": "No token cap memory",
+                            "description": "Extractor can omit the provider token cap.",
+                            "content": "When final_max_tokens is null, the client must not send max_completion_tokens.",
+                            "memory_kind": "relative_benchmark",
+                            "evidence_strength": "moderate",
+                            "performance_band": "moderate",
+                            "component_implications": [],
+                            "source_evidence": ["current experiment"],
+                            "avoid_absolute_language": True,
+                        }
+                    ],
+                    "audit": {"history_used": False, "notes": "ok"},
+                }
+            )
+
+    llm = FakeLLM()
+    extractor = MemoryExtractor(
+        llm,
+        config={
+            "extractor": {
+                "react_enabled": True,
+                "require_history_tools": False,
+                "react_max_steps": 1,
+                "final_max_tokens": None,
+                "structured_reasoning_effort": "xhigh",
+            }
+        },
+    )
+
+    memories = extractor.extract_from_experiment(
+        _traj(),
+        _exp([33.0, 31.0, 30.0, 32.0]),
+        history_tools=None,
+    )
+
+    final_call = llm.calls[-1]
+    assert len(memories) == 1
+    assert final_call["omit_token_limit"] is True
+    assert "max_tokens" not in final_call
+    assert final_call["reasoning_effort"] == "xhigh"
 
 
 def test_history_tools_support_semantic_and_structured_memory_queries():

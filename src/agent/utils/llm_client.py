@@ -242,6 +242,7 @@ class LLMClient:
         tools: Optional[list] = None,
         tool_choice: Optional[Any] = None,
         parallel_tool_calls: Optional[bool] = None,
+        omit_token_limit: bool = False,
         return_tool_calls: bool = False,
         **kwargs
     ) -> Any:
@@ -258,6 +259,7 @@ class LLMClient:
             tools: OpenAI Chat Completions tools spec (function calling)
             tool_choice: OpenAI tool_choice (force/auto) for tools
             parallel_tool_calls: OpenAI parallel_tool_calls flag
+            omit_token_limit: If True, do not send max_tokens/max_completion_tokens.
             return_tool_calls: If True, return a dict with tool_calls + content
             **kwargs: Additional parameters for API call
 
@@ -334,16 +336,17 @@ class LLMClient:
         # Keep max_tokens as the generic provider cap, while allowing OpenAI
         # callers to set max_completion_tokens independently. Per-call
         # max_tokens overrides both defaults for backwards compatibility.
-        effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
-        if self.provider == "openai":
-            effective_max_completion_tokens = (
-                self.max_completion_tokens
-                if max_tokens is None and self.max_completion_tokens is not None
-                else effective_max_tokens
-            )
-            params["max_completion_tokens"] = effective_max_completion_tokens
-        else:
-            params["max_tokens"] = effective_max_tokens
+        if not omit_token_limit:
+            effective_max_tokens = self.max_tokens if max_tokens is None else max_tokens
+            if self.provider == "openai":
+                effective_max_completion_tokens = (
+                    self.max_completion_tokens
+                    if max_tokens is None and self.max_completion_tokens is not None
+                    else effective_max_tokens
+                )
+                params["max_completion_tokens"] = effective_max_completion_tokens
+            else:
+                params["max_tokens"] = effective_max_tokens
 
         # Sampling params. For OpenAI + reasoning enabled, do NOT send them.
         effective_temperature = self.temperature if temperature is None else temperature

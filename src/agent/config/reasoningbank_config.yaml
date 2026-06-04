@@ -86,7 +86,6 @@ extractor:
   # Do not set structured_temperature here; several reasoning models reject
   # explicit temperature overrides.
   structured_reasoning_effort: "xhigh"
-  react_action_reasoning_effort: "medium"
   structured_max_tokens: 16000
   react_action_max_tokens: 16000
   final_max_tokens: 16000
