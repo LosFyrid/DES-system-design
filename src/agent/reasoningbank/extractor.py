@@ -1111,6 +1111,7 @@ Return ONLY JSON matching:
                         self._react_action_schema(),
                     ),
                     max_tokens=int(cfg.get("react_action_max_tokens", 16000)),
+                    reasoning_effort=str(cfg.get("react_action_reasoning_effort") or "medium"),
                 )
             except Exception as e:
                 logger.warning("Experiment extractor ReAct action call failed: %s", e)
@@ -1122,7 +1123,6 @@ Return ONLY JSON matching:
 
             if missing and (
                 action == "finish"
-                or action in actions_taken
                 or action not in {
                     "search_similar_memories",
                     "search_memories",

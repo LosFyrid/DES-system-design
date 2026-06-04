@@ -8,6 +8,7 @@ low/moderate performance, and downstream component reuse constraints.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -157,6 +158,144 @@ def test_extractor_raises_when_react_returns_no_memories():
         )
 
     assert extractor.last_extraction_audit["error"] == "react_extractor_returned_no_memories"
+
+
+def test_react_allows_repeated_notebook_writes_while_required_search_is_missing():
+    class FakeHistoryTools:
+        def __init__(self):
+            self.calls = []
+            self.evidence_count = 0
+
+        def tool_specs_text(self):
+            return "Available tools: search_recommendations, search_similar_memories, notebook_add_items."
+
+        def notebook_view(self):
+            return {
+                "ok": True,
+                "notebook": {
+                    "evidence_count": self.evidence_count,
+                    "note_count": 0,
+                    "evidence_summary": [],
+                    "notes": [],
+                },
+            }
+
+        def notebook_payload(self):
+            return {
+                "evidence_count": self.evidence_count,
+                "note_count": 0,
+                "entries": [
+                    {
+                        "entry_type": "evidence_item",
+                        "kind": "recommendation",
+                        "evidence": {"content": f"Notebook evidence {index}"},
+                    }
+                    for index in range(1, self.evidence_count + 1)
+                ],
+            }
+
+        def run(self, name, args, *, trajectory, experiment_result):
+            self.calls.append((name, dict(args)))
+            if name == "search_recommendations":
+                return {
+                    "ok": True,
+                    "result_set_id": "rs_1",
+                    "items": [{"item_number": 1, "item_ref": "recommendation:REC_1"}],
+                }
+            if name == "inspect_item":
+                return {
+                    "ok": True,
+                    "result_set_id": "rs_2",
+                    "items": [{"item_number": 1, "item_ref": "recommendation:REC_2"}],
+                }
+            if name == "notebook_add_items":
+                self.evidence_count += 1
+                return {
+                    "ok": True,
+                    "result_set_id": args.get("result_set_id"),
+                    "added_item_numbers": args.get("item_numbers") or [],
+                    "notebook": self.notebook_view()["notebook"],
+                }
+            if name == "search_similar_memories":
+                return {
+                    "ok": True,
+                    "result_set_id": "rs_3",
+                    "items": [{"item_number": 1, "item_ref": "memory:task_old:Prior memory"}],
+                }
+            return {"ok": False, "error": name}
+
+    class FakeLLM:
+        def __init__(self):
+            self.action_reasoning_efforts = []
+            self.actions = [
+                {"reasoning": "find recommendation history", "action": "search_recommendations", "args": {"scope": "all", "limit": 2}},
+                {"reasoning": "save first result", "action": "notebook_add_items", "args": {"result_set_id": "rs_1", "item_numbers": [1]}},
+                {"reasoning": "inspect another item", "action": "inspect_item", "args": {"item_ref": "recommendation:REC_2"}},
+                {"reasoning": "save inspected result too", "action": "notebook_add_items", "args": {"result_set_id": "rs_2", "item_numbers": [1]}},
+                {"reasoning": "finish required memory search", "action": "search_similar_memories", "args": {"query": "calibrated DES feedback", "top_k": 3}},
+                {"reasoning": "ready", "action": "finish", "args": {}},
+            ]
+
+        def chat(self, prompt, **kwargs):
+            system_prompt = kwargs.get("system_prompt") or ""
+            if "final DES experimental memories" in system_prompt:
+                return json.dumps(
+                    {
+                        "memories": [
+                            {
+                                "title": "Calibrated notebook memory",
+                                "description": "Repeated notebook writes remain available during evidence gathering.",
+                                "content": "Use both selected recommendation records before forming the final memory.",
+                                "memory_kind": "relative_benchmark",
+                                "evidence_strength": "moderate",
+                                "performance_band": "moderate",
+                                "component_implications": [
+                                    {
+                                        "component": "Choline chloride",
+                                        "action": "use_with_rationale",
+                                        "rationale": "Evidence was explicitly notebooked.",
+                                    }
+                                ],
+                                "source_evidence": ["notebook evidence"],
+                                "avoid_absolute_language": True,
+                            }
+                        ],
+                        "audit": {"history_used": True, "notes": "ok"},
+                    }
+                )
+            self.action_reasoning_efforts.append(kwargs.get("reasoning_effort"))
+            return json.dumps(self.actions.pop(0))
+
+    history_tools = FakeHistoryTools()
+    llm = FakeLLM()
+    extractor = MemoryExtractor(
+        llm,
+        config={
+            "extractor": {
+                "react_enabled": True,
+                "require_history_tools": True,
+                "react_max_steps": 8,
+            }
+        },
+    )
+
+    memories = extractor.extract_from_experiment(
+        _traj(),
+        _exp([33.0, 31.0, 30.0, 32.0]),
+        history_tools=history_tools,
+    )
+
+    assert [call[0] for call in history_tools.calls] == [
+        "search_recommendations",
+        "notebook_add_items",
+        "inspect_item",
+        "notebook_add_items",
+        "search_similar_memories",
+    ]
+    assert history_tools.evidence_count == 2
+    assert len(memories) == 1
+    assert extractor.last_extraction_audit["notebook"]["evidence_count"] == 2
+    assert set(llm.action_reasoning_efforts) == {"medium"}
 
 
 def test_history_tools_support_semantic_and_structured_memory_queries():
