@@ -560,9 +560,9 @@ class LoadHistoricalDataResponse(BaseResponse):
 
 class MemoryItemDetail(BaseModel):
     """Detailed memory item for management"""
-    title: str = Field(..., min_length=1, max_length=200, description="Memory title")
-    description: str = Field(..., min_length=1, max_length=500, description="One-sentence description")
-    content: str = Field(..., min_length=1, max_length=2000, description="Detailed content (1-5 sentences)")
+    title: str = Field(..., min_length=1, description="Memory title")
+    description: str = Field(..., min_length=1, description="Memory description")
+    content: str = Field(..., min_length=1, description="Detailed content")
     is_from_success: bool = Field(default=True, description="Whether from successful experiment")
     source_task_id: Optional[str] = Field(None, description="Source task/recommendation ID")
     created_at: str = Field(..., description="Creation timestamp")
